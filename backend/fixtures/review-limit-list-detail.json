@@ -1,1289 +1,254 @@
 [
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600000.SH",
-  "name": "合成0",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 3
+  "ts_code": "002343.SZ",
+  "industry": "影视院线",
+  "first_board_time": "93003"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600001.SH",
-  "name": "合成1",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 1
+  "ts_code": "002696.SZ",
+  "industry": "饲料",
+  "first_board_time": "92500"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600002.SH",
-  "name": "合成2",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 4
+  "ts_code": "603096.SH",
+  "industry": "出版",
+  "first_board_time": "93044"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600003.SH",
-  "name": "合成3",
-  "industry": "软件开发",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 2
+  "ts_code": "603968.SH",
+  "industry": "化学制品",
+  "first_board_time": "93009"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600004.SH",
-  "name": "合成4",
-  "industry": "软件开发",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 3
+  "ts_code": "000530.SZ",
+  "industry": "通用设备",
+  "first_board_time": "92500"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600005.SH",
-  "name": "合成5",
-  "industry": "软件开发",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 3
+  "ts_code": "000668.SZ",
+  "industry": "房地产开发",
+  "first_board_time": "92500"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600006.SH",
-  "name": "合成6",
-  "industry": "汽车整车",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 1
+  "ts_code": "000823.SZ",
+  "industry": "元件",
+  "first_board_time": "92500"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600007.SH",
-  "name": "合成7",
-  "industry": "汽车整车",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 1
+  "ts_code": "001318.SZ",
+  "industry": "饮料乳品",
+  "first_board_time": "92500"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600008.SH",
-  "name": "合成8",
-  "industry": "汽车整车",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 1
+  "ts_code": "002813.SZ",
+  "industry": "汽车零部件",
+  "first_board_time": "95615"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600009.SH",
-  "name": "合成9",
-  "industry": "汽车整车",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 3
+  "ts_code": "002860.SZ",
+  "industry": "家电零部",
+  "first_board_time": "92500"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600010.SH",
-  "name": "合成10",
-  "industry": "汽车整车",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 3
+  "ts_code": "002917.SZ",
+  "industry": "化学制品",
+  "first_board_time": "93018"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600011.SH",
-  "name": "合成11",
-  "industry": "汽车整车",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 1
+  "ts_code": "600202.SH",
+  "industry": "通用设备",
+  "first_board_time": "92500"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600012.SH",
-  "name": "合成12",
-  "industry": "汽车整车",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 1
+  "ts_code": "600391.SH",
+  "industry": "航空装备",
+  "first_board_time": "100608"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600013.SH",
-  "name": "合成13",
-  "industry": "汽车整车",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 1
+  "ts_code": "600847.SH",
+  "industry": "电池",
+  "first_board_time": "93550"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600014.SH",
-  "name": "合成14",
-  "industry": "光伏设备",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 1
+  "ts_code": "601188.SH",
+  "industry": "铁路公路",
+  "first_board_time": "93004"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600015.SH",
-  "name": "合成15",
-  "industry": "光伏设备",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 1
+  "ts_code": "000573.SZ",
+  "industry": "房地产开发",
+  "first_board_time": "105757"
  },
  {
-  "trade_date": "2026-09-01",
-  "ts_code": "600016.SH",
-  "name": "合成16",
-  "industry": "光伏设备",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 2
+  "ts_code": "000601.SZ",
+  "industry": "电力",
+  "first_board_time": "94657"
  },
  {
-  "trade_date": "2026-09-02",
-  "ts_code": "600017.SH",
-  "name": "合成17",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 2
+  "ts_code": "001216.SZ",
+  "industry": "家居用品",
+  "first_board_time": "141806"
  },
  {
-  "trade_date": "2026-09-02",
-  "ts_code": "600018.SH",
-  "name": "合成18",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 1
+  "ts_code": "001299.SZ",
+  "industry": "燃气Ⅱ",
+  "first_board_time": "100239"
  },
  {
-  "trade_date": "2026-09-02",
-  "ts_code": "600019.SH",
-  "name": "合成19",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 4
+  "ts_code": "002029.SZ",
+  "industry": "服装家纺",
+  "first_board_time": "131715"
  },
  {
-  "trade_date": "2026-09-02",
-  "ts_code": "600020.SH",
-  "name": "合成20",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 3
+  "ts_code": "002469.SZ",
+  "industry": "化学原料",
+  "first_board_time": "93157"
  },
  {
-  "trade_date": "2026-09-02",
-  "ts_code": "600021.SH",
-  "name": "合成21",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 4
+  "ts_code": "002552.SZ",
+  "industry": "元件",
+  "first_board_time": "92500"
  },
  {
-  "trade_date": "2026-09-02",
-  "ts_code": "600022.SH",
-  "name": "合成22",
-  "industry": "软件开发",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 3
+  "ts_code": "300006.SZ",
+  "industry": "化学制药",
+  "first_board_time": "93924"
  },
  {
-  "trade_date": "2026-09-02",
-  "ts_code": "600023.SH",
-  "name": "合成23",
-  "industry": "软件开发",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 4
+  "ts_code": "300299.SZ",
+  "industry": "游戏Ⅱ",
+  "first_board_time": "102424"
  },
  {
-  "trade_date": "2026-09-02",
-  "ts_code": "600024.SH",
-  "name": "合成24",
-  "industry": "软件开发",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600025.SH",
-  "name": "合成25",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600026.SH",
-  "name": "合成26",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600027.SH",
-  "name": "合成27",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600028.SH",
-  "name": "合成28",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600029.SH",
-  "name": "合成29",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600030.SH",
-  "name": "合成30",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600031.SH",
-  "name": "合成31",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600032.SH",
-  "name": "合成32",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600033.SH",
-  "name": "合成33",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600034.SH",
-  "name": "合成34",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600035.SH",
-  "name": "合成35",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-02",
-  "ts_code": "600036.SH",
-  "name": "合成36",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600037.SH",
-  "name": "合成37",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600038.SH",
-  "name": "合成38",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600039.SH",
-  "name": "合成39",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600040.SH",
-  "name": "合成40",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600041.SH",
-  "name": "合成41",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600042.SH",
-  "name": "合成42",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600043.SH",
-  "name": "合成43",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600044.SH",
-  "name": "合成44",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600045.SH",
-  "name": "合成45",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600046.SH",
-  "name": "合成46",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600047.SH",
-  "name": "合成47",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600048.SH",
-  "name": "合成48",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600049.SH",
-  "name": "合成49",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600050.SH",
-  "name": "合成50",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600051.SH",
-  "name": "合成51",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600052.SH",
-  "name": "合成52",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600053.SH",
-  "name": "合成53",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600054.SH",
-  "name": "合成54",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-03",
-  "ts_code": "600055.SH",
-  "name": "合成55",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600056.SH",
-  "name": "合成56",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600057.SH",
-  "name": "合成57",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600058.SH",
-  "name": "合成58",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600059.SH",
-  "name": "合成59",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600060.SH",
-  "name": "合成60",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600061.SH",
-  "name": "合成61",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600062.SH",
-  "name": "合成62",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600063.SH",
-  "name": "合成63",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600064.SH",
-  "name": "合成64",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600065.SH",
-  "name": "合成65",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600066.SH",
-  "name": "合成66",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600067.SH",
-  "name": "合成67",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600068.SH",
-  "name": "合成68",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600069.SH",
-  "name": "合成69",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600070.SH",
-  "name": "合成70",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600071.SH",
-  "name": "合成71",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600072.SH",
-  "name": "合成72",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600073.SH",
-  "name": "合成73",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600074.SH",
-  "name": "合成74",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600075.SH",
-  "name": "合成75",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600076.SH",
-  "name": "合成76",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600077.SH",
-  "name": "合成77",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600078.SH",
-  "name": "合成78",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600079.SH",
-  "name": "合成79",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-04",
-  "ts_code": "600080.SH",
-  "name": "合成80",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600081.SH",
-  "name": "合成81",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600082.SH",
-  "name": "合成82",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600083.SH",
-  "name": "合成83",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600084.SH",
-  "name": "合成84",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600085.SH",
-  "name": "合成85",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600086.SH",
-  "name": "合成86",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600087.SH",
-  "name": "合成87",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600088.SH",
-  "name": "合成88",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600089.SH",
-  "name": "合成89",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600090.SH",
-  "name": "合成90",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600091.SH",
-  "name": "合成91",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600092.SH",
-  "name": "合成92",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600093.SH",
-  "name": "合成93",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600094.SH",
-  "name": "合成94",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600095.SH",
-  "name": "合成95",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600096.SH",
-  "name": "合成96",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-07",
   "ts_code": "600097.SH",
-  "name": "合成97",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 1
+  "industry": "渔业",
+  "first_board_time": "93138"
  },
  {
-  "trade_date": "2026-09-07",
-  "ts_code": "600098.SH",
-  "name": "合成98",
-  "industry": "汽车整车",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600099.SH",
-  "name": "合成99",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600100.SH",
-  "name": "合成100",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600101.SH",
-  "name": "合成101",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600102.SH",
-  "name": "合成102",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600103.SH",
-  "name": "合成103",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-07",
-  "ts_code": "600104.SH",
-  "name": "合成104",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600105.SH",
-  "name": "合成105",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600106.SH",
-  "name": "合成106",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600107.SH",
-  "name": "合成107",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600108.SH",
-  "name": "合成108",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600109.SH",
-  "name": "合成109",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600110.SH",
-  "name": "合成110",
-  "industry": "半导体",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600111.SH",
-  "name": "合成111",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600112.SH",
-  "name": "合成112",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600113.SH",
-  "name": "合成113",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600114.SH",
-  "name": "合成114",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600115.SH",
-  "name": "合成115",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600116.SH",
-  "name": "合成116",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600117.SH",
-  "name": "合成117",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600118.SH",
-  "name": "合成118",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600119.SH",
-  "name": "合成119",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-08",
-  "ts_code": "600120.SH",
-  "name": "合成120",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-08",
   "ts_code": "600121.SH",
-  "name": "合成121",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 4
+  "industry": "煤炭开采",
+  "first_board_time": "94719"
  },
  {
-  "trade_date": "2026-09-08",
-  "ts_code": "600122.SH",
-  "name": "合成122",
-  "industry": "光伏设备",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 2
+  "ts_code": "600252.SH",
+  "industry": "中药Ⅱ",
+  "first_board_time": "93907"
  },
  {
-  "trade_date": "2026-09-08",
-  "ts_code": "600123.SH",
-  "name": "合成123",
-  "industry": "光伏设备",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 4
+  "ts_code": "600408.SH",
+  "industry": "焦炭Ⅱ",
+  "first_board_time": "134940"
  },
  {
-  "trade_date": "2026-09-09",
-  "ts_code": "600124.SH",
-  "name": "合成124",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 2
+  "ts_code": "601811.SH",
+  "industry": "出版",
+  "first_board_time": "110705"
  },
  {
-  "trade_date": "2026-09-09",
-  "ts_code": "600125.SH",
-  "name": "合成125",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 3
+  "ts_code": "601858.SH",
+  "industry": "出版",
+  "first_board_time": "110108"
  },
  {
-  "trade_date": "2026-09-09",
-  "ts_code": "600126.SH",
-  "name": "合成126",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 4
+  "ts_code": "603258.SH",
+  "industry": "游戏Ⅱ",
+  "first_board_time": "93746"
  },
  {
-  "trade_date": "2026-09-09",
-  "ts_code": "600127.SH",
-  "name": "合成127",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "133020",
-  "limit_times": 1
+  "ts_code": "603533.SH",
+  "industry": "数字媒体",
+  "first_board_time": "100525"
  },
  {
-  "trade_date": "2026-09-09",
-  "ts_code": "600128.SH",
-  "name": "合成128",
-  "industry": "半导体",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 3
+  "ts_code": "603598.SH",
+  "industry": "广告营销",
+  "first_board_time": "102756"
  },
  {
-  "trade_date": "2026-09-09",
-  "ts_code": "600129.SH",
-  "name": "合成129",
-  "industry": "软件开发",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 4
+  "ts_code": "603656.SH",
+  "industry": "专用设备",
+  "first_board_time": "101355"
  },
  {
-  "trade_date": "2026-09-09",
-  "ts_code": "600130.SH",
-  "name": "合成130",
-  "industry": "软件开发",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 2
+  "ts_code": "603992.SH",
+  "industry": "家居用品",
+  "first_board_time": "145224"
  },
  {
-  "trade_date": "2026-09-09",
-  "ts_code": "600131.SH",
-  "name": "合成131",
-  "industry": "软件开发",
+  "trade_date": "2026-10-14",
   "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 3
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600132.SH",
-  "name": "合成132",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "94530",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600133.SH",
-  "name": "合成133",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600134.SH",
-  "name": "合成134",
-  "industry": "软件开发",
-  "board_type": "U",
-  "first_board_time": "93410",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600135.SH",
-  "name": "合成135",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600136.SH",
-  "name": "合成136",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600137.SH",
-  "name": "合成137",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "93005",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600138.SH",
-  "name": "合成138",
-  "industry": "汽车整车",
-  "board_type": "U",
-  "first_board_time": "103000",
-  "limit_times": 4
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600139.SH",
-  "name": "合成139",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600140.SH",
-  "name": "合成140",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "143500",
-  "limit_times": 1
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600141.SH",
-  "name": "合成141",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "141000",
-  "limit_times": 2
- },
- {
-  "trade_date": "2026-09-09",
-  "ts_code": "600142.SH",
-  "name": "合成142",
-  "industry": "光伏设备",
-  "board_type": "U",
-  "first_board_time": "101500",
-  "limit_times": 1
+  "ts_code": "605189.SH",
+  "industry": "纺织制造",
+  "first_board_time": "92501"
  }
 ]

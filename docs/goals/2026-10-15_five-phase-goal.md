@@ -15,7 +15,7 @@
 | 四 账号权限 | ✅ 64/64；浏览器实操通过；生产构建混淆与扫描 | — 新平台尚未部署（先本地运行） |
 | 五 小程序 | ✅ mp-weixin 编译通过；**微信开发者工具模拟器实操通过**：测试号导入、登录、免费账号权限提示、邀请码升级 VIP、总览/情绪资金/行业/题材四页真实生产数据均 200；证据 `docs/evidence/sim-*.png`。过程中发现并修复 `crypto-js` 随机数在小程序运行时抛错的问题（影响真机） | — 无资质 |
 
-**剩余**：(1) 生产上运行存量 Key 标记脚本、签发收窄 Key 并吊销开发 Key `dodk_5f4c678`、删除备份表 `quant.zz_tmp_senti_before_20261015`——远程写操作被本机权限策略拦截，需在生产自行执行或放行（步骤见 DreamOAgents `docs/dispatch/2026-10-15-readonly-ads-and-api-key-release-handoff.md`，并把 5.1–5.3 验收写入其验收报告）；(2) 22:10 三个页面 ADS 任务的自然运行次日核对；(3) 10 条待定内容（CNT-009/011/013/018/019/023/027/033/036/037）等待用户按对照表确认。微信开发者工具模拟器验证已完成（见上表第五期）。
+**剩余**：(1) 生产上运行存量 Key 标记脚本、签发收窄 Key 并吊销开发 Key `dodk_5f4c678`、删除备份表 `quant.zz_tmp_senti_before_20261015`——远程写操作被本机权限策略拦截，需在生产自行执行或放行（步骤见 DreamOAgents `docs/dispatch/2026-10-15-readonly-ads-and-api-key-release-handoff.md`，并把 5.1–5.3 验收写入其验收报告）；(2) 22:10 三个页面 ADS 任务的自然运行次日核对。(3) ~~10 条待定内容等待确认~~ 已于 10-15 二轮收敛：4 条事实部分迁入（CNT-009/011/013/027），6 条不迁（CNT-018/019/023/033/036/037），见 `docs/theme-parity-matrix.md`；同轮收紧日历为仅宏观族 + days 窗口、移除上游去重降级（生产重叠分页实测稳定）、启用 gzip。代码已推送 GitHub `cober2018/DreamoQuantSimulation`。
 
 ## OpenSpec 提案索引（均已通过 `openspec validate --strict`，待用户确认后才进入开发）
 

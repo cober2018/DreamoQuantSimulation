@@ -11,6 +11,7 @@ import os
 import secrets as _secrets
 
 from fastapi import FastAPI, HTTPException, Path, Query, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from .access.gate import Gate
@@ -43,6 +44,9 @@ def create_app() -> FastAPI:
     app = FastAPI(title="DreamoQuantSimulation Insight API", version="0.2.0", lifespan=lifespan,
                   docs_url="/api/docs" if docs else None, openapi_url="/api/openapi.json" if docs else None,
                   redoc_url=None)
+
+    # 日历等列表接口响应可达数百 KB，启用 gzip 传输压缩
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
 
     # ---- 账号/权限 ----
     access = None
@@ -156,9 +160,13 @@ def create_app() -> FastAPI:
         return gate.stamp(await modules.history(up(request), trade_date, idx_type, period), p)
 
     @app.get("/api/v1/calendar")
-    async def calendar(request: Request, trade_date: Optional[str] = TradeDate):
+    async def calendar(
+        request: Request,
+        trade_date: Optional[str] = TradeDate,
+        days: int = Query(14, ge=1, le=60, description="自数据日起的前瞻事件天数窗口"),
+    ):
         p = entitled(request, "page.calendar", trade_date)
-        return gate.stamp(await modules.calendar(up(request), trade_date), p)
+        return gate.stamp(await modules.calendar(up(request), trade_date, days), p)
 
     return app
 

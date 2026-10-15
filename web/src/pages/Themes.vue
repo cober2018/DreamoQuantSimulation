@@ -23,6 +23,21 @@
       </div>
     </div>
 
+    <div class="panel" v-if="pools">
+      <h2>股票池当日计数<small>仅计数，不含名单</small></h2>
+      <div class="grid">
+        <div class="stat" v-if="pools.high_recognition">
+          <div class="label">高标认知池</div><div class="value">{{ fmt.num(pools.high_recognition.count, 0) }}</div>
+          <div class="sub">状态 {{ pools.high_recognition.status || '—' }} · 数据日 {{ pools.high_recognition.latest_date || '—' }}</div>
+        </div>
+        <div class="stat" v-for="(w, k) in pools.momentum_extreme || {}" :key="k">
+          <div class="label">动量极端池（{{ w.window_days }} 日窗）</div><div class="value">{{ fmt.num(w.count, 0) }}</div>
+          <div class="sub">{{ w.reason || w.status || '' }}</div>
+        </div>
+      </div>
+      <p class="note">计数为当日进入各池的个股数；池内个股名单与入选规则不提供。</p>
+    </div>
+
     <div class="panel" v-if="history.length">
       <h2>涨停、炸板、跌停的近期变化<small>{{ history.length }} 个交易日</small></h2>
       <EChart :option="historyOption" height="300px" />
@@ -64,6 +79,7 @@ import { useModule } from '../useModule'
 const tradeDate = ref('')
 const { env, loading, load } = useModule('themes', () => ({ trade_date: tradeDate.value }))
 const st = computed(() => env.value.data?.structure || null)
+const pools = computed(() => env.value.data?.pools || null)
 const tiers = computed(() => env.value.data?.board_tiers || [])
 const themes = computed(() => env.value.data?.themes || [])
 const buckets = computed(() => env.value.data?.seal_time_buckets || [])

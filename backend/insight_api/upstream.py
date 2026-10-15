@@ -1,7 +1,8 @@
-"""数据中台 records 上游：HTTP 客户端与夹具源共用同一分页/去重逻辑。
+"""数据中台 records 上游：HTTP 客户端与夹具源共用同一分页逻辑。
 
-records 接口按 trade_date DESC 排序且无同日二级排序，offset 分页可能重复或漏行，
-因此这里去重并把异常显式上报为 partial，而不是假装取全。
+数据中台第二期（已发布）为 records 提供了同日稳定排序键，offset 分页不再重复或漏行
+（2026-10-15 对生产 review-industry 概念板块重叠分页实测确认），客户端去重降级已移除；
+分页上限保护保留，触界仍显式上报为 partial。
 """
 
 from __future__ import annotations
@@ -108,7 +109,6 @@ class Upstream:
         self,
         service_key: str,
         params: Optional[Dict[str, str]] = None,
-        key_field: Optional[str] = None,
         max_rows: Optional[int] = None,
     ) -> FetchResult:
         params = {k: v for k, v in (params or {}).items() if v not in (None, "")}
@@ -121,24 +121,13 @@ class Upstream:
         limit = min(max_rows or PAGE_LIMIT, PAGE_LIMIT)
         rows: List[Dict[str, Any]] = []
         issues: List[str] = []
-        seen: set = set()
-        duplicated = False
         for page_no in range(MAX_PAGES):
             page = await self._source.page(service_key, {**params, "limit": str(limit), "offset": str(page_no * limit)})
-            for row in page:
-                if key_field:
-                    key = (row.get("trade_date"), row.get(key_field))
-                    if key in seen:
-                        duplicated = True
-                        continue
-                    seen.add(key)
-                rows.append(row)
+            rows.extend(page)
             if len(page) < limit or (max_rows and len(rows) >= max_rows):
                 break
         else:
             issues.append(f"{service_key} 达到分页上限 {MAX_PAGES} 页，结果可能不完整")
-        if duplicated:
-            issues.append(f"{service_key} 分页出现重复行（上游同日无稳定排序），已去重，可能存在漏行")
 
         result = FetchResult(rows=rows, issues=issues)
         if rows:  # 空结果不缓存: 当日数据可能稍后就绪
@@ -162,7 +151,6 @@ class Upstream:
         end_date: Optional[str],
         days: int,
         params: Optional[Dict[str, str]] = None,
-        key_field: Optional[str] = None,
     ) -> FetchResult:
         """取截至 end_date 的近 days 个交易日。优先用上游日期区间; 上游尚不支持 (422) 时逐日降级。"""
         params = dict(params or {})
@@ -174,8 +162,7 @@ class Upstream:
         end = date.fromisoformat(end_date[:10])
         start = end - timedelta(days=min(int(days * 1.6) + 4, 89))
         try:
-            res = await self.fetch(service_key, {**params, "start_date": start.isoformat(), "end_date": end.isoformat()},
-                                   key_field=key_field)
+            res = await self.fetch(service_key, {**params, "start_date": start.isoformat(), "end_date": end.isoformat()})
             rows = res.rows
             issues = list(res.issues)
         except UpstreamUnsupported:
@@ -185,7 +172,7 @@ class Upstream:
             while len(seen_dates) < days and budget > 0:
                 budget -= 1
                 if cursor.weekday() < 5:
-                    r = await self.fetch(service_key, {**params, "trade_date": cursor.isoformat()}, key_field=key_field)
+                    r = await self.fetch(service_key, {**params, "trade_date": cursor.isoformat()})
                     if r.rows:
                         rows.extend(r.rows)
                         seen_dates.add(cursor.isoformat())

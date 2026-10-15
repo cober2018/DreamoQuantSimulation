@@ -36,6 +36,14 @@ openspec/                规格与变更
 | 四 | `add-insight-access-control-v1` | 免费/VIP/SVIP/管理员，管理员可自定义角色与权限点；邀请码兑换（无支付）；argon2id、短期令牌 + 可轮换刷新令牌；请求签名防重放、限流与异常封禁、水印；生产构建混淆并扫描 | 本地完成并验证 |
 | 五 | `add-insight-wechat-miniprogram-v1` | uni-app 小程序（总览/情绪资金/行业/题材/我的）；微信登录接入点；邀请码兑换与账号绑定 | 编译通过；已在微信开发者工具模拟器（测试号）实操通过，证据 `docs/evidence/sim-*.png` |
 
+追加（2026-10-15 二轮，10 条待定内容收敛，见 `docs/theme-parity-matrix.md`）：
+
+- **事实部分迁入 4 条**：CNT-009 聪明钱五因子截面统计、CNT-011 风格相对强度序列（固定阵营顺序，无 leader/signal）、CNT-013 底部条件观察值（无预测/总分）→ 参与度页；CNT-027 股票池当日计数（无名单）→ 题材页。因子键名重命名绕开禁止模式（`low_impact_stealth` → `stealth`）。
+- **不迁入 6 条**：CNT-018/019/023/033/036/037（事实已由其他内容覆盖或纯结论）。
+- **日历接口收紧**：上游 ADS 新混入 lockup（解禁）/policy（政策）事件族，不在 CNT-034/035 审定范围——已过滤为仅 `macro:` 宏观族，新增 `days` 前瞻窗口参数（默认 14 天，1–60），并启用 gzip（日历响应 290KB → 传输 27KB）。
+- **移除客户端去重降级**：数据中台第二期稳定排序键已发布并经生产重叠分页实测确认，`upstream.fetch` 去重逻辑移除，分页上限保护保留。
+- 夹具刷新为 2026-10-14 真实行并裁剪至模块所需列；小程序情绪页同步新增五因子与风格强度摘要。
+
 页面与接口（均需登录与对应权限点；`/auth/*`、`/health` 除外）：
 
 | 页面 | 接口 | 权限点 |
@@ -49,7 +57,7 @@ openspec/                规格与变更
 | 账号 | `/api/v1/auth/{register,login,refresh,logout,me,change-password,wechat,wechat/bind}`、`/api/v1/invite/redeem` | — |
 | 管理 | `/api/v1/admin/{users,roles,invites,audit,redemptions}` | admin.console |
 
-验证（`scripts/sandbox/`）：`2026-10-14_verify_insight_api.py` 44/44；`2026-10-15_verify_insight_access.py` 64/64。截图证据 `docs/evidence/`。
+验证（`scripts/sandbox/`）：`2026-10-14_verify_insight_api.py` 49/49；`2026-10-15_verify_insight_access.py` 64/64。截图证据 `docs/evidence/`。
 
 ## 目录补充
 
@@ -80,10 +88,9 @@ cd miniprogram && VITE_H5_MOCK_CODE=mock:h5demo npm run build:h5 && npx vite pre
 
 - **生产收尾**：存量 Key 标记、签发收窄范围的新平台 Key 并吊销开发 Key、删除生产备份表（远程写操作需用户放行或自行执行）；次日核对 22:10 三个任务自然运行。
 - 微信开发者工具模拟器验证已完成（测试号；证据 `docs/evidence/sim-*.png`）；真机预览/上传仍需资质（企业主体、金融类目）、HTTPS 备案域名、合法域名配置、用户协议正式文本。
-- 待定内容（CNT-009/011/013/018/019/023/027/033/036/037）：事实部分迁入建议见 `docs/theme-parity-matrix.md`，等待确认。
+- 上游日历 ADS 新出现的解禁/政策事件族如需展示，须另立内容条目（CNT）再审后接入。
 - 多节点部署需把限流/签名随机数去重换成共享存储；SQLite 换服务端数据库（仓储接口已隔离）。
 - 邮件/短信找回密码未做（由管理员重置）。
-- 上游 records 同日无二级排序（数据中台第二期已补稳定排序键，发布后可移除去重降级）。
 
 ## 关键设计决策
 

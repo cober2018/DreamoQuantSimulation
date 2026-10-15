@@ -94,6 +94,17 @@ OPEN5_FIELDS = {
     # 上游字段名含 "reaction"，会命中禁止键守卫 (action)，输出名改为 over_response_ratio
     "over_response_ratio": "overreaction_ratio", "data_status": "data_status",
 }
+# CNT-009: 上游因子键名含 "impact"（禁止模式），必须重命名为中性键后才能输出
+SMART_MONEY_FACTOR_KEYS = {
+    "informed_flow_direction": ("direction", "方向"),
+    "informed_flow_persistence": ("persistence", "持续性"),
+    "informed_flow_price_confirmation": ("price_confirmation", "价格确认"),
+    "informed_flow_low_impact_stealth": ("stealth", "低冲击隐蔽"),
+    "informed_flow_uncrowded_liquidity": ("uncrowded_liquidity", "非拥挤流动性"),
+}
+# CNT-011: 只取阵营级相对强度序列；leader/leader_label/signal/trend/acceleration（当前风格选择与加速度解读）不进白名单
+STYLE_CAMP_FIELDS = ["key", "label", "index_name", "index_code", "strength_score", "z_score",
+                     "strength_series", "source_date", "available", "missing_reason"]
 THEME_RANK_FIELDS = ["industry", "up_count", "broken_count", "highest_tier", "avg_pct"]
 # 封板时间分桶 (HHMMSS 整数, 左闭右开)
 SEAL_BUCKETS = [
@@ -160,8 +171,88 @@ async def overview(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
                     sources=sources, gaps=gaps + issue_gaps("CNT-002", res.issues), data=data)
 
 
+def _smart_money_factors(indicators: Any) -> Optional[Dict[str, Any]]:
+    """CNT-009: 只投影五因子截面统计（净广度与正负占比）；共振评分、风险分、dual_run 等不进入响应。"""
+    sm = indicators.get("smart_money") if isinstance(indicators, dict) else None
+    metrics = sm.get("metrics") if isinstance(sm, dict) else None
+    if not isinstance(metrics, dict) or metrics.get("available") is False:
+        return None
+    raw = metrics.get("raw")
+    if not isinstance(raw, dict):
+        return None
+    display, net = raw.get("factor_display") or {}, raw.get("factor_net_breadth") or {}
+    pos, neg = raw.get("factor_pos_share") or {}, raw.get("factor_neg_share") or {}
+    factors = [{
+        "key": key, "label": label,
+        "net_breadth_pct": to_float(display.get(src)),
+        "net_breadth": to_float(net.get(src)),
+        "pos_share": to_float(pos.get(src)),
+        "neg_share": to_float(neg.get(src)),
+    } for src, (key, label) in SMART_MONEY_FACTOR_KEYS.items()]
+    if all(f["net_breadth_pct"] is None and f["net_breadth"] is None for f in factors):
+        return None
+    threshold = to_float(raw.get("factor_breadth_threshold"))
+    return {
+        "factors": factors,
+        "sample_rows": to_int(raw.get("rows")),
+        "pool_rows": to_int(raw.get("candidate_expected_pool_rows")),
+        "breadth_threshold": threshold,
+        "model_version": raw.get("model_version"),
+        "trade_date": str(raw.get("trade_date"))[:10] if raw.get("trade_date") else None,
+        "note": "净广度% = 该因子下偏多证据股票占比 − 偏空证据占比；截面统计，非个股或方向结论",
+    }
+
+
+def _style_strength(rot: Any) -> Optional[Dict[str, Any]]:
+    """CNT-011: 只投影各阵营相对强度序列；保持上游固定阵营顺序，不按强度排序、不输出 leader/signal。"""
+    if not isinstance(rot, dict) or not isinstance(rot.get("camps"), list):
+        return None
+    camps = [pick(c, STYLE_CAMP_FIELDS) for c in rot["camps"] if isinstance(c, dict)]
+    camps = [c for c in camps if c.get("available")]
+    if not camps:
+        return None
+    return {
+        "camps": camps,
+        "definition": "强度分为阵营指数相对强度的历史评分（0–100）；序列为近 20 个交易日",
+    }
+
+
+def _bottom_conditions(ns: Any) -> Optional[Dict[str, Any]]:
+    """CNT-013: 只投影三项条件观察值与阈值对比；下一状态预测、准备度总分与解读文字不进入响应。"""
+    if not isinstance(ns, dict) or not isinstance(ns.get("conditions"), list):
+        return None
+    conds = [pick(c, ["key", "label", "value", "threshold", "condition"])
+             for c in ns["conditions"] if isinstance(c, dict)]
+    if not conds:
+        return None
+    return {
+        "trade_date": str(ns.get("trade_date"))[:10] if ns.get("trade_date") else None,
+        "history_obs": to_int(ns.get("history_obs")),
+        "data_status": ns.get("data_status"),
+        "calc_version": ns.get("calc_version"),
+        "conditions": conds,
+        "note": "条件值为当日观察值与规则阈值对比（met/near/unmet 为阈值比较结果），不构成状态预测",
+    }
+
+
+def _pool_counts(summary: Any) -> Optional[Dict[str, Any]]:
+    """CNT-027: 只交付各池当日个股数与数据状态；池内名单、排序与风险指令（risk_summary）不进入响应。"""
+    if not isinstance(summary, dict):
+        return None
+    hr, me = summary.get("high_recognition"), summary.get("momentum_extreme")
+    counts: Dict[str, Any] = {}
+    if isinstance(hr, dict):
+        counts["high_recognition"] = pick(hr, ["count", "status", "latest_date", "lag_days"])
+    if isinstance(me, dict) and me:
+        counts["momentum_extreme"] = {
+            k: pick(v, ["window_days", "status", "reason", "latest_avail_date", "count"])
+            for k, v in me.items() if isinstance(v, dict)
+        }
+    return counts or None
+
+
 async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
-    ids = ["CNT-006", "CNT-007", "CNT-008", "CNT-010"]
+    ids = ["CNT-006", "CNT-007", "CNT-008", "CNT-009", "CNT-010", "CNT-011", "CNT-013"]
     res = await up.fetch(SENTIMENT, {"trade_date": trade_date}, max_rows=1)
     row = first(res.rows)
     gaps: List[Dict[str, Any]] = []
@@ -204,6 +295,22 @@ async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, An
         matrix = []
     blocks["derivatives"] = [pick(m, DERIVATIVE_FIELDS) for m in matrix if isinstance(m, dict)]
 
+    indicators = parse_json(row.get("indicators_json"))
+    blocks["smart_money_factors"] = _smart_money_factors(indicators)
+    if blocks["smart_money_factors"] is None:
+        sm = indicators.get("smart_money") if isinstance(indicators, dict) else None
+        metrics = sm.get("metrics") if isinstance(sm, dict) else None
+        reason = metrics.get("missing_reason") if isinstance(metrics, dict) else None
+        gaps.append(gap("CNT-009", f"聪明钱五因子当日不可用: {reason or '上游缺数或门禁未通过'}"))
+
+    blocks["style_strength"] = _style_strength(parse_json(row.get("style_rotation_json")))
+    if blocks["style_strength"] is None:
+        gaps.append(gap("CNT-011", "风格轮动序列当日不可用"))
+
+    blocks["bottom_conditions"] = _bottom_conditions(parse_json(row.get("next_state_json")))
+    if blocks["bottom_conditions"] is None:
+        gaps.append(gap("CNT-013", "底部条件观察值当日不可用"))
+
     sources = [source_entry(SENTIMENT, row, "snapshot_time", row.get("coverage_ratio"),
                             missing_list(row.get("missing_sources_json")))]
     status = "partial" if gaps or res.issues else "ok"
@@ -212,7 +319,7 @@ async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, An
 
 
 async def _industry_rows(up: Upstream, trade_date: Optional[str], idx_type: str):
-    return await up.fetch(INDUSTRY, {"trade_date": trade_date, "idx_type": idx_type}, key_field="sector_code")
+    return await up.fetch(INDUSTRY, {"trade_date": trade_date, "idx_type": idx_type})
 
 
 async def industries(up: Upstream, trade_date: Optional[str], idx_type: str) -> Dict[str, Any]:
@@ -285,7 +392,7 @@ def _board_counts(summary: Any) -> Optional[Dict[str, Any]]:
 
 
 async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
-    ids = ["CNT-022", "CNT-025"]
+    ids = ["CNT-022", "CNT-025", "CNT-027"]
     res = await up.fetch(THEME, {"trade_date": trade_date}, max_rows=1)
     row = first(res.rows)
     if not row:
@@ -305,7 +412,7 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
     seal: Dict[str, Dict[str, int]] = {}
     seal_total = 0
     try:
-        detail = await up.fetch(LIMIT_DETAIL, {"trade_date": td, "board_type": "U"}, key_field="ts_code")
+        detail = await up.fetch(LIMIT_DETAIL, {"trade_date": td, "board_type": "U"})
         for d in detail.rows:
             seal_total += 1
             ind = d.get("industry")
@@ -324,18 +431,23 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
     tiers = parse_json(row.get("board_tiers_json"))
     tiers = [pick(t, ["tier", "count"]) for t in tiers if isinstance(t, dict)] if isinstance(tiers, list) else []
 
-    # 股票池结构 (CNT-025): 当日计数 + 近 N 日历史
+    # 股票池结构 (CNT-025) + 各池计数 (CNT-027): 当日计数 + 近 N 日历史
     structure = None
+    pools_counts = None
     history: List[Dict[str, Any]] = []
     try:
         pool = await up.fetch(POOLS, {"trade_date": td}, max_rows=1)
         prow = first(pool.rows)
-        counts = _board_counts(parse_json(prow.get("pool_summary_json"))) if prow else None
+        summary = parse_json(prow.get("pool_summary_json")) if prow else None
+        counts = _board_counts(summary)
         if counts is None:
             gaps.append(gap("CNT-025", "股票池 ADS 当日缺行或 pool_summary 无法解析"))
         else:
             structure = counts
             sources.append(source_entry(POOLS, prow, "snapshot_time", None, missing_list(prow.get("missing_sources_json"))))
+        pools_counts = _pool_counts(summary)
+        if pools_counts is None:
+            gaps.append(gap("CNT-027", "高标/动量极端等池计数当日不可用"))
         series = await up.fetch_range(POOLS, td, 10)
         for r in sorted(series.rows, key=lambda x: str(x.get("trade_date"))):
             c = _board_counts(parse_json(r.get("pool_summary_json")))
@@ -356,6 +468,7 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
         "seal_time_buckets": [b[0] for b in SEAL_BUCKETS],
         "board_tiers": tiers,
         "structure": structure,
+        "pools": pools_counts,
         "history": history,
         "units": {"avg_return_pct": "%"},
     }
@@ -433,7 +546,7 @@ async def history(up: Upstream, trade_date: Optional[str], idx_type: str, period
                     gaps=gaps + issue_gaps("CNT-029", res.issues), data=data)
 
 
-async def calendar(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
+async def calendar(up: Upstream, trade_date: Optional[str], days: int = 14) -> Dict[str, Any]:
     ids = ["CNT-034", "CNT-035"]
     res = await up.fetch(FORWARD, {"trade_date": trade_date}, max_rows=1)
     row = first(res.rows)
@@ -446,15 +559,26 @@ async def calendar(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
         raw_events = []
     window = parse_json(row.get("calendar_window_json"))
     window = window if isinstance(window, dict) else {}
+    # 只保留宏观日历族 (event_id "macro:")：lockup/policy 族为前瞻风险中心的解禁/政策事件，
+    # 不在 CNT-034/035 审定范围；同时按锚点日前瞻 days 天窗口截取，避免一次下发全部事件
+    anchor = str(row.get("trade_date"))[:10]
+    try:
+        end = (date.fromisoformat(anchor) + timedelta(days=days)).isoformat()
+    except ValueError:
+        anchor, end = "", ""
     events = [
         pick(e, CALENDAR_FIELDS)
         for e in (raw_events or [])
         # fallback_contract 是旧系统占位事件，不是真实日历
         if isinstance(e, dict) and e.get("source") != "fallback_contract"
+        and str(e.get("event_id", "")).startswith("macro:")
+        and (not anchor or anchor <= str(e.get("event_date") or "") < end)
     ]
     events.sort(key=lambda e: (str(e.get("event_date") or ""), str(e.get("event_time") or "")))
     data = {
         "window": pick(window, ["start_date", "end_date", "complete"]),
+        "family_filter": "仅宏观日历事件；解禁/政策事件族不在本页范围",
+        "view_days": days,
         "events": events,
         "consensus_label": "第三方发布的市场预期，非本平台预测",
     }

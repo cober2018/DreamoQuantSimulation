@@ -54,6 +54,49 @@
       <p class="note">{{ lu.note }}</p>
     </div>
 
+    <div class="panel" v-if="sm">
+      <h2>聪明钱五因子<small>截面统计，数据日 {{ sm.trade_date || '—' }} · 模型 {{ sm.model_version || '—' }}</small></h2>
+      <div class="grid">
+        <div class="stat" v-for="f in sm.factors" :key="f.key">
+          <div class="label">{{ f.label }}</div>
+          <div :class="['value', fmt.dir(f.net_breadth_pct)]">{{ fmt.signed(f.net_breadth_pct) }}%</div>
+          <div class="sub">偏多 {{ fmt.ratio(f.pos_share) }} / 偏空 {{ fmt.ratio(f.neg_share) }}</div>
+        </div>
+      </div>
+      <p class="note">{{ sm.note }}；样本 {{ fmt.num(sm.sample_rows, 0) }} 只（入池 {{ fmt.num(sm.pool_rows, 0) }} 只）。共振评分与风险分不提供。</p>
+    </div>
+
+    <div class="panel" v-if="styleData">
+      <h2>风格相对强度<small>阵营历史序列，非当前风格选择建议 · 数据日 {{ styleCamps[0]?.source_date || '—' }}</small></h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="left">阵营</th><th class="left">代表指数</th><th>当日强度分</th><th>z 分（20 日）</th></tr></thead>
+          <tbody>
+            <tr v-for="c in styleCamps" :key="c.key">
+              <td class="left">{{ c.label }}</td>
+              <td class="left muted">{{ c.index_name }} {{ c.index_code }}</td>
+              <td>{{ fmt.num(c.strength_score, 1) }}</td>
+              <td :class="fmt.dir(c.z_score)">{{ fmt.signed(c.z_score, 3) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <EChart v-if="styleCamps.some((c) => c.strength_series?.length)" :option="styleOption" height="260px" />
+      <p class="note">{{ styleData.definition }}；按固定阵营顺序展示，不按强度排序，不提供 leader/signal 结论。</p>
+    </div>
+
+    <div class="panel" v-if="bc">
+      <h2>底部条件观察<small>样本 {{ fmt.num(bc.history_obs, 0) }} 个交易日 · 数据状态 {{ bc.data_status || '—' }}</small></h2>
+      <div class="grid">
+        <div class="stat" v-for="c in bc.conditions" :key="c.key">
+          <div class="label">{{ c.label }}</div>
+          <div class="value">{{ fmt.num(c.value, 1) }} <span class="muted">/ 阈值 {{ fmt.num(c.threshold, 1) }}</span></div>
+          <div class="sub">状态：{{ COND[c.condition] || c.condition || '—' }}</div>
+        </div>
+      </div>
+      <p class="note">{{ bc.note }}；下一状态预测与准备度总分不提供。</p>
+    </div>
+
     <div class="panel">
       <h2>股指衍生品原始指标</h2>
       <div class="table-wrap">
@@ -82,9 +125,11 @@
 <script setup>
 import { computed, ref } from 'vue'
 import PageFrame from '../components/PageFrame.vue'
+import EChart from '../components/EChart.vue'
 import { fmt } from '../api'
 import { useModule } from '../useModule'
 
+const COND = { met: '已达标', near: '接近', unmet: '未达标' }
 const tradeDate = ref('')
 const { env, loading, load } = useModule('participation', () => ({ trade_date: tradeDate.value }))
 const obs = computed(() => env.value.data?.participation_observation || null)
@@ -92,6 +137,24 @@ const erp = computed(() => env.value.data?.erp || {})
 const val = computed(() => env.value.data?.valuation || {})
 const lu = computed(() => env.value.data?.limit_up_structure || {})
 const deriv = computed(() => env.value.data?.derivatives || [])
+const sm = computed(() => env.value.data?.smart_money_factors || null)
+const styleData = computed(() => env.value.data?.style_strength || null)
+const styleCamps = computed(() => styleData.value?.camps || [])
+const bc = computed(() => env.value.data?.bottom_conditions || null)
+const styleOption = computed(() => {
+  const first = styleCamps.value.find((c) => c.strength_series?.length)
+  const n = first ? first.strength_series.length : 0
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { data: styleCamps.value.map((c) => c.label) },
+    grid: { left: 44, right: 16, top: 34, bottom: 26 },
+    xAxis: { type: 'category', data: Array.from({ length: n }, (_, i) => `T-${n - 1 - i}`) },
+    yAxis: { type: 'value', scale: true },
+    series: styleCamps.value
+      .filter((c) => c.strength_series?.length)
+      .map((c) => ({ name: c.label, type: 'line', data: c.strength_series, showSymbol: false })),
+  }
+})
 // 上游 *_pct 字段已是百分数；分位为 0~1 小数，缺失多因历史样本不足
 const pctPoint = (v) => (v == null ? '—' : `${Number(v).toFixed(2)}%`)
 const pp = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${Number(v).toFixed(2)} pp`)

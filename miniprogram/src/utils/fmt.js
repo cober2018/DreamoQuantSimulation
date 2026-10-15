@@ -1,4 +1,5 @@
 export const num = (v, d = 2) => (v == null || v === '' || Number.isNaN(Number(v)) ? '—' : Number(v).toLocaleString('zh-CN', { maximumFractionDigits: d }))
 export const ratio = (v, d = 1) => (v == null ? '—' : `${(v * 100).toFixed(d)}%`)
 export const pct = (v, d = 2) => (v == null ? '—' : `${v > 0 ? '+' : ''}${(v * 100).toFixed(d)}%`)
+export const signed = (v, d = 1) => (v == null || v === '' || Number.isNaN(Number(v)) ? '—' : `${v > 0 ? '+' : ''}${Number(v).toFixed(d)}`)
 export const dir = (v) => (v == null || v === 0 ? '' : v > 0 ? 'rise' : 'fall')

@@ -16,7 +16,7 @@
               <tr v-for="e in list" :key="e.event_id">
                 <td class="left">{{ e.event_time || '待定' }}</td>
                 <td class="left">{{ e.country || '—' }}</td>
-                <td class="left wrap"><strong>{{ e.title }}</strong> <span class="muted">{{ e.event_type_label }} {{ e.indicator_code }}</span></td>
+                <td class="left wrap"><strong>{{ e.title }}</strong> <span class="muted" v-if="e.indicator_code && e.indicator_code !== 'UNKNOWN'">{{ e.event_type_label }} {{ e.indicator_code }}</span><span class="muted" v-else-if="e.event_type_label">{{ e.event_type_label }}</span></td>
                 <td class="left">{{ [e.period, e.unit].filter(Boolean).join(' · ') || '—' }}</td>
                 <td>{{ e.previous_value || '—' }}</td>
                 <td>{{ e.consensus_value || '—' }}</td>

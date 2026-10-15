@@ -55,7 +55,9 @@ ENDPOINTS = [
     "/api/v1/calendar",
 ]
 FORBIDDEN_VALUES = ["主攻", "优先关注", "利空成长", "外部宏观事件窗口待接入", "acceleration", "leading", "局部恐慌区",
-                    "incubating", "首板为主", "低参与｜承接改善", "减仓"]
+                    "incubating", "首板为主", "低参与｜承接改善", "减仓", "动能加速",
+                    # 新接入内容中必须被投影排除的结论性文案 (来自真实上游行)
+                    "红利防御主线领跑", "底部观察区", "建议仓位"]
 
 
 def run_fixture_checks():
@@ -95,7 +97,10 @@ def run_fixture_checks():
         rs = hist["structure"]["rising_sector_ratio"]
         check("结构统计含分子分母", rs["denominator"] == 30 and rs["value"] == round(rs["numerator"] / 30, 6))
         cal = c.get("/api/v1/calendar").json()["data"]["events"]
-        check("日历剔除 fallback 占位事件", all(not e["event_id"].startswith("fallback") for e in cal) and len(cal) == 5)
+        check("日历仅宏观族且默认 14 天前瞻窗口", cal and all(e["event_id"].startswith("macro:") for e in cal)
+              and max(e["event_date"] for e in cal) < "2026-10-28")
+        cal7 = c.get("/api/v1/calendar?days=7").json()["data"]["events"]
+        check("日历 days 参数收窄窗口", cal7 and all(e["event_date"] < "2026-10-21" for e in cal7))
         series = c.get("/api/v1/industries/BK1003/series?days=7").json()
         check("7 日序列满额 ok", series["status"] == "ok" and len(series["data"]["points"]) == 7)
         series = c.get("/api/v1/industries/BK1003/series?days=10").json()
@@ -105,8 +110,8 @@ def run_fixture_checks():
         check("非法板块类型 422", c.get("/api/v1/industries?idx_type=x").status_code == 422)
         check("历史日期可选", c.get("/api/v1/history?trade_date=2026-09-03").json()["trade_date"] == "2026-09-03")
         th = c.get("/api/v1/themes").json()
-        check("题材页已接入: ok 且含 CNT-022/025", th["status"] in ("ok", "partial") and
-              set(th["content_ids"]) == {"CNT-022", "CNT-025"}, th["status"])
+        check("题材页已接入: ok 且含 CNT-022/025/027", th["status"] in ("ok", "partial") and
+              set(th["content_ids"]) == {"CNT-022", "CNT-025", "CNT-027"}, th["status"])
         tdata = th["data"]
         check("题材行只含允许字段", all(set(t) == {"industry", "up_count", "broken_count", "highest_tier",
                                               "seal_time_buckets", "avg_return_pct"} for t in tdata["themes"]))
@@ -115,13 +120,37 @@ def run_fixture_checks():
         st = tdata["structure"]
         check("炸板率带分子分母与定义", st["broken_board_rate"]["denominator"] ==
               st["limit_up_count"] + st["broken_board_count"] and "炸板数" in st["broken_board_rate"]["definition"])
-        check("历史序列 7 个交易日按日期升序", [h["trade_date"] for h in tdata["history"]] ==
-              sorted(h["trade_date"] for h in tdata["history"]) and len(tdata["history"]) == 7)
+        check("历史序列按日期升序且不插值", [h["trade_date"] for h in tdata["history"]] ==
+              sorted(h["trade_date"] for h in tdata["history"]) and len(tdata["history"]) >= 5)
+        pools = tdata["pools"]
+        check("各池计数 (CNT-027): 计数与数据状态、无名单/指令", pools is not None
+              and isinstance(pools.get("high_recognition", {}).get("count"), int)
+              and set(pools.get("momentum_extreme", {})) == {"10d", "20d"}
+              and "risk_command" not in json.dumps(tdata) and "position_guidance" not in json.dumps(tdata))
         part = c.get("/api/v1/participation").json()
         po = part["data"]["participation_observation"]
+        senti = json.loads((ROOT / "backend/fixtures/review-market-sentiment.json").read_text())[0]
+        raw_total = json.loads(senti["participation_observation_json"])["total_amount"]
         check("参与观察只含原始统计 (CNT-006)", "CNT-006" in part["content_ids"] and po is not None
               and "participation_state" not in po and "market_picture" not in po and "absorption_score" not in po
-              and po["total_amount_billion"] == 14000.0)
+              and abs(po["total_amount_billion"] - raw_total / 1e8) < 0.1)
+        from insight_api.modules import STYLE_CAMP_FIELDS
+        sm = part["data"]["smart_money_factors"]
+        check("聪明钱五因子 (CNT-009): 中性键名且无评分/风险分", sm is not None
+              and {f["key"] for f in sm["factors"]} == {"direction", "persistence", "price_confirmation",
+                                                        "stealth", "uncrowded_liquidity"}
+              and "impact" not in json.dumps(sm) and "panic" not in json.dumps(sm)
+              and isinstance(sm["sample_rows"], int))
+        sty = part["data"]["style_strength"]
+        check("风格强度 (CNT-011): 阵营字段恰为白名单且无 leader/signal", sty is not None
+              and len(sty["camps"]) == 3
+              and all(set(camp) == set(STYLE_CAMP_FIELDS) for camp in sty["camps"])
+              and "leader" not in json.dumps(sty) and "signal" not in json.dumps(sty))
+        bc = part["data"]["bottom_conditions"]
+        check("底部条件 (CNT-013): 观察值+阈值且无预测/总分字段", bc is not None
+              and len(bc["conditions"]) == 3
+              and all(set(cd) == {"key", "label", "value", "threshold", "condition"} for cd in bc["conditions"])
+              and "candidate_state" not in json.dumps(bc) and "readiness" not in json.dumps(bc))
         o5 = c.get("/api/v1/history").json()["data"]["open5"]
         check("Open5 汇总带分母 (CNT-031)", o5 is not None and o5["expected_stock_count"] == 5300
               and "source_table" not in o5)
@@ -168,16 +197,16 @@ def run_upstream_checks():
     with client(fresh_app(malformed, INSIGHT_UPSTREAM_API_KEY="k")) as c:
         check("上游结构不符 → 502", c.get("/api/v1/calendar").status_code == 502)
 
-    def dup_pages(request):
+    def stable_pages(request):
         offset = int(request.url.params["offset"])
         base = {"trade_date": "2026-09-09", "idx_type": "行业板块", "sector_name": "x", "sector_return": 0.01}
-        lo, hi = (0, 500) if offset == 0 else (495, 520)
-        rows = [{**base, "sector_code": f"BK{i}"} for i in range(lo, hi)]
+        rows = [{**base, "sector_code": f"BK{i}"} for i in range(offset, min(offset + 500, 520))]
         return httpx.Response(200, json={"success": True, "data": {"rows": rows, "trade_date": "latest"}})
 
-    with client(fresh_app(dup_pages, INSIGHT_UPSTREAM_API_KEY="k")) as c:
+    with client(fresh_app(stable_pages, INSIGHT_UPSTREAM_API_KEY="k")) as c:
         body = c.get("/api/v1/industries").json()
-        check("分页重复 → 去重并 partial", body["status"] == "partial" and len(body["data"]["items"]) == 520)
+        check("上游已稳定排序: 分页取全且不再去重降级", body["status"] == "ok"
+              and len(body["data"]["items"]) == 520)
         check("交易日取自行而非上游回显 latest", body["trade_date"] == "2026-09-09")
 
     def bad_json(request):
