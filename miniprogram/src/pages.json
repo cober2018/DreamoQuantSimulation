@@ -1,0 +1,27 @@
+{
+  "pages": [
+    { "path": "pages/index/index", "style": { "navigationBarTitleText": "市场总览" } },
+    { "path": "pages/mood/index", "style": { "navigationBarTitleText": "情绪与资金" } },
+    { "path": "pages/industry/index", "style": { "navigationBarTitleText": "行业摘要" } },
+    { "path": "pages/theme/index", "style": { "navigationBarTitleText": "题材摘要" } },
+    { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } }
+  ],
+  "tabBar": {
+    "color": "#6b7484",
+    "selectedColor": "#2f5d9b",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "总览" },
+      { "pagePath": "pages/mood/index", "text": "情绪资金" },
+      { "pagePath": "pages/industry/index", "text": "行业" },
+      { "pagePath": "pages/theme/index", "text": "题材" },
+      { "pagePath": "pages/mine/index", "text": "我的" }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "量化数据洞察",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f6f7f9"
+  }
+}

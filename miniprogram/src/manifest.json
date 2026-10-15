@@ -1,0 +1,14 @@
+{
+  "name": "量化数据洞察",
+  "appid": "",
+  "description": "信息汇总与历史数据统计",
+  "versionName": "0.1.0",
+  "versionCode": "1",
+  "mp-weixin": {
+    "appid": "touristappid",
+    "setting": { "urlCheck": false, "es6": true, "minified": true },
+    "usingComponents": true
+  },
+  "h5": { "title": "量化数据洞察" },
+  "vueVersion": "3"
+}
