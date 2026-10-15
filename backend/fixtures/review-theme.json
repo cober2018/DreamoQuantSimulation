@@ -1,0 +1,79 @@
+[
+ {
+  "trade_date": "2026-09-01",
+  "theme_rankings_json": "[{\"industry\": \"半导体\", \"up_count\": 5, \"broken_count\": 2, \"highest_tier\": \"3连板\", \"avg_pct\": 7.16, \"net_inflow\": 6.15, \"strength_score\": 86.7, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"软件开发\", \"up_count\": 6, \"broken_count\": 2, \"highest_tier\": \"3连板\", \"avg_pct\": 6.59, \"net_inflow\": -1.69, \"strength_score\": 75.0, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"汽车整车\", \"up_count\": 6, \"broken_count\": 2, \"highest_tier\": null, \"avg_pct\": 7.02, \"net_inflow\": 3.75, \"strength_score\": 71.3, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"光伏设备\", \"up_count\": 5, \"broken_count\": 2, \"highest_tier\": \"3连板\", \"avg_pct\": 7.41, \"net_inflow\": 8.5, \"strength_score\": 75.1, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}]",
+  "board_tiers_json": "[{\"tier\": \"首板\", \"count\": 38}, {\"tier\": \"2连板\", \"count\": 13}, {\"tier\": \"3连板\", \"count\": 1}, {\"tier\": \"高板\", \"count\": 1}]",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "theme_horizon_rankings_json": "{}",
+  "snapshot_time": "2026-09-01T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-02",
+  "theme_rankings_json": "[{\"industry\": \"半导体\", \"up_count\": 3, \"broken_count\": 1, \"highest_tier\": \"2连板\", \"avg_pct\": 4.58, \"net_inflow\": 5.19, \"strength_score\": 69.3, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"软件开发\", \"up_count\": 4, \"broken_count\": 0, \"highest_tier\": null, \"avg_pct\": 5.28, \"net_inflow\": 8.89, \"strength_score\": 83.3, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"汽车整车\", \"up_count\": 7, \"broken_count\": 1, \"highest_tier\": null, \"avg_pct\": 5.31, \"net_inflow\": -4.68, \"strength_score\": 62.7, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"光伏设备\", \"up_count\": 7, \"broken_count\": 4, \"highest_tier\": \"3连板\", \"avg_pct\": 6.82, \"net_inflow\": 1.46, \"strength_score\": 80.3, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}]",
+  "board_tiers_json": "[{\"tier\": \"首板\", \"count\": 32}, {\"tier\": \"2连板\", \"count\": 10}, {\"tier\": \"3连板\", \"count\": 5}, {\"tier\": \"高板\", \"count\": 1}]",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "theme_horizon_rankings_json": "{}",
+  "snapshot_time": "2026-09-02T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-03",
+  "theme_rankings_json": "[{\"industry\": \"半导体\", \"up_count\": 8, \"broken_count\": 1, \"highest_tier\": null, \"avg_pct\": 5.93, \"net_inflow\": 6.88, \"strength_score\": 45.1, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"软件开发\", \"up_count\": 4, \"broken_count\": 3, \"highest_tier\": \"3连板\", \"avg_pct\": 5.12, \"net_inflow\": 8.0, \"strength_score\": 69.2, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"汽车整车\", \"up_count\": 4, \"broken_count\": 2, \"highest_tier\": \"2连板\", \"avg_pct\": 7.16, \"net_inflow\": 6.11, \"strength_score\": 79.2, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"光伏设备\", \"up_count\": 3, \"broken_count\": 1, \"highest_tier\": \"3连板\", \"avg_pct\": 5.42, \"net_inflow\": 4.16, \"strength_score\": 80.4, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}]",
+  "board_tiers_json": "[{\"tier\": \"首板\", \"count\": 40}, {\"tier\": \"2连板\", \"count\": 7}, {\"tier\": \"3连板\", \"count\": 1}, {\"tier\": \"高板\", \"count\": 3}]",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "theme_horizon_rankings_json": "{}",
+  "snapshot_time": "2026-09-03T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-04",
+  "theme_rankings_json": "[{\"industry\": \"半导体\", \"up_count\": 6, \"broken_count\": 4, \"highest_tier\": \"2连板\", \"avg_pct\": 9.97, \"net_inflow\": 3.74, \"strength_score\": 49.1, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"软件开发\", \"up_count\": 9, \"broken_count\": 2, \"highest_tier\": null, \"avg_pct\": 6.02, \"net_inflow\": 1.02, \"strength_score\": 74.0, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"汽车整车\", \"up_count\": 9, \"broken_count\": 4, \"highest_tier\": \"2连板\", \"avg_pct\": 9.89, \"net_inflow\": 7.97, \"strength_score\": 86.9, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"光伏设备\", \"up_count\": 3, \"broken_count\": 3, \"highest_tier\": null, \"avg_pct\": 6.73, \"net_inflow\": -0.91, \"strength_score\": 52.4, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}]",
+  "board_tiers_json": "[{\"tier\": \"首板\", \"count\": 27}, {\"tier\": \"2连板\", \"count\": 10}, {\"tier\": \"3连板\", \"count\": 3}, {\"tier\": \"高板\", \"count\": 0}]",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "theme_horizon_rankings_json": "{}",
+  "snapshot_time": "2026-09-04T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-07",
+  "theme_rankings_json": "[{\"industry\": \"半导体\", \"up_count\": 5, \"broken_count\": 3, \"highest_tier\": \"2连板\", \"avg_pct\": 9.54, \"net_inflow\": 7.75, \"strength_score\": 61.7, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"软件开发\", \"up_count\": 6, \"broken_count\": 4, \"highest_tier\": \"3连板\", \"avg_pct\": 4.52, \"net_inflow\": 7.65, \"strength_score\": 43.8, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"汽车整车\", \"up_count\": 5, \"broken_count\": 1, \"highest_tier\": \"2连板\", \"avg_pct\": 9.14, \"net_inflow\": 0.53, \"strength_score\": 57.8, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"光伏设备\", \"up_count\": 8, \"broken_count\": 1, \"highest_tier\": \"2连板\", \"avg_pct\": 4.42, \"net_inflow\": 0.1, \"strength_score\": 52.2, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}]",
+  "board_tiers_json": "[{\"tier\": \"首板\", \"count\": 20}, {\"tier\": \"2连板\", \"count\": 5}, {\"tier\": \"3连板\", \"count\": 4}, {\"tier\": \"高板\", \"count\": 0}]",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "theme_horizon_rankings_json": "{}",
+  "snapshot_time": "2026-09-07T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-08",
+  "theme_rankings_json": "[{\"industry\": \"半导体\", \"up_count\": 9, \"broken_count\": 4, \"highest_tier\": null, \"avg_pct\": 9.75, \"net_inflow\": 4.63, \"strength_score\": 75.3, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"软件开发\", \"up_count\": 9, \"broken_count\": 2, \"highest_tier\": \"3连板\", \"avg_pct\": 7.25, \"net_inflow\": 5.21, \"strength_score\": 46.0, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"汽车整车\", \"up_count\": 9, \"broken_count\": 4, \"highest_tier\": null, \"avg_pct\": 8.34, \"net_inflow\": -4.66, \"strength_score\": 78.6, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"光伏设备\", \"up_count\": 6, \"broken_count\": 1, \"highest_tier\": null, \"avg_pct\": 5.19, \"net_inflow\": 5.72, \"strength_score\": 84.8, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}]",
+  "board_tiers_json": "[{\"tier\": \"首板\", \"count\": 15}, {\"tier\": \"2连板\", \"count\": 8}, {\"tier\": \"3连板\", \"count\": 1}, {\"tier\": \"高板\", \"count\": 3}]",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "theme_horizon_rankings_json": "{}",
+  "snapshot_time": "2026-09-08T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-09",
+  "theme_rankings_json": "[{\"industry\": \"半导体\", \"up_count\": 3, \"broken_count\": 2, \"highest_tier\": \"3连板\", \"avg_pct\": 9.17, \"net_inflow\": 8.77, \"strength_score\": 52.7, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"软件开发\", \"up_count\": 8, \"broken_count\": 1, \"highest_tier\": null, \"avg_pct\": 7.91, \"net_inflow\": 2.66, \"strength_score\": 65.7, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"汽车整车\", \"up_count\": 5, \"broken_count\": 4, \"highest_tier\": null, \"avg_pct\": 4.36, \"net_inflow\": -4.35, \"strength_score\": 47.1, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}, {\"industry\": \"光伏设备\", \"up_count\": 6, \"broken_count\": 1, \"highest_tier\": null, \"avg_pct\": 7.97, \"net_inflow\": -3.45, \"strength_score\": 78.0, \"stage\": \"incubating\", \"stage_reason\": \"首板为主\"}]",
+  "board_tiers_json": "[{\"tier\": \"首板\", \"count\": 26}, {\"tier\": \"2连板\", \"count\": 12}, {\"tier\": \"3连板\", \"count\": 5}, {\"tier\": \"高板\", \"count\": 0}]",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "theme_horizon_rankings_json": "{}",
+  "snapshot_time": "2026-09-09T22:10:00+08:00"
+ }
+]

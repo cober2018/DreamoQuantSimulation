@@ -1,0 +1,58 @@
+[
+ {
+  "trade_date": "2026-09-01",
+  "market_state_json": "{}",
+  "guidance_json": "[{\"type\": \"watch\"}]",
+  "missing_sources_json": "[]",
+  "snapshot_time": "2026-09-01T22:10:00+08:00",
+  "opening_price_discovery_json": "{\"trade_date\": \"2026-09-01\", \"metric_version\": \"open5_price_discovery_v1\", \"expected_stock_count\": 5300, \"open5_ready_count\": 4220, \"close_ready_count\": 4320, \"open5_observed_count\": 4270, \"open5_incomplete_count\": 980, \"open5_unavailable_count\": 100, \"coverage_ratio\": 0.796226, \"positive_open5_ratio\": 0.244371, \"continuation_ratio\": 0.074435, \"overreaction_ratio\": 0.263391, \"data_status\": \"partial\", \"source_table\": \"quant.dws_astock_opening_price_discovery_daily_df\"}"
+ },
+ {
+  "trade_date": "2026-09-02",
+  "market_state_json": "{}",
+  "guidance_json": "[{\"type\": \"watch\"}]",
+  "missing_sources_json": "[]",
+  "snapshot_time": "2026-09-02T22:10:00+08:00",
+  "opening_price_discovery_json": "{\"trade_date\": \"2026-09-02\", \"metric_version\": \"open5_price_discovery_v1\", \"expected_stock_count\": 5300, \"open5_ready_count\": 4845, \"close_ready_count\": 4945, \"open5_observed_count\": 4895, \"open5_incomplete_count\": 355, \"open5_unavailable_count\": 100, \"coverage_ratio\": 0.914151, \"positive_open5_ratio\": 0.203199, \"continuation_ratio\": 0.268557, \"overreaction_ratio\": 0.298773, \"data_status\": \"partial\", \"source_table\": \"quant.dws_astock_opening_price_discovery_daily_df\"}"
+ },
+ {
+  "trade_date": "2026-09-03",
+  "market_state_json": "{}",
+  "guidance_json": "[{\"type\": \"watch\"}]",
+  "missing_sources_json": "[]",
+  "snapshot_time": "2026-09-03T22:10:00+08:00",
+  "opening_price_discovery_json": "{\"trade_date\": \"2026-09-03\", \"metric_version\": \"open5_price_discovery_v1\", \"expected_stock_count\": 5300, \"open5_ready_count\": 4854, \"close_ready_count\": 4954, \"open5_observed_count\": 4904, \"open5_incomplete_count\": 346, \"open5_unavailable_count\": 100, \"coverage_ratio\": 0.915849, \"positive_open5_ratio\": 0.238268, \"continuation_ratio\": 0.136078, \"overreaction_ratio\": 0.190943, \"data_status\": \"partial\", \"source_table\": \"quant.dws_astock_opening_price_discovery_daily_df\"}"
+ },
+ {
+  "trade_date": "2026-09-04",
+  "market_state_json": "{}",
+  "guidance_json": "[{\"type\": \"watch\"}]",
+  "missing_sources_json": "[]",
+  "snapshot_time": "2026-09-04T22:10:00+08:00",
+  "opening_price_discovery_json": "{\"trade_date\": \"2026-09-04\", \"metric_version\": \"open5_price_discovery_v1\", \"expected_stock_count\": 5300, \"open5_ready_count\": 4377, \"close_ready_count\": 4477, \"open5_observed_count\": 4427, \"open5_incomplete_count\": 823, \"open5_unavailable_count\": 100, \"coverage_ratio\": 0.825849, \"positive_open5_ratio\": 0.266385, \"continuation_ratio\": 0.08134, \"overreaction_ratio\": 0.221492, \"data_status\": \"partial\", \"source_table\": \"quant.dws_astock_opening_price_discovery_daily_df\"}"
+ },
+ {
+  "trade_date": "2026-09-07",
+  "market_state_json": "{}",
+  "guidance_json": "[{\"type\": \"watch\"}]",
+  "missing_sources_json": "[]",
+  "snapshot_time": "2026-09-07T22:10:00+08:00",
+  "opening_price_discovery_json": "{\"trade_date\": \"2026-09-07\", \"metric_version\": \"open5_price_discovery_v1\", \"expected_stock_count\": 5300, \"open5_ready_count\": 4999, \"close_ready_count\": 5099, \"open5_observed_count\": 5049, \"open5_incomplete_count\": 201, \"open5_unavailable_count\": 100, \"coverage_ratio\": 0.943208, \"positive_open5_ratio\": 0.366761, \"continuation_ratio\": 0.149458, \"overreaction_ratio\": 0.128483, \"data_status\": \"partial\", \"source_table\": \"quant.dws_astock_opening_price_discovery_daily_df\"}"
+ },
+ {
+  "trade_date": "2026-09-08",
+  "market_state_json": "{}",
+  "guidance_json": "[{\"type\": \"watch\"}]",
+  "missing_sources_json": "[]",
+  "snapshot_time": "2026-09-08T22:10:00+08:00",
+  "opening_price_discovery_json": "{\"trade_date\": \"2026-09-08\", \"metric_version\": \"open5_price_discovery_v1\", \"expected_stock_count\": 5300, \"open5_ready_count\": 4925, \"close_ready_count\": 5025, \"open5_observed_count\": 4975, \"open5_incomplete_count\": 275, \"open5_unavailable_count\": 100, \"coverage_ratio\": 0.929245, \"positive_open5_ratio\": 0.340349, \"continuation_ratio\": 0.213007, \"overreaction_ratio\": 0.281944, \"data_status\": \"partial\", \"source_table\": \"quant.dws_astock_opening_price_discovery_daily_df\"}"
+ },
+ {
+  "trade_date": "2026-09-09",
+  "market_state_json": "{}",
+  "guidance_json": "[{\"type\": \"watch\"}]",
+  "missing_sources_json": "[]",
+  "snapshot_time": "2026-09-09T22:10:00+08:00",
+  "opening_price_discovery_json": "{\"trade_date\": \"2026-09-09\", \"metric_version\": \"open5_price_discovery_v1\", \"expected_stock_count\": 5300, \"open5_ready_count\": 4332, \"close_ready_count\": 4432, \"open5_observed_count\": 4382, \"open5_incomplete_count\": 868, \"open5_unavailable_count\": 100, \"coverage_ratio\": 0.817358, \"positive_open5_ratio\": 0.201178, \"continuation_ratio\": 0.199963, \"overreaction_ratio\": 0.100107, \"data_status\": \"partial\", \"source_table\": \"quant.dws_astock_opening_price_discovery_daily_df\"}"
+ }
+]

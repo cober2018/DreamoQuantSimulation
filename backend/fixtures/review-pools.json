@@ -1,0 +1,79 @@
+[
+ {
+  "trade_date": "2026-09-01",
+  "risk_summary_json": "{\"risk_command\": \"减仓\", \"position_guidance\": \"x\"}",
+  "limit_down_anchor_json": "{}",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "pool_summary_json": "{\"board_tier_counts\": {\"首板\": 38, \"2连板\": 13, \"3连板\": 1, \"高板\": 1, \"unknown\": 23}, \"broken_board_count\": 23, \"limit_down_count\": 19}",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "snapshot_time": "2026-09-01T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-02",
+  "risk_summary_json": "{\"risk_command\": \"减仓\", \"position_guidance\": \"x\"}",
+  "limit_down_anchor_json": "{}",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "pool_summary_json": "{\"board_tier_counts\": {\"首板\": 32, \"2连板\": 10, \"3连板\": 5, \"高板\": 1, \"unknown\": 19}, \"broken_board_count\": 19, \"limit_down_count\": 12}",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "snapshot_time": "2026-09-02T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-03",
+  "risk_summary_json": "{\"risk_command\": \"减仓\", \"position_guidance\": \"x\"}",
+  "limit_down_anchor_json": "{}",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "pool_summary_json": "{\"board_tier_counts\": {\"首板\": 40, \"2连板\": 7, \"3连板\": 1, \"高板\": 3, \"unknown\": 17}, \"broken_board_count\": 17, \"limit_down_count\": 12}",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "snapshot_time": "2026-09-03T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-04",
+  "risk_summary_json": "{\"risk_command\": \"减仓\", \"position_guidance\": \"x\"}",
+  "limit_down_anchor_json": "{}",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "pool_summary_json": "{\"board_tier_counts\": {\"首板\": 27, \"2连板\": 10, \"3连板\": 3, \"高板\": 0, \"unknown\": 29}, \"broken_board_count\": 29, \"limit_down_count\": 4}",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "snapshot_time": "2026-09-04T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-07",
+  "risk_summary_json": "{\"risk_command\": \"减仓\", \"position_guidance\": \"x\"}",
+  "limit_down_anchor_json": "{}",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "pool_summary_json": "{\"board_tier_counts\": {\"首板\": 20, \"2连板\": 5, \"3连板\": 4, \"高板\": 0, \"unknown\": 18}, \"broken_board_count\": 18, \"limit_down_count\": 16}",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "snapshot_time": "2026-09-07T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-08",
+  "risk_summary_json": "{\"risk_command\": \"减仓\", \"position_guidance\": \"x\"}",
+  "limit_down_anchor_json": "{}",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "pool_summary_json": "{\"board_tier_counts\": {\"首板\": 15, \"2连板\": 8, \"3连板\": 1, \"高板\": 3, \"unknown\": 17}, \"broken_board_count\": 17, \"limit_down_count\": 13}",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "snapshot_time": "2026-09-08T22:10:00+08:00"
+ },
+ {
+  "trade_date": "2026-09-09",
+  "risk_summary_json": "{\"risk_command\": \"减仓\", \"position_guidance\": \"x\"}",
+  "limit_down_anchor_json": "{}",
+  "freshness_json": "{}",
+  "missing_sources_json": "[]",
+  "pool_summary_json": "{\"board_tier_counts\": {\"首板\": 26, \"2连板\": 12, \"3连板\": 5, \"高板\": 0, \"unknown\": 14}, \"broken_board_count\": 14, \"limit_down_count\": 17}",
+  "consumer_policy_json": "{}",
+  "scoring_contract_json": "{}",
+  "snapshot_time": "2026-09-09T22:10:00+08:00"
+ }
+]
