@@ -1,0 +1,7 @@
+schema: spec-driven
+
+context: |
+  DreamoQuantSimulation：对外量化数据分析平台（独立仓库）。
+  后端 Python 3.11 + FastAPI + httpx；前端 Vite + Vue 3 + ECharts。
+  数据只通过 DreamO 数据中台 records HTTP API 获取，禁止引用旧平台代码。
+  产品边界：仅提供证券信息汇总与历史数据统计，不提供证券品种选择、买卖时机或其他投资建议。
