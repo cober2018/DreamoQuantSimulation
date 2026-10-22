@@ -209,7 +209,7 @@ class AccessService:
             "username": p.username, "role": p.role, "role_label": self.role_label(p.role),
             "permissions": sorted(p.perms), "history_days": p.history_days,
             "member_expires_at": p.member_expires_at, "must_change_password": p.must_change_password,
-            "client": p.client,
+            "client": p.client, "perm_min_role": self.perm_min_role(),
         }
 
     def role_label(self, role: str) -> str:
@@ -275,17 +275,9 @@ class AccessService:
                 pass
             else:
                 user = c.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
-                start = now
-                if user["member_expires_at"] and user["member_expires_at"] > now and user["member_role"] == inv["role"]:
-                    start = user["member_expires_at"]  # 同级续期顺延
-                expires = start + inv["duration_days"] * 86400
-                # 低于当前有效会员等级的邀请码只延长不降级: 比较角色权限页数
-                cur_role = self.effective_role(user)
-                new_role = inv["role"]
-                if self._rank(cur_role) > self._rank(new_role) and cur_role != "free":
-                    new_role = cur_role
-                    expires = max(expires, user["member_expires_at"] or 0)
-                c.execute("UPDATE users SET member_role=?, member_expires_at=? WHERE id=?", (new_role, expires, user_id))
+                # 低于当前有效会员等级的邀请码只延长不降级 (沿用第四期行为)
+                new_role, expires = self._grant_in_tx(c, user, inv["role"], inv["duration_days"], now, source="invite",
+                                                      lower="keep", note=f"invite#{inv['id']}", actor=str(user_id))
                 c.execute("UPDATE invite_codes SET used_count=used_count+1 WHERE id=?", (inv["id"],))
                 c.execute("INSERT INTO redemptions(invite_id,user_id,role,expires_at,at,ip) VALUES(?,?,?,?,?,?)",
                           (inv["id"], user_id, new_role, expires, now, ip))
@@ -299,9 +291,151 @@ class AccessService:
         perms = self.role_permissions(role)
         return sum(1 for p in perms if p.startswith("page.")) * 1000 + perms.get("data.history_days", 0)
 
+    # ------------------------------------------------------------------ 会员开通 (后台/邀请码/将来的支付回调统一入口)
+    def _grant_in_tx(self, c, user, role: str, days: int, now: float, *, source: str, lower: str,
+                     plan_id: Optional[int] = None, amount_cents: int = 0, channel: Optional[str] = None,
+                     note: Optional[str] = None, actor: Optional[str] = None) -> tuple:
+        active = bool(user["member_role"] and user["member_expires_at"] and user["member_expires_at"] > now)
+        before = user["member_expires_at"] if active else None
+        start = user["member_expires_at"] if active and user["member_role"] == role else now
+        expires = start + days * 86400
+        new_role = role
+        cur_role = self.effective_role(user)
+        if cur_role != "free" and self._rank(cur_role) > self._rank(role):
+            # 后台开通拒绝降级, 避免误缩短用户已付费时长
+            if lower == "reject":
+                raise AccessError(409, f"该用户当前等级（{self.role_label(cur_role)}）高于所选套餐，请先清除会员再开通")
+            new_role = cur_role
+            expires = max(expires, user["member_expires_at"] or 0)
+        c.execute("UPDATE users SET member_role=?, member_expires_at=? WHERE id=?", (new_role, expires, user["id"]))
+        c.execute("INSERT INTO membership_grants(user_id,role,days,expires_before,expires_after,source,plan_id,"
+                  "amount_cents,channel,note,actor,at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                  (user["id"], new_role, days, before, expires, source, plan_id, amount_cents, channel, note, actor, now))
+        return new_role, expires
+
+    def grant_membership(self, user_id: int, actor: str, *, plan_id: Optional[int] = None, role: Optional[str] = None,
+                         days: Optional[int] = None, amount_cents: int = 0, channel: str = "", note: str = "",
+                         source: str = "admin") -> Dict[str, Any]:
+        if plan_id is not None:
+            plan = self.store.q1("SELECT * FROM plans WHERE id=?", (plan_id,))
+            if not plan:
+                raise AccessError(404, "套餐不存在")
+            role, days = plan["role"], plan["duration_days"]
+        if not role or not self.store.q1("SELECT 1 FROM roles WHERE name=?", (role,)) or role == "admin":
+            raise AccessError(422, "目标角色无效")
+        if not isinstance(days, int) or not (1 <= days <= 3650):
+            raise AccessError(422, "天数范围 1–3650")
+        if amount_cents < 0:
+            raise AccessError(422, "金额不能为负，更正请使用冲正")
+        now = time.time()
+        with self.store.tx() as c:
+            user = c.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+            if not user:
+                raise AccessError(404, "用户不存在")
+            new_role, expires = self._grant_in_tx(c, user, role, days, now, source=source, lower="reject",
+                                                  plan_id=plan_id, amount_cents=amount_cents, channel=channel or None,
+                                                  note=note or None, actor=actor)
+        self.store.audit(actor, "membership_grant", user["username"],
+                         {"role": new_role, "days": days, "plan_id": plan_id, "amount_cents": amount_cents,
+                          "channel": channel, "expires_at": expires})
+        return {"role": new_role, "role_label": self.role_label(new_role), "member_expires_at": expires}
+
+    def correct_grant(self, grant_id: int, amount_cents: int, note: str, actor: str) -> None:
+        ref = self.store.q1("SELECT * FROM membership_grants WHERE id=?", (grant_id,))
+        if not ref:
+            raise AccessError(404, "开通记录不存在")
+        if amount_cents == 0 or not note:
+            raise AccessError(422, "冲正需填写非零金额与说明")
+        # 记录只追加不修改: 更正以冲正行体现, 原行保留
+        self.store.x("INSERT INTO membership_grants(user_id,role,days,source,amount_cents,channel,note,ref_id,actor,at)"
+                     " VALUES(?,?,0,'admin',?,'correction',?,?,?,?)",
+                     (ref["user_id"], ref["role"], amount_cents, note, grant_id, actor, time.time()))
+        self.store.audit(actor, "grant_correction", str(grant_id), {"amount_cents": amount_cents, "note": note})
+
+    def list_grants(self, start: Optional[float] = None, end: Optional[float] = None, source: Optional[str] = None,
+                    username: Optional[str] = None, limit: int = 1000) -> Dict[str, Any]:
+        where, args = ["1=1"], []
+        if start is not None:
+            where.append("g.at>=?"); args.append(start)
+        if end is not None:
+            where.append("g.at<?"); args.append(end)
+        if source:
+            where.append("g.source=?"); args.append(source)
+        if username:
+            where.append("u.username=?"); args.append(username.lower())
+        sql = (" FROM membership_grants g JOIN users u ON u.id=g.user_id LEFT JOIN plans p ON p.id=g.plan_id"
+               f" WHERE {' AND '.join(where)}")
+        rows = self.store.q(f"SELECT g.*, u.username, p.name plan_name{sql} ORDER BY g.id DESC LIMIT ?", (*args, limit))
+        total = self.store.q1(f"SELECT COALESCE(SUM(g.amount_cents),0) t, COUNT(*) n{sql}", args)
+        return {"items": [dict(r) for r in rows], "total_cents": total["t"], "count": total["n"]}
+
+    # ------------------------------------------------------------------ 套餐
+    def list_plans(self, listed_only: bool = False) -> List[Dict[str, Any]]:
+        sql = "SELECT * FROM plans" + (" WHERE listed=1" if listed_only else "") + " ORDER BY sort, id"
+        return [{**dict(r), "listed": bool(r["listed"]), "role_label": self.role_label(r["role"])}
+                for r in self.store.q(sql)]
+
+    def save_plan(self, plan_id: Optional[int], data: Dict[str, Any], actor: str) -> int:
+        name = (data.get("name") or "").strip()
+        role, days, price = data.get("role"), data.get("duration_days"), data.get("price_cents")
+        if not name or len(name) > 40:
+            raise AccessError(422, "套餐名称 1–40 字")
+        if not role or role == "admin" or not self.store.q1("SELECT 1 FROM roles WHERE name=?", (role,)):
+            raise AccessError(422, "套餐对应角色无效（不能是管理员）")
+        if not isinstance(days, int) or not (1 <= days <= 3650):
+            raise AccessError(422, "天数范围 1–3650")
+        if not isinstance(price, int) or not (0 <= price <= 100_000_000):
+            raise AccessError(422, "标价无效")
+        now = time.time()
+        vals = (name, role, days, price, int(bool(data.get("listed"))), int(data.get("sort") or 0),
+                (data.get("note") or "")[:200])
+        if plan_id is None:
+            # 新套餐默认不上架: 上架前需确认主体资质与价格
+            vals = vals[:4] + (0,) + vals[5:]
+            plan_id = self.store.x("INSERT INTO plans(name,role,duration_days,price_cents,listed,sort,note,created_at,"
+                                   "updated_at) VALUES(?,?,?,?,?,?,?,?,?)", (*vals, now, now))
+        elif self.store.x("UPDATE plans SET name=?,role=?,duration_days=?,price_cents=?,listed=?,sort=?,note=?,"
+                          "updated_at=? WHERE id=?", (*vals, now, plan_id)) == 0:
+            raise AccessError(404, "套餐不存在")
+        self.store.audit(actor, "plan_save", str(plan_id), {"name": name, "role": role, "days": days,
+                                                             "price_cents": price, "listed": vals[4]})
+        return plan_id
+
+    def delete_plan(self, plan_id: int, actor: str) -> None:
+        if self.store.q1("SELECT 1 FROM membership_grants WHERE plan_id=? LIMIT 1", (plan_id,)):
+            raise AccessError(409, "该套餐已有开通记录，只能下架不能删除")
+        if self.store.x("DELETE FROM plans WHERE id=?", (plan_id,)) == 0:
+            raise AccessError(404, "套餐不存在")
+        self.store.audit(actor, "plan_delete", str(plan_id))
+
+    def plan_contact_text(self) -> str:
+        row = self.store.q1("SELECT value FROM meta WHERE key='plan_contact_text'")
+        return row["value"] if row else ""
+
+    def set_plan_contact_text(self, text: str, actor: str) -> None:
+        text = (text or "").strip()[:500]
+        self.store.x("INSERT INTO meta(key,value) VALUES('plan_contact_text',?) "
+                     "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (text,))
+        self.store.audit(actor, "plan_contact_update")
+
+    def perm_min_role(self) -> Dict[str, Optional[str]]:
+        """各权限点的最低可开通等级 (不含管理员), 供前端锁定预告显示, 不涉及数据。"""
+        roles = [r["name"] for r in self.store.q("SELECT name FROM roles WHERE name NOT IN ('admin','free')")]
+        roles.sort(key=self._rank)
+        out: Dict[str, Optional[str]] = {}
+        for perm in [p for p in ALL_PERMS if p.startswith("page.")] + ["data.detail"]:
+            hit = next((r for r in roles if perm in self.role_permissions(r)), None)
+            out[perm] = self.role_label(hit) if hit else None
+        return out
+
     # ------------------------------------------------------------------ 管理
-    def list_users(self, limit: int = 200) -> List[Dict[str, Any]]:
-        rows = self.store.q("SELECT * FROM users ORDER BY id DESC LIMIT ?", (limit,))
+    def list_users(self, limit: int = 200, expiring_within_days: Optional[int] = None) -> List[Dict[str, Any]]:
+        if expiring_within_days:
+            now = time.time()
+            rows = self.store.q("SELECT * FROM users WHERE member_expires_at>? AND member_expires_at<=? "
+                                "ORDER BY member_expires_at LIMIT ?", (now, now + expiring_within_days * 86400, limit))
+        else:
+            rows = self.store.q("SELECT * FROM users ORDER BY id DESC LIMIT ?", (limit,))
         return [{"id": r["id"], "username": r["username"], "base_role": r["base_role"], "member_role": r["member_role"],
                  "member_expires_at": r["member_expires_at"], "effective_role": self.effective_role(r),
                  "disabled": bool(r["disabled"]), "created_at": r["created_at"],

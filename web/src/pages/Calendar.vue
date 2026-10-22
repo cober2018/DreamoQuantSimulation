@@ -1,5 +1,5 @@
 <template>
-  <PageFrame title="事件日历" question="哪些事件已公布、将公布，事实是什么？" :env="env" :loading="loading" @retry="load">
+  <PageFrame title="事件日历" question="哪些事件已公布、将公布，事实是什么？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools><input type="date" v-model="tradeDate" aria-label="数据日" /></template>
 
     <div v-if="win.complete === false" class="banner fixture">日历窗口不完整，以下仅列出已取得的事件。</div>

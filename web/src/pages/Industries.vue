@@ -1,5 +1,5 @@
 <template>
-  <PageFrame title="行业比较与轮动" question="不同板块已发生的表现有什么差异？" :env="env" :loading="loading" @retry="load">
+  <PageFrame title="行业比较与轮动" question="不同板块已发生的表现有什么差异？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools>
       <div class="seg">
         <button v-for="t in IDX_TYPES" :key="t" :class="{ on: idxType === t }" @click="idxType = t">{{ t }}</button>
@@ -46,10 +46,12 @@
     </div>
 
     <div class="panel" v-if="selected">
-      <h2>{{ series.data?.sector_name || selected }} 近期序列
-        <small>{{ series.data?.points?.length || 0 }} / {{ series.data?.requested_days || 5 }} 个交易日
+      <h2>{{ series.data?.sector_name || items.find((r) => r.sector_code === selected)?.sector_name || selected }} 近期序列
+        <small v-if="canDetail">{{ series.data?.points?.length || 0 }} / {{ series.data?.requested_days || 5 }} 个交易日
           <span v-if="series.status === 'partial'">（不足，未插值）</span></small></h2>
-      <div v-if="seriesLoading" class="empty-state">加载中…</div>
+      <div v-if="!canDetail" class="lock-card">近期序列属于下钻明细，需要 {{ session.user?.perm_min_role?.['data.detail'] || '更高等级' }}。<router-link to="/plans">查看会员套餐</router-link></div>
+      <div v-else-if="seriesLoading" class="empty-state">加载中…</div>
+      <div v-else-if="series.status && !['ok', 'partial', 'empty'].includes(series.status)" class="empty-state">序列暂时无法加载，请稍后重试。</div>
       <div v-else-if="!series.data?.points?.length" class="empty-state">没有可用序列。</div>
       <div v-else class="two-col">
         <EChart :option="seriesOption" height="280px" />
@@ -65,6 +67,9 @@ import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import { fmt, getModule } from '../api'
 import { useModule } from '../useModule'
+import { can, session } from '../auth'
+
+const canDetail = computed(() => can('data.detail'))
 
 const IDX_TYPES = ['行业板块', '概念板块', '地域板块']
 const COLS = [
@@ -128,7 +133,7 @@ const rrgOption = computed(() => ({
 const series = ref({})
 const seriesLoading = ref(false)
 watch(selected, async (code) => {
-  if (!code) return
+  if (!code || !canDetail.value) return
   seriesLoading.value = true
   series.value = await getModule(`industries/${encodeURIComponent(code)}/series`, { end_date: env.value.trade_date })
   seriesLoading.value = false

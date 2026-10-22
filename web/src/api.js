@@ -21,6 +21,13 @@ export async function getModule(path, params = {}) {
   return body
 }
 
+// 页面只展示中文数据名, 不暴露内部服务标识
+export const SERVICE_NAMES = {
+  'review-industry': '板块日表', 'review-market-sentiment': '市场情绪日表', 'review-theme': '题材日表',
+  'review-forward-risk': '事件日历', 'review-limit-list-detail': '涨跌停明细', 'review-pools': '股票池统计',
+  'review-daily': '市场日表',
+}
+
 export const fmt = {
   pct(v, digits = 2) {
     if (v === null || v === undefined) return '—'
@@ -38,6 +45,9 @@ export const fmt = {
   signed(v, digits = 2) {
     if (v === null || v === undefined) return '—'
     return `${v > 0 ? '+' : ''}${Number(v).toFixed(digits)}`
+  },
+  signedPct(v, digits = 2) {
+    return v === null || v === undefined ? '—' : `${v > 0 ? '+' : ''}${Number(v).toFixed(digits)}%`
   },
   dir(v) {
     if (v === null || v === undefined || v === 0) return ''

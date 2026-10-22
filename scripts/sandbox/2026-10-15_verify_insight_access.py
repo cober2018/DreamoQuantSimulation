@@ -79,6 +79,80 @@ class Client:
 PW = "Passw0rd-Test-1"
 
 
+def verify_membership(TestClient):
+    """launch-membership-ops-and-page-polish-v1: 套餐、开通、冲正、合计、到期筛选。"""
+    with TestClient(make_app(), base_url="http://testserver") as tc:
+        for u in ("dave", "erin"):
+            tc.post("/api/v1/auth/register", json={"username": u, "password": PW, "accept_terms": True})
+        adm = Client(tc)
+        adm.login("root", "Init-Passw0rd-1")
+        adm.post("/api/v1/auth/change-password", json={"old_password": "Init-Passw0rd-1", "new_password": "Admin-Passw0rd-2"})
+        adm.login("root", "Admin-Passw0rd-2")
+        d = Client(tc); d.login("dave", PW)
+
+        r = adm.post("/api/v1/admin/plans", json={"name": "VIP 月卡", "role": "vip", "duration_days": 30,
+                                                   "price_cents": 9900, "listed": True})
+        vip_plan = r.json().get("id")
+        check("新建套餐默认未上架(即使提交 listed)", r.status_code == 200
+              and d.get("/api/v1/plans", signed=False).json()["items"] == [])
+        check("套餐不能对应管理员角色", adm.post("/api/v1/admin/plans", json={
+            "name": "x", "role": "admin", "duration_days": 30, "price_cents": 1}).status_code == 422)
+        adm.put(f"/api/v1/admin/plans/{vip_plan}", json={"name": "VIP 月卡", "role": "vip", "duration_days": 30,
+                                                          "price_cents": 9900, "listed": True})
+        svip_plan = adm.post("/api/v1/admin/plans", json={"name": "SVIP 月卡", "role": "svip", "duration_days": 30,
+                                                           "price_cents": 19900}).json()["id"]
+        adm.put("/api/v1/admin/plan-contact", json={"text": "添加客服微信开通"})
+        pl = d.get("/api/v1/plans", signed=False).json()
+        check("用户只看到已上架套餐与开通说明", [p["name"] for p in pl["items"]] == ["VIP 月卡"]
+              and pl["contact_text"] == "添加客服微信开通", pl)
+        check("免费用户也可查看套餐", d.get("/api/v1/plans", signed=False).status_code == 200)
+
+        users = adm.get("/api/v1/admin/users").json()["items"]
+        dave = next(u["id"] for u in users if u["username"] == "dave")
+        erin = next(u["id"] for u in users if u["username"] == "erin")
+        r1 = adm.post(f"/api/v1/admin/users/{dave}/grant", json={"plan_id": vip_plan, "amount_cents": 9900, "channel": "微信"})
+        e1 = r1.json().get("member_expires_at", 0)
+        check("后台按套餐开通 VIP 即时生效", r1.status_code == 200 and r1.json()["role"] == "vip"
+              and d.get("/api/v1/participation").status_code == 200, r1.text)
+        r2 = adm.post(f"/api/v1/admin/users/{dave}/grant", json={"plan_id": vip_plan, "amount_cents": 9900, "channel": "微信"})
+        check("同级续期从原到期顺延", abs(r2.json()["member_expires_at"] - (e1 + 30 * 86400)) < 2, r2.text)
+        r3 = adm.post(f"/api/v1/admin/users/{dave}/grant", json={"plan_id": svip_plan, "amount_cents": 19900})
+        check("升级从现在起算", r3.json()["role"] == "svip"
+              and abs(r3.json()["member_expires_at"] - (time.time() + 30 * 86400)) < 5, r3.text)
+        r4 = adm.post(f"/api/v1/admin/users/{dave}/grant", json={"plan_id": vip_plan, "amount_cents": 9900})
+        me = d.get("/api/v1/auth/me", signed=False).json()
+        check("降级开通被拒 409 且状态不变", r4.status_code == 409 and me["role"] == "svip", r4.text)
+        check("负金额开通被拒", adm.post(f"/api/v1/admin/users/{erin}/grant", json={
+            "plan_id": vip_plan, "amount_cents": -1}).status_code == 422)
+        check("非管理员不能开通", d.post(f"/api/v1/admin/users/{dave}/grant", json={"plan_id": vip_plan}).status_code == 403)
+
+        inv = adm.post("/api/v1/admin/invites", json={"role": "vip", "duration_days": 7}).json()["codes"][0]
+        e = Client(tc); e.login("erin", PW)
+        e.post("/api/v1/invite/redeem", json={"code": inv})
+        g = adm.get("/api/v1/admin/grants").json()
+        inv_rows = [x for x in g["items"] if x["source"] == "invite"]
+        check("兑换写入开通记录(来源 invite, 金额 0)", len(inv_rows) == 1 and inv_rows[0]["amount_cents"] == 0
+              and inv_rows[0]["username"] == "erin", inv_rows)
+        check("开通记录合计 = 实收之和", g["total_cents"] == 9900 + 9900 + 19900 and g["count"] == 4, g["total_cents"])
+        first_id = min(x["id"] for x in g["items"] if x["source"] == "admin")
+        check("冲正缺说明被拒", adm.post(f"/api/v1/admin/grants/{first_id}/correction",
+                                        json={"amount_cents": -900, "note": ""}).status_code == 422)
+        adm.post(f"/api/v1/admin/grants/{first_id}/correction", json={"amount_cents": -900, "note": "多记"})
+        g2 = adm.get("/api/v1/admin/grants").json()
+        check("冲正追加一行, 原记录不变, 合计减少", g2["count"] == 5 and g2["total_cents"] == g["total_cents"] - 900
+              and next(x for x in g2["items"] if x["id"] == first_id)["amount_cents"] == 9900)
+        check("按来源筛选", all(x["source"] == "invite" for x in adm.get("/api/v1/admin/grants?source=invite").json()["items"]))
+        check("按日期筛选: 未来区间为空", adm.get("/api/v1/admin/grants?start_date=2099-01-01").json()["count"] == 0)
+        check("已有开通记录的套餐不可删除", adm.delete(f"/api/v1/admin/plans/{vip_plan}").status_code == 409)
+        exp = adm.get("/api/v1/admin/users?expiring_within_days=7").json()["items"]
+        check("7 天内到期筛选只含 erin", [u["username"] for u in exp] == ["erin"], exp)
+        pm = e.get("/api/v1/auth/me", signed=False).json().get("perm_min_role", {})
+        check("me 返回各页面最低等级(供锁定预告)", pm.get("page.participation") == "VIP" and pm.get("page.history") == "SVIP"
+              and pm.get("data.detail") == "SVIP", pm)
+        audit = json.dumps(adm.get("/api/v1/admin/audit").json())
+        check("审计含开通/冲正/套餐", all(k in audit for k in ("membership_grant", "grant_correction", "plan_save")))
+
+
 def main():
     from fastapi.testclient import TestClient
     app = make_app()
@@ -255,6 +329,7 @@ def main():
         check("小程序令牌: 总览 200", m.get("/api/v1/overview").status_code == 200)
         check("小程序令牌: 日历(不在小程序范围) 403", m.get("/api/v1/calendar").status_code == 403)
         check("未同意协议的微信首次登录被拒", tc.post("/api/v1/auth/wechat", json={"code": "mock:newbie"}).status_code == 422)
+    verify_membership(TestClient)
     app = make_app()
     with TestClient(app) as tc:
         r = tc.post("/api/v1/auth/wechat", json={"code": "mock:x", "accept_terms": True})

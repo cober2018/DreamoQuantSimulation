@@ -1,5 +1,5 @@
 <template>
-  <StateView :state="state" :detail="detail" @retry="load">
+  <StateView :state="state" :detail="detail" :env="env" perm="page.themes" @retry="load">
     <view class="card" v-if="st">
       <view class="card-title">涨跌停结构</view>
       <view class="card-sub">{{ env.trade_date }}</view>

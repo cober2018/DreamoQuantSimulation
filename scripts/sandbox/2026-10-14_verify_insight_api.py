@@ -109,6 +109,13 @@ def run_fixture_checks():
         check("非法日期参数 422", c.get("/api/v1/overview?trade_date=2026/09/09").status_code == 422)
         check("非法板块类型 422", c.get("/api/v1/industries?idx_type=x").status_code == 422)
         check("历史日期可选", c.get("/api/v1/history?trade_date=2026-09-03").json()["trade_date"] == "2026-09-03")
+        gap = c.get("/api/v1/participation?trade_date=2026-10-21").json()
+        check("缺数据日: empty 且给出最近有数据日, 不冒充", gap["status"] == "empty" and gap["data"] == {}
+              and gap["latest_available_date"] == "2026-10-14" and gap["trade_date"] == "2026-10-21", gap)
+        gap = c.get("/api/v1/overview?trade_date=2026-10-21").json()
+        check("缺数据日: 总览给出行业表最近日", gap["status"] == "empty" and gap["latest_available_date"] == "2026-09-09", gap)
+        check("非 empty 响应不带 latest_available_date",
+              "latest_available_date" not in c.get("/api/v1/overview").json())
         th = c.get("/api/v1/themes").json()
         check("题材页已接入: ok 且含 CNT-022/025/027", th["status"] in ("ok", "partial") and
               set(th["content_ids"]) == {"CNT-022", "CNT-025", "CNT-027"}, th["status"])

@@ -1,5 +1,5 @@
 <template>
-  <StateView :state="state" :detail="detail" @retry="load">
+  <StateView :state="state" :detail="detail" :env="env" perm="page.participation" @retry="load">
     <view class="card" v-if="obs">
       <view class="card-title">市场参与与卖压</view>
       <view class="card-sub">原始统计 · 数据日期 {{ obs.trade_date }}</view>
@@ -13,8 +13,8 @@
     <view class="card" v-if="erp">
       <view class="card-title">股权风险溢价 ERP</view>
       <view class="grid">
-        <view class="stat"><view class="label">ERP</view><view class="value">{{ num(erp.erp_value_pct) }}%</view></view>
-        <view class="stat"><view class="label">10年国债</view><view class="value">{{ num(erp.yield_10y) }}%</view></view>
+        <view class="stat"><view class="label">ERP</view><view class="value">{{ erp.erp_value_pct == null ? '—' : num(erp.erp_value_pct) + '%' }}</view></view>
+        <view class="stat"><view class="label">10年国债</view><view class="value">{{ erp.yield_10y == null ? '—' : num(erp.yield_10y) + '%' }}</view></view>
         <view class="stat"><view class="label">近252日分位</view><view class="value">{{ erp.erp_percentile_252d == null ? '样本不足' : num(erp.erp_percentile_252d, 1) + '%' }}</view></view>
       </view>
     </view>
@@ -31,7 +31,7 @@
       <view class="grid">
         <view class="stat" v-for="f in sm.factors" :key="f.key">
           <view class="label">{{ f.label }}</view>
-          <view class="value">{{ signed(f.net_breadth_pct, 1) }}%</view>
+          <view class="value">{{ f.net_breadth_pct == null ? '—' : signed(f.net_breadth_pct, 1) + '%' }}</view>
         </view>
       </view>
     </view>

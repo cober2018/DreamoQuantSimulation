@@ -8,6 +8,21 @@
 
     <div v-if="tab === 'users'" class="panel">
       <h2>用户</h2>
+      <div class="toolbar">
+        <label><input type="checkbox" v-model="expiringOnly" @change="load" /> 只看 7 天内到期</label>
+      </div>
+      <form v-if="grantFor" class="row grant" @submit.prevent="doGrant">
+        <strong>为 {{ grantFor.username }} 开通</strong>
+        <select v-model.number="grant.plan_id" @change="fillAmount">
+          <option :value="null" disabled>选择套餐</option>
+          <option v-for="p in plans" :key="p.id" :value="p.id">{{ p.name }}（{{ p.role_label }} {{ p.duration_days }} 天 ¥{{ yuan(p.price_cents) }}）{{ p.listed ? '' : ' · 未上架' }}</option>
+        </select>
+        <label>实收（元）<input type="number" step="0.01" min="0" v-model.number="grant.amount" /></label>
+        <input v-model.trim="grant.channel" placeholder="收款渠道（微信/支付宝/转账）" />
+        <input v-model.trim="grant.note" placeholder="备注" />
+        <button class="btn primary" :disabled="!grant.plan_id">确认开通</button>
+        <button type="button" class="btn" @click="grantFor = null">取消</button>
+      </form>
       <div class="table-wrap"><table>
         <thead><tr><th>ID</th><th class="left">用户名</th><th>基础角色</th><th>会员角色</th><th>到期</th><th>生效角色</th><th>状态</th><th>操作</th></tr></thead>
         <tbody>
@@ -16,15 +31,70 @@
             <td>{{ u.member_expires_at ? date(u.member_expires_at) : '—' }}</td><td>{{ u.effective_role }}</td>
             <td>{{ u.disabled ? '已禁用' : '正常' }}</td>
             <td class="ops">
-              <select @change="setMember(u, $event.target.value)">
-                <option value="">设会员角色…</option>
-                <option v-for="r in roles" :key="r.name" :value="r.name">{{ r.label }}</option>
-              </select>
+              <button class="btn" v-if="u.base_role !== 'admin'" @click="openGrant(u)">开通/续期</button>
+              <button class="btn" v-if="u.member_role" @click="clearMember(u)">清除会员</button>
               <button class="btn" @click="patch(u, { disabled: !u.disabled })">{{ u.disabled ? '启用' : '禁用' }}</button>
               <button class="btn" @click="reset(u)">重置密码</button>
             </td>
           </tr>
         </tbody>
+      </table></div>
+    </div>
+
+    <div v-if="tab === 'plans'" class="panel">
+      <h2>套餐<small>新建默认未上架；已有开通记录的套餐只能下架不能删除</small></h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="left">名称</th><th>等级</th><th>天数</th><th>标价（元）</th><th>排序</th><th>上架</th><th class="left">说明</th><th></th></tr></thead>
+        <tbody><tr v-for="p in plans" :key="p.id">
+          <td class="left"><input v-model.trim="p.name" /></td>
+          <td><select v-model="p.role"><option v-for="r in sellable" :key="r.name" :value="r.name">{{ r.label }}</option></select></td>
+          <td><input type="number" min="1" v-model.number="p.duration_days" class="num" /></td>
+          <td><input type="number" min="0" step="0.01" :value="yuan(p.price_cents)" @change="p.price_cents = cents($event.target.value)" class="num" /></td>
+          <td><input type="number" v-model.number="p.sort" class="num" /></td>
+          <td><input type="checkbox" v-model="p.listed" /></td>
+          <td class="left"><input v-model.trim="p.note" /></td>
+          <td class="ops"><button class="btn" @click="savePlan(p)">保存</button><button class="btn" @click="delPlan(p)">删除</button></td>
+        </tr></tbody>
+      </table></div>
+      <h3>新建套餐</h3>
+      <form class="row" @submit.prevent="createPlan">
+        <input v-model.trim="newPlan.name" placeholder="名称（如 VIP 月卡）" />
+        <select v-model="newPlan.role"><option v-for="r in sellable" :key="r.name" :value="r.name">{{ r.label }}</option></select>
+        <label>天数<input type="number" min="1" v-model.number="newPlan.duration_days" class="num" /></label>
+        <label>标价（元）<input type="number" min="0" step="0.01" v-model.number="newPlan.price" class="num" /></label>
+        <button class="btn">创建</button>
+      </form>
+      <h3>开通方式说明<small class="muted">（显示在会员套餐页，如客服微信号、付款后联系方式）</small></h3>
+      <form class="col" @submit.prevent="saveContact">
+        <textarea v-model="contact" rows="3" maxlength="500"></textarea>
+        <button class="btn">保存说明</button>
+      </form>
+    </div>
+
+    <div v-if="tab === 'grants'" class="panel">
+      <h2>开通记录<small>只追加不修改；记错请冲正</small></h2>
+      <form class="row" @submit.prevent="load">
+        <label>起<input type="date" v-model="gf.start_date" /></label>
+        <label>止<input type="date" v-model="gf.end_date" /></label>
+        <select v-model="gf.source"><option value="">全部来源</option><option value="admin">后台开通</option><option value="invite">邀请码</option></select>
+        <input v-model.trim="gf.username" placeholder="用户名" />
+        <button class="btn">查询</button>
+      </form>
+      <div class="grid" style="margin-bottom:12px">
+        <div class="stat"><div class="label">实收合计（元）</div><div class="value">{{ yuan(grants.total_cents) }}</div></div>
+        <div class="stat"><div class="label">记录数</div><div class="value">{{ grants.count }}</div></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>时间</th><th class="left">用户</th><th>来源</th><th class="left">套餐</th><th>等级</th><th>天数</th><th>到期（开通后）</th><th>金额（元）</th><th class="left">渠道</th><th class="left">备注</th><th class="left">操作人</th><th></th></tr></thead>
+        <tbody><tr v-for="g in grants.items" :key="g.id">
+          <td>{{ new Date(g.at * 1000).toLocaleString('zh-CN') }}</td><td class="left">{{ g.username }}</td>
+          <td>{{ SRC[g.source] || g.source }}</td><td class="left">{{ g.plan_name || '—' }}</td><td>{{ g.role || '—' }}</td>
+          <td>{{ g.days || '—' }}</td><td>{{ g.expires_after ? date(g.expires_after) : '—' }}</td>
+          <td :class="g.amount_cents < 0 ? 'fall' : ''">{{ yuan(g.amount_cents) }}</td>
+          <td class="left">{{ g.channel === 'correction' ? `冲正 #${g.ref_id}` : (g.channel || '—') }}</td>
+          <td class="left">{{ g.note || '—' }}</td><td class="left">{{ g.actor }}</td>
+          <td><button class="btn" v-if="g.channel !== 'correction'" @click="correct(g)">冲正</button></td>
+        </tr></tbody>
       </table></div>
     </div>
 
@@ -87,7 +157,9 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { api } from '../auth'
 
-const tabs = [{ k: 'users', l: '用户' }, { k: 'roles', l: '角色权限' }, { k: 'invites', l: '邀请码' }, { k: 'audit', l: '审计' }]
+const tabs = [{ k: 'users', l: '用户' }, { k: 'plans', l: '套餐' }, { k: 'grants', l: '开通记录' }, { k: 'roles', l: '角色权限' },
+  { k: 'invites', l: '邀请码' }, { k: 'audit', l: '审计' }]
+const SRC = { admin: '后台开通', invite: '邀请码', payment: '在线支付' }
 const tab = ref('users')
 const msg = ref('')
 const users = ref([])
@@ -100,6 +172,17 @@ const newCodes = ref([])
 const newRole = reactive({ name: '', label: '' })
 const inv = reactive({ role: 'vip', duration_days: 30, count: 1, max_uses: 1, note: '' })
 const date = (t) => new Date(t * 1000).toLocaleDateString('zh-CN')
+const yuan = (c) => ((c || 0) / 100).toFixed(2)
+const cents = (v) => Math.round(Number(v || 0) * 100)
+const expiringOnly = ref(false)
+const plans = ref([])
+const contact = ref('')
+const newPlan = reactive({ name: '', role: 'vip', duration_days: 30, price: 0 })
+const grantFor = ref(null)
+const grant = reactive({ plan_id: null, amount: 0, channel: '', note: '' })
+const grants = ref({ items: [], total_cents: 0, count: 0 })
+const gf = reactive({ start_date: '', end_date: '', source: '', username: '' })
+const sellable = computed(() => roles.value.filter((r) => r.name !== 'admin' && r.name !== 'free'))
 const permLabel = {
   'page.overview': '市场总览', 'page.participation': '参与度与资金环境', 'page.industries': '行业比较与轮动',
   'page.themes': '题材与涨跌结构', 'page.history': '历史复盘', 'page.calendar': '事件日历',
@@ -115,7 +198,23 @@ async function load() {
     const r = await api('GET', '/api/v1/admin/roles')
     if (r.ok) { roles.value = r.data.items; allPerms.value = r.data.all_permissions; numeric.value = r.data.numeric }
   }
-  if (tab.value === 'users') { const r = await api('GET', '/api/v1/admin/users'); if (r.ok) users.value = r.data.items }
+  if (tab.value === 'users') {
+    const r = await api('GET', `/api/v1/admin/users${expiringOnly.value ? '?expiring_within_days=7' : ''}`)
+    if (r.ok) users.value = r.data.items
+  }
+  if (tab.value === 'users' || tab.value === 'plans') {
+    const r = await api('GET', '/api/v1/admin/plans')
+    if (r.ok) { plans.value = r.data.items; contact.value = r.data.contact_text }
+  }
+  if (tab.value === 'plans') {
+    const r = await api('GET', '/api/v1/admin/roles')
+    if (r.ok) roles.value = r.data.items
+  }
+  if (tab.value === 'grants') {
+    const qs = new URLSearchParams(Object.entries(gf).filter(([, v]) => v))
+    const r = await api('GET', `/api/v1/admin/grants${qs.toString() ? `?${qs}` : ''}`)
+    if (r.ok) grants.value = r.data
+  }
   if (tab.value === 'invites') { const r = await api('GET', '/api/v1/admin/invites'); if (r.ok) invites.value = r.data.items }
   if (tab.value === 'audit') { const r = await api('GET', '/api/v1/admin/audit'); if (r.ok) audit.value = r.data.items }
 }
@@ -124,11 +223,48 @@ async function patch(u, body) {
   msg.value = r.ok ? '已更新' : (r.data.detail || '失败')
   load()
 }
-async function setMember(u, role) {
-  if (!role) return
-  const days = Number(window.prompt('会员有效天数', '30'))
-  if (!days) return
-  await patch(u, { member_role: role, member_expires_at: Date.now() / 1000 + days * 86400 })
+// 开通统一走 grant 接口, 保证每次开通都有金额记录
+function openGrant(u) { grantFor.value = u; Object.assign(grant, { plan_id: null, amount: 0, channel: '', note: '' }) }
+function fillAmount() { const p = plans.value.find((x) => x.id === grant.plan_id); if (p) grant.amount = p.price_cents / 100 }
+async function doGrant() {
+  const r = await api('POST', `/api/v1/admin/users/${grantFor.value.id}/grant`, {
+    plan_id: grant.plan_id, amount_cents: cents(grant.amount), channel: grant.channel, note: grant.note })
+  msg.value = r.ok ? `已开通：${r.data.role_label}，到期 ${date(r.data.member_expires_at)}` : (r.data.detail || '失败')
+  if (r.ok) { grantFor.value = null; load() }
+}
+async function clearMember(u) {
+  if (!window.confirm(`清除 ${u.username} 的会员（立即恢复为基础角色）？`)) return
+  await patch(u, { clear_member: true })
+}
+async function createPlan() {
+  const r = await api('POST', '/api/v1/admin/plans', { name: newPlan.name, role: newPlan.role,
+    duration_days: newPlan.duration_days, price_cents: cents(newPlan.price) })
+  msg.value = r.ok ? '已创建（未上架，勾选上架后保存才对用户可见）' : (r.data.detail || '失败')
+  load()
+}
+async function savePlan(p) {
+  const r = await api('PUT', `/api/v1/admin/plans/${p.id}`, p)
+  msg.value = r.ok ? '套餐已保存' : (r.data.detail || '失败')
+  load()
+}
+async function delPlan(p) {
+  if (!window.confirm(`删除套餐 ${p.name}？`)) return
+  const r = await api('DELETE', `/api/v1/admin/plans/${p.id}`)
+  msg.value = r.ok ? '已删除' : (r.data.detail || '失败')
+  load()
+}
+async function saveContact() {
+  const r = await api('PUT', '/api/v1/admin/plan-contact', { text: contact.value })
+  msg.value = r.ok ? '开通方式说明已保存' : (r.data.detail || '失败')
+}
+async function correct(g) {
+  const amt = window.prompt(`冲正记录 #${g.id}：输入冲正金额（元，可为负数，如 -900）`)
+  if (!amt) return
+  const note = window.prompt('冲正说明（必填）')
+  if (!note) return
+  const r = await api('POST', `/api/v1/admin/grants/${g.id}/correction`, { amount_cents: cents(amt), note })
+  msg.value = r.ok ? '已追加冲正记录' : (r.data.detail || '失败')
+  load()
 }
 async function reset(u) {
   if (!window.confirm(`重置 ${u.username} 的密码？`)) return
@@ -166,6 +302,9 @@ onMounted(load)
 .perms { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 8px 0; font-size: 13px; }
 .perms input[type=number] { width: 70px; margin-left: 6px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; margin-bottom: 12px; }
+.grant { background: #f6f8fb; padding: 10px; border-radius: 6px; }
+.num { width: 90px; }
+.col { display: grid; gap: 8px; max-width: 520px; }
 .codes { background: #f1f4f8; padding: 10px; border-radius: 6px; font-family: var(--mono); }
 input, select { padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; }
 </style>

@@ -15,27 +15,35 @@
     <div v-if="loading" class="empty-state">加载中…</div>
     <div v-else-if="isError" class="banner error">
       <span>{{ errorText }}</span>
-      <button class="btn" @click="$emit('retry')">重试</button>
+      <router-link v-if="env.status === 'forbidden'" class="btn" to="/plans">查看会员套餐</router-link>
+      <router-link v-else-if="env.status === 'unauthorized'" class="btn" to="/login">重新登录</router-link>
+      <button v-else class="btn" @click="$emit('retry')">重试</button>
     </div>
-    <div v-else-if="env.status === 'empty'" class="empty-state">所选日期没有可用数据。</div>
+    <div v-else-if="env.status === 'empty'" class="empty-state">
+      <p>{{ env.trade_date ? `${env.trade_date} 的数据暂缺（上游数据维护中）` : '暂无可用数据（上游数据维护中）' }}</p>
+      <button v-if="canJump" class="btn" @click="$emit('jump', env.latest_available_date)">
+        查看最近有数据的交易日 {{ env.latest_available_date }}
+      </button>
+    </div>
     <template v-else>
+      <div v-if="env.status === 'partial' && gapItems.length" class="banner fixture">部分内容暂缺：{{ gapItems.join('、') }}。其余内容正常展示。</div>
       <slot />
     </template>
 
-    <div v-if="!loading && env.gaps && env.gaps.length" class="panel">
-      <h2>未提供或不完整的内容</h2>
+    <details v-if="!loading && env.gaps && env.gaps.length" class="panel fold">
+      <summary>未提供或不完整的内容（{{ env.gaps.length }}）</summary>
       <ul class="gaps">
-        <li v-for="g in env.gaps" :key="g.content_id + g.reason">{{ g.content_id }} {{ g.item }}：{{ g.reason }}</li>
+        <li v-for="(g, i) in env.gaps" :key="i">{{ g.item }}：{{ g.reason }}</li>
       </ul>
-    </div>
+    </details>
 
-    <div v-if="!loading && env.sources && env.sources.length" class="panel">
-      <h2>数据来源与覆盖</h2>
+    <details v-if="!loading && env.sources && env.sources.length" class="panel fold">
+      <summary>数据来源与覆盖</summary>
       <div class="table-wrap"><table>
-        <thead><tr><th>服务</th><th>数据日</th><th>快照时间</th><th>覆盖率</th><th class="left">缺失来源</th></tr></thead>
+        <thead><tr><th class="left">数据</th><th>数据日</th><th>快照时间</th><th>覆盖率</th><th class="left">缺失来源</th></tr></thead>
         <tbody>
           <tr v-for="s in env.sources" :key="s.service_key">
-            <td>{{ s.service_key }}</td>
+            <td class="left">{{ SERVICE_NAMES[s.service_key] || '其他数据' }}</td>
             <td>{{ s.source_date || '无该日数据' }}</td>
             <td>{{ s.snapshot_time || '—' }}</td>
             <td>{{ fmt.ratio(s.coverage_ratio) }}</td>
@@ -43,7 +51,7 @@
           </tr>
         </tbody>
       </table></div>
-    </div>
+    </details>
 
     <footer class="footer">{{ DISCLAIMER }}</footer>
   </section>
@@ -51,7 +59,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { fmt } from '../api'
+import { fmt, SERVICE_NAMES } from '../api'
 
 const DISCLAIMER = '本平台仅提供证券信息汇总与历史数据统计，不构成任何证券投资建议。'
 const props = defineProps({
@@ -60,19 +68,21 @@ const props = defineProps({
   env: { type: Object, default: () => ({}) },
   loading: Boolean,
 })
-defineEmits(['retry'])
+defineEmits(['retry', 'jump'])
 
 const LABELS = {
-  ok: '数据完整', partial: '部分缺失', empty: '无数据', not_connected: '数据待接入',
+  ok: '数据完整', partial: '部分缺失', empty: '数据暂缺', not_connected: '数据待接入',
   upstream_error: '数据服务不可用', server_error: '服务错误', unauthorized: '未登录', forbidden: '权限不足',
   rate_limited: '请求过于频繁',
 }
 const statusLabel = computed(() => LABELS[props.env.status] || props.env.status)
 const isError = computed(() => ['upstream_error', 'server_error', 'unauthorized', 'forbidden', 'rate_limited'].includes(props.env.status))
 const errorText = computed(() => ({
-  upstream_error: '数据服务暂不可用，未展示任何数值。',
+  upstream_error: '数据服务暂时不可用，请稍后重试。',
   unauthorized: '登录已失效，请重新登录。',
-  forbidden: props.env.detail || '当前账号权限不足，该内容需要更高等级。可在“我的账号”使用邀请码升级。',
-  rate_limited: props.env.detail || '请求过于频繁，请稍后再试。',
-}[props.env.status] || '服务出现错误，未展示任何数值。'))
+  forbidden: props.env.detail || '当前等级无法查看该内容。',
+  rate_limited: '请求过于频繁，请稍后再试。',
+}[props.env.status] || '服务出现错误，请稍后重试。'))
+const canJump = computed(() => props.env.latest_available_date && props.env.latest_available_date !== props.env.trade_date)
+const gapItems = computed(() => [...new Set((props.env.gaps || []).map((g) => g.item).filter(Boolean))])
 </script>

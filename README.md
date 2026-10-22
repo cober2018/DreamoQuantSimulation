@@ -28,13 +28,14 @@ openspec/                规格与变更
 
 与旧平台**零代码引用**：唯一依赖是数据中台的 HTTP 接口 `GET /api/v1/data/apis/{service_key}/records`。
 
-## 已完成（2026-10-15 五期）
+## 已完成（2026-10-22 六期）
 
 | 期 | 提案 | 内容 | 状态 |
 |---|---|---|---|
 | 三 | `integrate-insight-live-api-and-recompose-pages-v1` | 改接数据中台带 Key 的 API；补齐参与观察/题材/股票池结构/Open5 四条内容；主题对照表 `docs/theme-parity-matrix.md`；服务端缓存与日期区间降级 | 本地完成；数据中台已发布，生产实连 6/6 页通过 |
 | 四 | `add-insight-access-control-v1` | 免费/VIP/SVIP/管理员，管理员可自定义角色与权限点；邀请码兑换（无支付）；argon2id、短期令牌 + 可轮换刷新令牌；请求签名防重放、限流与异常封禁、水印；生产构建混淆并扫描 | 本地完成并验证 |
 | 五 | `add-insight-wechat-miniprogram-v1` | uni-app 小程序（总览/情绪资金/行业/题材/我的）；微信登录接入点；邀请码兑换与账号绑定 | 编译通过；已在微信开发者工具模拟器（测试号）实操通过，证据 `docs/evidence/sim-*.png` |
+| 六 | `launch-membership-ops-and-page-polish-v1` | 会员运营（线下收款）：套餐、后台按套餐开通/续期、开通记录与实收合计、冲正、到期提醒；会员页面锁定预告；缺数据日如实标注并可跳到最近有数据日；Web 与小程序逐页优化；上线清单 `docs/launch-checklist.md` | 本地完成并验证；真实上游 10-21 缺数据实测待做 |
 
 追加（2026-10-15 二轮，10 条待定内容收敛，见 `docs/theme-parity-matrix.md`）：
 
@@ -54,16 +55,22 @@ openspec/                规格与变更
 | 题材与涨跌结构 | `/api/v1/themes`（封板时间分布需 data.detail） | page.themes |
 | 历史复盘 | `/api/v1/history` | page.history |
 | 事件日历 | `/api/v1/calendar` | page.calendar |
+| 会员套餐 | `/api/v1/plans`（已上架套餐与开通方式说明） | 登录即可 |
 | 账号 | `/api/v1/auth/{register,login,refresh,logout,me,change-password,wechat,wechat/bind}`、`/api/v1/invite/redeem` | — |
-| 管理 | `/api/v1/admin/{users,roles,invites,audit,redemptions}` | admin.console |
+| 管理 | `/api/v1/admin/{users,roles,invites,audit,redemptions,plans,plan-contact,grants}`、`/admin/users/{id}/grant`、`/admin/grants/{id}/correction` | admin.console |
 
-验证（`scripts/sandbox/`）：`2026-10-14_verify_insight_api.py` 49/49；`2026-10-15_verify_insight_access.py` 64/64。截图证据 `docs/evidence/`。
+会员开通规则：后台开通、邀请码兑换（以及将来的支付回调）统一走 `grant_membership`，都写 `membership_grants`（只追加，记错用冲正）。同等级续期从原到期日顺延；升级从今天算；后台降级会被拒绝（409）。新建套餐默认不上架。
+缺数据：所选日期上游没有数据时返回 `status=empty` 和 `latest_available_date`，页面显示"数据暂缺"和跳转按钮，不拿其他日期冒充。
+
+验证（`scripts/sandbox/`）：`2026-10-14_verify_insight_api.py` 52/52；`2026-10-15_verify_insight_access.py` 84/84。截图证据 `docs/evidence/`。
 
 ## 目录补充
 
 ```
 backend/insight_api/access/   账号权限：store(SQLite) / security / service / gate / guard / routes
 web/src/{auth.js,pages/Login|Account|Admin|Terms.vue}   登录、签名请求、账号、管理后台
+web/src/{pageCatalog.js,pages/Plans|Locked.vue,components/DateTag.vue}   套餐页、锁定预告、分区数据日标注
+docs/launch-checklist.md      上线检查清单
 web/scripts/{obfuscate,scan-dist}.mjs                   生产构建混淆与产物扫描
 miniprogram/                  uni-app 小程序 (npm run build:mp-weixin | build:h5)
 docs/goals/2026-10-15_five-phase-goal.md  五期目标与提案索引
@@ -85,6 +92,9 @@ cd miniprogram && VITE_H5_MOCK_CODE=mock:h5demo npm run build:h5 && npx vite pre
 ```
 
 ## TODO
+
+- **上线前**：按 `docs/launch-checklist.md` 逐项完成，特别是主体资质、协议退款条款、HTTPS 备案域名；之后在后台填写套餐价格和客服联系方式，再上架。
+- 数据中台改造完成后，用真实上游实测 2026-10-21 的缺数据显示（本地已用夹具验证）。
 
 - **生产收尾**：存量 Key 标记、签发收窄范围的新平台 Key 并吊销开发 Key、删除生产备份表（远程写操作需用户放行或自行执行）；次日核对 22:10 三个任务自然运行。
 - 微信开发者工具模拟器验证已完成（测试号；证据 `docs/evidence/sim-*.png`）；真机预览/上传仍需资质（企业主体、金融类目）、HTTPS 备案域名、合法域名配置、用户协议正式文本。

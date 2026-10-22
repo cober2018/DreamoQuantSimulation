@@ -1,5 +1,5 @@
 <template>
-  <StateView :state="state" :detail="detail" @retry="load">
+  <StateView :state="state" :detail="detail" :env="env" perm="page.industries" @retry="load">
     <view class="card">
       <view class="card-title">行业涨幅</view>
       <view class="card-sub">{{ env?.trade_date }} · 共 {{ items.length }} 个行业，仅展示前后各 {{ N }} 名</view>

@@ -88,6 +88,7 @@ def envelope(
     sources: Optional[List[Dict[str, Any]]] = None,
     gaps: Optional[List[Dict[str, Any]]] = None,
     data: Optional[Dict[str, Any]] = None,
+    latest_available_date: Optional[str] = None,
 ) -> Dict[str, Any]:
     assert_delivered(content_ids)
     body = {
@@ -101,6 +102,8 @@ def envelope(
         "data": data or {},
         "disclaimer": DISCLAIMER,
     }
+    if status == "empty":
+        body["latest_available_date"] = latest_available_date
     scan_forbidden_keys(body)
     return body
 

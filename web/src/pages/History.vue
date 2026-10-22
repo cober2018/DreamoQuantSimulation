@@ -1,5 +1,5 @@
 <template>
-  <PageFrame title="历史复盘" question="某一天的数据和历史对比是什么？" :env="env" :loading="loading" @retry="load">
+  <PageFrame title="历史复盘" question="某一天的数据和历史对比是什么？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools>
       <div class="seg">
         <button v-for="t in IDX_TYPES" :key="t" :class="{ on: idxType === t }" @click="idxType = t">{{ t }}</button>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="panel" v-if="open5">
-      <h2>开盘 5 分钟统计（Open5）<small>全市场，{{ open5.trade_date }}，数据状态 {{ open5.data_status }}</small></h2>
+      <h2>开盘 5 分钟统计（Open5）<small>全市场</small><DateTag :date="open5.trade_date" :page-date="env.trade_date" /></h2>
       <div class="grid">
         <div class="stat"><div class="label">覆盖率</div><div class="value">{{ fmt.ratio(open5.coverage_ratio) }}</div>
           <div class="sub">{{ fmt.num(open5.open5_ready_count, 0) }} / {{ fmt.num(open5.expected_stock_count, 0) }}</div></div>
@@ -56,6 +56,7 @@ import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import { fmt } from '../api'
 import { useModule } from '../useModule'
+import DateTag from '../components/DateTag.vue'
 
 const IDX_TYPES = ['行业板块', '概念板块', '地域板块']
 const PERIODS = [{ v: '1d', l: '1 日' }, { v: '5d', l: '5 日' }, { v: '20d', l: '20 日' }]

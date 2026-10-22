@@ -6,15 +6,17 @@
       <div class="grid">
         <div class="stat"><div class="label">用户名</div><div class="value">{{ u.username }}</div></div>
         <div class="stat"><div class="label">当前等级</div><div class="value">{{ u.role_label }}</div>
-          <div class="sub" v-if="u.member_expires_at">到期 {{ date(u.member_expires_at) }}</div></div>
+          <div class="sub" v-if="u.member_expires_at">到期 {{ date(u.member_expires_at) }}（剩 {{ leftDays }} 天）</div></div>
         <div class="stat"><div class="label">可查看历史</div><div class="value">{{ u.history_days }} 个交易日</div></div>
       </div>
       <p class="banner info" v-if="u.must_change_password">请先修改初始/临时密码，否则无法访问数据页面。</p>
+      <p v-if="leftDays !== null && leftDays <= 7" class="banner fixture">会员将于 {{ leftDays }} 天后到期，续期请查看会员套餐。</p>
+      <router-link class="btn primary" to="/plans">{{ u.member_expires_at ? '续期 / 升级' : '开通会员' }}</router-link>
     </div>
 
     <div class="panel">
       <h2>邀请码兑换</h2>
-      <p class="muted">本站不提供付款入口，VIP / SVIP 通过邀请码获得。</p>
+      <p class="muted">已获得邀请码可在此兑换；付费开通请查看<router-link to="/plans">会员套餐</router-link>。</p>
       <form class="row" @submit.prevent="redeem">
         <input v-model.trim="code" placeholder="XXXX-XXXX-XXXX" />
         <button class="btn" :disabled="!code">兑换</button>
@@ -50,6 +52,8 @@ const oldPw = ref('')
 const newPw = ref('')
 const pwMsg = ref('')
 const date = (t) => new Date(t * 1000).toLocaleDateString('zh-CN')
+const leftDays = computed(() => (u.value.member_expires_at
+  ? Math.max(0, Math.ceil((u.value.member_expires_at * 1000 - Date.now()) / 86400000)) : null))
 
 async function redeem() {
   const r = await api('POST', '/api/v1/invite/redeem', { code: code.value })

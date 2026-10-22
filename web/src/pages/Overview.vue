@@ -1,5 +1,5 @@
 <template>
-  <PageFrame title="市场总览" question="今天市场发生了什么？" :env="env" :loading="loading" @retry="load">
+  <PageFrame title="市场总览" question="今天市场发生了什么？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools><input type="date" v-model="tradeDate" aria-label="交易日" /></template>
     <div class="grid">
       <div class="stat">
@@ -18,6 +18,15 @@
       <h2>涨跌家数分布</h2>
       <EChart :option="breadthOption" height="90px" />
     </div>
+    <div class="panel" style="margin-top:16px">
+      <h2>更多数据</h2>
+      <div class="grid">
+        <router-link v-for="p in more" :key="p.key" :to="p.path" class="stat more">
+          <div class="label">{{ p.title }}<span v-if="!can(p.perm)" class="badge lock">🔒 {{ session.user?.perm_min_role?.[p.perm] || '会员' }}</span></div>
+          <div class="sub">{{ p.question }}</div>
+        </router-link>
+      </div>
+    </div>
   </PageFrame>
 </template>
 
@@ -27,6 +36,10 @@ import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import { fmt } from '../api'
 import { useModule } from '../useModule'
+import { can, session } from '../auth'
+import { PAGES } from '../pageCatalog'
+
+const more = PAGES.filter((p) => p.key !== 'overview')
 
 const tradeDate = ref('')
 const { env, loading, load } = useModule('overview', () => ({ trade_date: tradeDate.value }))
@@ -42,3 +55,9 @@ const breadthOption = computed(() => ({
   ],
 }))
 </script>
+
+<style scoped>
+.more { display: block; color: var(--text); }
+.more:hover { border-color: var(--accent); }
+.more .badge { margin-left: 6px; }
+</style>

@@ -1,9 +1,9 @@
 <template>
-  <PageFrame title="参与度与资金环境" question="参与和资金结构相对历史怎样变化？" :env="env" :loading="loading" @retry="load">
+  <PageFrame title="参与度与资金环境" question="参与和资金结构相对历史怎样变化？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools><input type="date" v-model="tradeDate" aria-label="交易日" /></template>
 
     <div class="panel" v-if="obs">
-      <h2>市场参与与卖压<small>原始统计，数据日 {{ obs.trade_date }}</small></h2>
+      <h2>市场参与与卖压<small>原始统计</small><DateTag :date="obs.trade_date" :page-date="env.trade_date" /></h2>
       <div class="grid">
         <div class="stat"><div class="label">全市场成交额</div><div class="value">{{ fmt.num(obs.total_amount_billion, 0) }} 亿元</div><div class="sub">{{ fmt.num(obs.count_stocks, 0) }} 只股票</div></div>
         <div class="stat"><div class="label">成交额 / 前 20 日中位数</div><div class="value">{{ fmt.num(obs.amount_ratio_20d, 2) }} 倍</div></div>
@@ -15,7 +15,7 @@
         <div class="stat"><div class="label">卖出占比 3 日趋势</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
         <div class="stat"><div class="label">委托失衡</div><div class="value">{{ fmt.signed(obs.order_imbalance, 3) }}</div><div class="sub">1 日变化 {{ fmt.signed(obs.order_imbalance_delta_1d, 3) }}</div></div>
       </div>
-      <p class="note">分位为相对此前历史窗口的位置，只描述历史相对水平，不是概率或参与人数比例；数据状态 {{ obs.data_status }}。</p>
+      <p class="note">分位为相对此前历史窗口的位置，只描述历史相对水平，不是概率或参与人数比例。</p>
     </div>
 
     <div class="panel">
@@ -48,18 +48,18 @@
         <div class="stat"><div class="label">封板率</div><div class="value">{{ fmt.ratio(lu.seal_rate) }}</div></div>
         <div class="stat"><div class="label">连板股数</div><div class="value">{{ fmt.num(lu.consecutive_board_count, 0) }}</div></div>
         <div class="stat"><div class="label">最高连板天数</div><div class="value">{{ fmt.num(lu.max_consecutive_days, 0) }}</div></div>
-        <div class="stat"><div class="label">首板溢价</div><div :class="['value', fmt.dir(lu.first_board_premium)]">{{ fmt.signed(lu.first_board_premium) }}%</div></div>
+        <div class="stat"><div class="label">首板溢价</div><div :class="['value', fmt.dir(lu.first_board_premium)]">{{ fmt.signedPct(lu.first_board_premium) }}</div></div>
         <div class="stat"><div class="label">回封率</div><div class="value">{{ fmt.ratio(lu.broken_repair_rate) }}</div></div>
       </div>
       <p class="note">{{ lu.note }}</p>
     </div>
 
     <div class="panel" v-if="sm">
-      <h2>聪明钱五因子<small>截面统计，数据日 {{ sm.trade_date || '—' }} · 模型 {{ sm.model_version || '—' }}</small></h2>
+      <h2>聪明钱五因子<small>截面统计 · 模型 {{ sm.model_version || '—' }}</small><DateTag :date="sm.trade_date" :page-date="env.trade_date" /></h2>
       <div class="grid">
         <div class="stat" v-for="f in sm.factors" :key="f.key">
           <div class="label">{{ f.label }}</div>
-          <div :class="['value', fmt.dir(f.net_breadth_pct)]">{{ fmt.signed(f.net_breadth_pct) }}%</div>
+          <div :class="['value', fmt.dir(f.net_breadth_pct)]">{{ fmt.signedPct(f.net_breadth_pct) }}</div>
           <div class="sub">偏多 {{ fmt.ratio(f.pos_share) }} / 偏空 {{ fmt.ratio(f.neg_share) }}</div>
         </div>
       </div>
@@ -67,7 +67,7 @@
     </div>
 
     <div class="panel" v-if="styleData">
-      <h2>风格相对强度<small>阵营历史序列，非当前风格选择建议 · 数据日 {{ styleCamps[0]?.source_date || '—' }}</small></h2>
+      <h2>风格相对强度<small>阵营历史序列，非当前风格选择建议</small><DateTag :date="styleCamps[0]?.source_date" :page-date="env.trade_date" /></h2>
       <div class="table-wrap">
         <table>
           <thead><tr><th class="left">阵营</th><th class="left">代表指数</th><th>当日强度分</th><th>z 分（20 日）</th></tr></thead>
@@ -86,7 +86,7 @@
     </div>
 
     <div class="panel" v-if="bc">
-      <h2>底部条件观察<small>样本 {{ fmt.num(bc.history_obs, 0) }} 个交易日 · 数据状态 {{ bc.data_status || '—' }}</small></h2>
+      <h2>底部条件观察<small>样本 {{ fmt.num(bc.history_obs, 0) }} 个交易日</small></h2>
       <div class="grid">
         <div class="stat" v-for="c in bc.conditions" :key="c.key">
           <div class="label">{{ c.label }}</div>
@@ -126,6 +126,7 @@
 import { computed, ref } from 'vue'
 import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
+import DateTag from '../components/DateTag.vue'
 import { fmt } from '../api'
 import { useModule } from '../useModule'
 

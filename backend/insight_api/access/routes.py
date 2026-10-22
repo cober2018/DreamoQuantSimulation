@@ -75,6 +75,46 @@ class InviteIn(BaseModel):
     note: str = ""
 
 
+class PlanIn(BaseModel):
+    name: str
+    role: str
+    duration_days: int
+    price_cents: int
+    listed: bool = False
+    sort: int = 0
+    note: str = ""
+
+
+class GrantIn(BaseModel):
+    plan_id: Optional[int] = None
+    role: Optional[str] = None
+    days: Optional[int] = None
+    amount_cents: int = 0
+    channel: str = ""
+    note: str = ""
+
+
+class CorrectionIn(BaseModel):
+    amount_cents: int
+    note: str
+
+
+class ContactIn(BaseModel):
+    text: str = ""
+
+
+def _day_start(date_str: Optional[str], plus_days: int = 0) -> Optional[float]:
+    if not date_str:
+        return None
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+    except ValueError:
+        raise HTTPException(422, "日期格式应为 YYYY-MM-DD")
+    return (d + timedelta(days=plus_days)).timestamp()
+
+
 def _err(e: AccessError) -> HTTPException:
     return HTTPException(e.status, e.detail, headers=e.headers or None)
 
@@ -242,10 +282,75 @@ def build_router(access: AccessService, gate: Gate, settings) -> APIRouter:
             raise HTTPException(403, "无权访问")
         return p
 
+    @r.get("/plans")
+    def plans(request: Request):
+        gate.principal(request, require_signature=False)
+        return {"items": access.list_plans(listed_only=True), "contact_text": access.plan_contact_text()}
+
     @r.get("/admin/users")
-    def admin_users(request: Request):
+    def admin_users(request: Request, expiring_within_days: Optional[int] = None):
         admin(request)
-        return {"items": access.list_users()}
+        return {"items": access.list_users(expiring_within_days=expiring_within_days)}
+
+    @r.post("/admin/users/{user_id}/grant")
+    def admin_grant(user_id: int, body: GrantIn, request: Request):
+        p = admin(request)
+        try:
+            return access.grant_membership(user_id, p.username, **body.model_dump())
+        except AccessError as e:
+            raise _err(e)
+
+    @r.get("/admin/plans")
+    def admin_plans(request: Request):
+        admin(request)
+        return {"items": access.list_plans(), "contact_text": access.plan_contact_text()}
+
+    @r.post("/admin/plans")
+    def admin_plan_create(body: PlanIn, request: Request):
+        p = admin(request)
+        try:
+            return {"id": access.save_plan(None, body.model_dump(), p.username), "detail": "新套餐默认未上架"}
+        except AccessError as e:
+            raise _err(e)
+
+    @r.put("/admin/plans/{plan_id}")
+    def admin_plan_update(plan_id: int, body: PlanIn, request: Request):
+        p = admin(request)
+        try:
+            access.save_plan(plan_id, body.model_dump(), p.username)
+        except AccessError as e:
+            raise _err(e)
+        return {"ok": True}
+
+    @r.delete("/admin/plans/{plan_id}")
+    def admin_plan_delete(plan_id: int, request: Request):
+        p = admin(request)
+        try:
+            access.delete_plan(plan_id, p.username)
+        except AccessError as e:
+            raise _err(e)
+        return {"ok": True}
+
+    @r.put("/admin/plan-contact")
+    def admin_plan_contact(body: ContactIn, request: Request):
+        p = admin(request)
+        access.set_plan_contact_text(body.text, p.username)
+        return {"ok": True}
+
+    @r.get("/admin/grants")
+    def admin_grants(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None,
+                     source: Optional[str] = None, username: Optional[str] = None):
+        admin(request)
+        return access.list_grants(_day_start(start_date), _day_start(end_date, 1), source or None, username or None)
+
+    @r.post("/admin/grants/{grant_id}/correction")
+    def admin_grant_correction(grant_id: int, body: CorrectionIn, request: Request):
+        p = admin(request)
+        try:
+            access.correct_grant(grant_id, body.amount_cents, body.note, p.username)
+        except AccessError as e:
+            raise _err(e)
+        return {"ok": True}
 
     @r.patch("/admin/users/{user_id}")
     def admin_user_patch(user_id: int, body: UserPatchIn, request: Request):

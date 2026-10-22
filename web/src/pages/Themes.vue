@@ -1,9 +1,9 @@
 <template>
-  <PageFrame title="题材与涨跌结构" question="当日涨停、炸板、跌停如何分布？" :env="env" :loading="loading" @retry="load">
+  <PageFrame title="题材与涨跌结构" question="当日涨停、炸板、跌停如何分布？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools><input type="date" v-model="tradeDate" aria-label="交易日" /></template>
 
     <div class="panel" v-if="st">
-      <h2>涨跌停结构<small>来自股票池统计，{{ env.trade_date }}</small></h2>
+      <h2>涨跌停结构<small>来自股票池统计</small></h2>
       <div class="grid">
         <div class="stat"><div class="label">涨停</div><div class="value">{{ fmt.num(st.limit_up_count, 0) }}</div></div>
         <div class="stat"><div class="label">炸板</div><div class="value">{{ fmt.num(st.broken_board_count, 0) }}</div></div>
@@ -28,7 +28,7 @@
       <div class="grid">
         <div class="stat" v-if="pools.high_recognition">
           <div class="label">高标认知池</div><div class="value">{{ fmt.num(pools.high_recognition.count, 0) }}</div>
-          <div class="sub">状态 {{ pools.high_recognition.status || '—' }} · 数据日 {{ pools.high_recognition.latest_date || '—' }}</div>
+          <div class="sub"><DateTag :date="pools.high_recognition.latest_date" :page-date="env.trade_date" /></div>
         </div>
         <div class="stat" v-for="(w, k) in pools.momentum_extreme || {}" :key="k">
           <div class="label">动量极端池（{{ w.window_days }} 日窗）</div><div class="value">{{ fmt.num(w.count, 0) }}</div>
@@ -57,13 +57,14 @@
               <td>{{ t.up_count }}</td>
               <td>{{ t.broken_count }}</td>
               <td>{{ t.highest_tier || '—' }}</td>
-              <td :class="fmt.dir(t.avg_return_pct)">{{ fmt.signed(t.avg_return_pct) }}%</td>
+              <td :class="fmt.dir(t.avg_return_pct)">{{ fmt.signedPct(t.avg_return_pct) }}</td>
               <td v-for="b in buckets" :key="b">{{ t.seal_time_buckets?.[b] || 0 }}</td>
             </tr>
           </tbody>
         </table>
       </div>
       <p v-else class="muted">当日没有进入题材榜的行业。</p>
+      <div v-if="env.data?.detail_locked" class="lock-card" style="margin-top:12px">封板时间分布属于下钻明细，需要 {{ session.user?.perm_min_role?.['data.detail'] || '更高等级' }}。<router-link to="/plans">查看会员套餐</router-link></div>
       <p class="note">封板时间为首次封板所在时间段的涨停只数；不展示个股名单、强度分与阶段判断。</p>
     </div>
   </PageFrame>
@@ -75,6 +76,8 @@ import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import { fmt } from '../api'
 import { useModule } from '../useModule'
+import DateTag from '../components/DateTag.vue'
+import { session } from '../auth'
 
 const tradeDate = ref('')
 const { env, loading, load } = useModule('themes', () => ({ trade_date: tradeDate.value }))

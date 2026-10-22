@@ -140,12 +140,23 @@ async def _optional_source(up: Upstream, service_key: str, trade_date: Optional[
                         missing_list(row.get("missing_sources_json")))
 
 
+async def _latest_date(up: Upstream, service_key: str, trade_date: Optional[str],
+                       params: Optional[Dict[str, str]] = None) -> Optional[str]:
+    """所选日无数据时取上游最新一行的日期, 供页面跳转; 只报日期, 不拿该行冒充所选日。"""
+    if not trade_date:
+        return None
+    res = await up.fetch(service_key, dict(params or {}), max_rows=1)
+    row = first(res.rows)
+    return str(row.get("trade_date"))[:10] if row and row.get("trade_date") else None
+
+
 async def overview(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
     ids = ["CNT-002", "CNT-004"]
     res = await up.fetch(INDUSTRY, {"trade_date": trade_date, "idx_type": "行业板块"}, max_rows=1)
     row = first(res.rows)
     if not row:
-        return envelope("overview", ids, up.data_mode, status="empty", trade_date=trade_date)
+        return envelope("overview", ids, up.data_mode, status="empty", trade_date=trade_date,
+                        latest_available_date=await _latest_date(up, INDUSTRY, trade_date, {"idx_type": "行业板块"}))
     gaps: List[Dict[str, Any]] = []
     up_n, down_n = to_int(row.get("market_ctx_up_count")), to_int(row.get("market_ctx_down_count"))
     total = (up_n or 0) + (down_n or 0)
@@ -257,7 +268,8 @@ async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, An
     row = first(res.rows)
     gaps: List[Dict[str, Any]] = []
     if not row:
-        return envelope("participation", ids, up.data_mode, status="empty", trade_date=trade_date, gaps=gaps)
+        return envelope("participation", ids, up.data_mode, status="empty", trade_date=trade_date, gaps=gaps,
+                        latest_available_date=await _latest_date(up, SENTIMENT, trade_date))
 
     blocks: Dict[str, Any] = {}
     for name, column, fields, cid in (
@@ -326,7 +338,8 @@ async def industries(up: Upstream, trade_date: Optional[str], idx_type: str) -> 
     ids = ["CNT-014", "CNT-015", "CNT-016", "CNT-020"]
     res = await _industry_rows(up, trade_date, idx_type)
     if not res.rows:
-        return envelope("industries", ids, up.data_mode, status="empty", trade_date=trade_date)
+        return envelope("industries", ids, up.data_mode, status="empty", trade_date=trade_date,
+                        latest_available_date=await _latest_date(up, INDUSTRY, trade_date, {"idx_type": idx_type}))
     items = [pick(r, INDUSTRY_FIELDS) for r in res.rows]
     items.sort(key=lambda x: (x["sector_return"] is None, -(x["sector_return"] or 0)))
     data = {"idx_type": idx_type, "idx_types": list(IDX_TYPES), "items": items, "units": FIELD_UNITS,
@@ -396,7 +409,8 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
     res = await up.fetch(THEME, {"trade_date": trade_date}, max_rows=1)
     row = first(res.rows)
     if not row:
-        return envelope("themes", ids, up.data_mode, status="empty", trade_date=trade_date)
+        return envelope("themes", ids, up.data_mode, status="empty", trade_date=trade_date,
+                        latest_available_date=await _latest_date(up, THEME, trade_date))
     td = str(row.get("trade_date"))[:10]
     gaps: List[Dict[str, Any]] = []
     sources = [source_entry(THEME, row, "snapshot_time", None, missing_list(row.get("missing_sources_json")))]
@@ -510,7 +524,8 @@ async def history(up: Upstream, trade_date: Optional[str], idx_type: str, period
     gaps: List[Dict[str, Any]] = []
     res = await _industry_rows(up, trade_date, idx_type)
     if not res.rows:
-        return envelope("history", ids, up.data_mode, status="empty", trade_date=trade_date, gaps=gaps)
+        return envelope("history", ids, up.data_mode, status="empty", trade_date=trade_date, gaps=gaps,
+                        latest_available_date=await _latest_date(up, INDUSTRY, trade_date, {"idx_type": idx_type}))
     flow_key = f"net_flow_{period}"
     items = [pick(r, ["sector_code", "sector_name", "sector_return", "amount", "di", "above_ma20_ratio",
                       "net_flow_1d", "net_flow_5d", "net_flow_20d"]) for r in res.rows]
@@ -551,7 +566,8 @@ async def calendar(up: Upstream, trade_date: Optional[str], days: int = 14) -> D
     res = await up.fetch(FORWARD, {"trade_date": trade_date}, max_rows=1)
     row = first(res.rows)
     if not row:
-        return envelope("calendar", ids, up.data_mode, status="empty", trade_date=trade_date)
+        return envelope("calendar", ids, up.data_mode, status="empty", trade_date=trade_date,
+                        latest_available_date=await _latest_date(up, FORWARD, trade_date))
     gaps: List[Dict[str, Any]] = []
     raw_events = parse_json(row.get("calendar_events_json"))
     if is_bad(raw_events) or (raw_events is not None and not isinstance(raw_events, list)):
