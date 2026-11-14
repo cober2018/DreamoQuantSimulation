@@ -327,7 +327,21 @@ def main():
               and body["user"]["client"] == "mp" and "refresh_token" in body)
         m = Client(tc); m.token, m.sk = body["access_token"], body["sign_key"]
         check("小程序令牌: 总览 200", m.get("/api/v1/overview").status_code == 200)
-        check("小程序令牌: 日历(不在小程序范围) 403", m.get("/api/v1/calendar").status_code == 403)
+        # add-miniprogram-history-calendar-v1：入口不再限制页面，只按角色权限
+        check("小程序令牌: 日历按角色权限 200", m.get("/api/v1/calendar").status_code == 200)
+        tc.post("/api/v1/auth/register", json={"username": "mpweb", "password": PW, "accept_terms": True})
+        w = Client(tc); w.login("mpweb", PW)
+        check("免费用户历史复盘：小程序与网页同为 403",
+              m.get("/api/v1/history").status_code == 403 and w.get("/api/v1/history").status_code == 403)
+        uid = body["user"].get("id") or body["user"].get("user_id")
+        import sqlite3
+        c = sqlite3.connect(os.environ["INSIGHT_DB_PATH"])
+        c.execute("UPDATE users SET base_role='svip' WHERE username=?", (body["user"]["username"],)); c.commit()
+        th = m.get("/api/v1/themes").json()
+        check("小程序 SVIP：历史复盘 200、题材含封板时间", m.get("/api/v1/history").status_code == 200
+              and not th["data"].get("detail_locked") and "seal_time_buckets" in th["data"], th["data"].get("detail_locked"))
+        code = (m.get("/api/v1/industries").json()["data"]["items"] or [{}])[0].get("sector_code")
+        check("小程序 SVIP：板块序列 200", m.get(f"/api/v1/industries/{code}/series?days=5").status_code == 200)
         check("未同意协议的微信首次登录被拒", tc.post("/api/v1/auth/wechat", json={"code": "mock:newbie"}).status_code == 422)
     verify_membership(TestClient)
     app = make_app()

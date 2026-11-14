@@ -13,11 +13,13 @@
     </view>
     <view class="foot">{{ DISCLAIMER }}</view>
   </StateView>
+  <MorePages />
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import StateView from '../../utils/StateView.vue'
+import MorePages from '../../utils/MorePages.vue'
 import { useData } from '../../utils/useData'
 import { num, ratio, dir } from '../../utils/fmt'
 import { DISCLAIMER } from '../../utils/config'

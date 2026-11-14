@@ -4,7 +4,9 @@
     { "path": "pages/mood/index", "style": { "navigationBarTitleText": "情绪与资金" } },
     { "path": "pages/industry/index", "style": { "navigationBarTitleText": "行业摘要" } },
     { "path": "pages/theme/index", "style": { "navigationBarTitleText": "题材摘要" } },
-    { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } }
+    { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } },
+    { "path": "pages/history/index", "style": { "navigationBarTitleText": "历史复盘" } },
+    { "path": "pages/calendar/index", "style": { "navigationBarTitleText": "事件日历" } }
   ],
   "tabBar": {
     "color": "#6b7484",

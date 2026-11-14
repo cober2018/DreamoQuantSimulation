@@ -36,6 +36,7 @@ openspec/                规格与变更
 | 四 | `add-insight-access-control-v1` | 免费/VIP/SVIP/管理员，管理员可自定义角色与权限点；邀请码兑换（无支付）；argon2id、短期令牌 + 可轮换刷新令牌；请求签名防重放、限流与异常封禁、水印；生产构建混淆并扫描 | 本地完成并验证 |
 | 五 | `add-insight-wechat-miniprogram-v1` | uni-app 小程序（总览/情绪资金/行业/题材/我的）；微信登录接入点；邀请码兑换与账号绑定 | 编译通过；已在微信开发者工具模拟器（测试号）实操通过，证据 `docs/evidence/sim-*.png` |
 | 六 | `launch-membership-ops-and-page-polish-v1` | 会员运营（线下收款）：套餐、后台按套餐开通/续期、开通记录与实收合计、冲正、到期提醒；会员页面锁定预告；缺数据日如实标注并可跳到最近有数据日；Web 与小程序逐页优化；上线清单 `docs/launch-checklist.md` | 本地完成并验证；真实上游 10-21 缺数据实测待做 |
+| 七 | `add-miniprogram-history-calendar-v1` | 小程序与网页同权限：删除入口层页面拦截；补历史复盘、事件日历两页（总览"更多数据"、我的"全部页面"进入）；题材封板时间分布、行业板块序列下钻 | 本地完成；模拟器走查证据 `docs/evidence/mp-sim-*.png` |
 
 追加（2026-10-15 二轮，10 条待定内容收敛，见 `docs/theme-parity-matrix.md`）：
 

@@ -16,7 +16,10 @@
       <view>请求过于频繁，请稍后再试</view>
       <view class="btn ghost" @click="$emit('retry')">重试</view>
     </view>
-    <view v-else-if="state === 'empty'" class="state">暂无可用数据（上游数据维护中），请稍后再看</view>
+    <view v-else-if="state === 'empty'" class="state">
+      <view>该日数据暂缺（上游数据维护中）</view>
+      <view v-if="jumpable && env && env.latest_available_date" class="btn ghost" @click="$emit('jump', env.latest_available_date)">查看最近有数据的交易日（{{ env.latest_available_date }}）</view>
+    </view>
     <view v-else-if="state === 'error'" class="state">
       <view>数据服务暂时不可用，请稍后重试</view>
       <view class="btn ghost" @click="$emit('retry')">重试</view>
@@ -38,9 +41,12 @@ const PREVIEW = {
   'page.participation': ['成交额及历史分位', '主动卖出占比', '股权风险溢价（ERP）', '涨停结构', '聪明钱五因子统计', '风格相对强度'],
   'page.industries': ['行业涨跌幅排名', '行业资金净流入排名'],
   'page.themes': ['涨停/炸板/跌停结构', '连板梯队', '题材榜'],
+  'page.history': ['板块结构统计', '开盘 5 分钟统计（Open5）', '板块资金净流入全量排行'],
+  'page.calendar': ['宏观事件日历', '前值、公布值与第三方市场预期'],
+  'data.detail': ['题材封板时间分布', '板块近 N 日序列'],
 }
-const props = defineProps({ state: String, detail: String, env: Object, perm: String })
-defineEmits(['retry'])
+const props = defineProps({ state: String, detail: String, env: Object, perm: String, jumpable: Boolean })
+defineEmits(['retry', 'jump'])
 const goMine = () => uni.switchTab({ url: '/pages/mine/index' })
 const preview = computed(() => PREVIEW[props.perm])
 const need = computed(() => session.user?.perm_min_role?.[props.perm] || '会员')

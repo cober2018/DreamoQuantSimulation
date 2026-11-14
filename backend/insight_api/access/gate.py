@@ -15,8 +15,6 @@ from .store import ALL_PERMS
 
 USER_PER_MIN, IP_PER_MIN = 120, 300
 BLOCK_SECONDS = 15 * 60
-# 小程序只展示部分数据: 不含历史复盘、事件日历全量与下钻明细
-MP_PAGES = {"page.overview", "page.participation", "page.industries", "page.themes"}
 
 
 def client_ip(request: Request) -> str:
@@ -100,8 +98,6 @@ class Gate:
     # ---- 权限 ----
     def require(self, request: Request, perm: str, *, signed: bool = True) -> Principal:
         p = self.principal(request, require_signature=signed)
-        if p.client == "mp" and perm in {x for x in ALL_PERMS if x.startswith("page.")} and perm not in MP_PAGES:
-            raise HTTPException(403, "小程序暂不提供该内容")
         if perm and not p.can(perm):
             raise HTTPException(403, "当前账号权限不足，该内容需要更高等级")
         return p

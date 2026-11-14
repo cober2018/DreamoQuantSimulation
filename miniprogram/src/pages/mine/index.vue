@@ -40,6 +40,7 @@
         <input class="input" v-model="bindPw" password placeholder="网页密码" />
         <view class="btn ghost" @click="bind">绑定</view>
       </view>
+      <MorePages all />
       <view v-if="msg" class="note">{{ msg }}</view>
       <view class="btn ghost" style="margin:20rpx" @click="out">退出登录</view>
     </view>
@@ -52,6 +53,7 @@ import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { session, wechatLogin, signedRequest, logout } from '../../utils/auth'
 import { DISCLAIMER } from '../../utils/config'
+import MorePages from '../../utils/MorePages.vue'
 
 const terms = ref(false)
 const msg = ref('')

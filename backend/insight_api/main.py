@@ -170,8 +170,7 @@ def create_app() -> FastAPI:
     ):
         p = entitled(request, "page.industries", end_date)
         ind = p.extra.get("indicators")
-        series_ok = (p.can("data.detail") if ind is None else any(i.startswith("industries.series.") for i in ind)) \
-            and p.client != "mp"
+        series_ok = p.can("data.detail") if ind is None else any(i.startswith("industries.series.") for i in ind)
         if not series_ok:
             raise HTTPException(403, "板块序列属于下钻明细，需要更高等级")
         out = await src("industries").industry_series(up(request), sector_code, end_date, min(days, p.history_days))
@@ -183,7 +182,7 @@ def create_app() -> FastAPI:
         out = await src("themes").themes(up(request), trade_date)
         data = out.get("data") or {}
         ind = p.extra.get("indicators")
-        if p.client == "mp" or ((not p.can("data.detail")) if ind is None else ("themes.seal_time.seal_time_buckets" not in ind)):
+        if (not p.can("data.detail")) if ind is None else ("themes.seal_time.seal_time_buckets" not in ind):
             for t in data.get("themes", []):
                 t.pop("seal_time_buckets", None)
             data.pop("seal_time_buckets", None)
