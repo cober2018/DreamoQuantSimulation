@@ -11,8 +11,8 @@
         <div class="stat"><div class="label">成交额分位（250 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_250d, 1) }}</div></div>
         <div class="stat"><div class="label">低参与连续天数</div><div class="value">{{ fmt.num(obs.low_participation_streak, 0) }}</div></div>
         <div class="stat"><div class="label">主动卖出占比</div><div class="value">{{ fmt.ratio(obs.active_sell_ratio) }}</div></div>
-        <div class="stat"><div class="label">卖出占比 1 日变化</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_1d, 3) }}</div></div>
-        <div class="stat"><div class="label">卖出占比 3 日趋势</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
+        <div class="stat"><div class="label">卖压缓和程度（1 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_1d, 3) }}</div></div>
+        <div class="stat"><div class="label">卖压缓和程度（3 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
         <div class="stat"><div class="label">委托失衡</div><div class="value">{{ fmt.signed(obs.order_imbalance, 3) }}</div><div class="sub">1 日变化 {{ fmt.signed(obs.order_imbalance_delta_1d, 3) }}</div></div>
       </div>
       <p class="note">分位为相对此前历史窗口的位置，只描述历史相对水平，不是概率或参与人数比例。</p>
