@@ -1,0 +1,330 @@
+{
+ "insight-svip": {
+  "public-daily-review-summary": {
+   "open5": [
+    "close_ready_count",
+    "continuation_ratio",
+    "coverage_ratio",
+    "data_status",
+    "expected_stock_count",
+    "metric_version",
+    "open5_incomplete_count",
+    "open5_observed_count",
+    "open5_ready_count",
+    "open5_unavailable_count",
+    "over_response_ratio",
+    "positive_open5_ratio",
+    "trade_date"
+   ]
+  },
+  "public-forward-risk-events": {
+   "calendar-facts": [
+    "actual_value",
+    "consensus_source",
+    "consensus_value",
+    "country",
+    "event_date",
+    "event_ref",
+    "event_time",
+    "event_type_label",
+    "indicator_code",
+    "period",
+    "previous_value",
+    "publication_status",
+    "source_importance",
+    "title",
+    "unit"
+   ]
+  },
+  "public-industry-review": {
+   "facts": [
+    "above_ma20_ratio",
+    "amount",
+    "amount_ratio_ma20",
+    "coverage_ratio",
+    "di",
+    "down_num",
+    "idx_type",
+    "industry_code",
+    "industry_name",
+    "is_fallback",
+    "market_amount_share",
+    "member_count",
+    "net_flow_1d",
+    "net_flow_20d",
+    "net_flow_5d",
+    "new_high_20d_ratio",
+    "rs_momentum",
+    "rs_ratio",
+    "sector_return",
+    "sector_return_20d",
+    "sector_return_5d",
+    "sector_return_60d",
+    "turnover_rate_1d",
+    "up_num",
+    "up_stock_ratio"
+   ],
+   "overview": [
+    "change_pct",
+    "diffusion_change",
+    "diffusion_pct",
+    "industry_code",
+    "industry_name",
+    "net_inflow_20d",
+    "net_inflow_5d",
+    "turnover",
+    "turnover_rate"
+   ],
+   "series": [
+    "amount",
+    "coverage_ratio",
+    "di",
+    "net_flow_1d",
+    "rs_momentum",
+    "rs_ratio",
+    "sector_return",
+    "trade_date"
+   ]
+  },
+  "public-limit-pool-structure": {
+   "current": [
+    "broken_board_count",
+    "limit_down_count",
+    "tier_counts",
+    "trade_date"
+   ],
+   "history": [
+    "broken_board_count",
+    "limit_down_count",
+    "tier_counts",
+    "trade_date"
+   ],
+   "pool-counts": [
+    "count",
+    "lag_days",
+    "latest_date",
+    "pool",
+    "reason",
+    "status",
+    "window_days"
+   ]
+  },
+  "public-market-capital-behavior": {
+   "factor-breadth": [
+    "display",
+    "factor",
+    "neg_share",
+    "net_breadth",
+    "pos_share"
+   ]
+  },
+  "public-market-compensation": {
+   "current": [
+    "bond_date",
+    "bond_lag_days",
+    "bond_yield_pct",
+    "change_20d_bp",
+    "compensation_pct",
+    "date",
+    "earnings_yield_pct",
+    "equity_contribution_bp",
+    "historical_position_pct",
+    "index_code",
+    "index_name",
+    "rate_contribution_bp",
+    "status"
+   ],
+   "erp-filter": [
+    "available_count",
+    "earnings_yield",
+    "erp_change_20d_pct",
+    "erp_change_5d_pct",
+    "erp_percentile_252d",
+    "erp_percentile_3y",
+    "erp_percentile_5y",
+    "erp_value_pct",
+    "total_count",
+    "trade_date",
+    "yield_10y",
+    "yield_source_flag"
+   ],
+   "history-position": [
+    "bond_yield_pct",
+    "compensation_pct",
+    "date",
+    "earnings_yield_pct",
+    "historical_position_pct",
+    "status"
+   ],
+   "valuation-breadth": [
+    "available_count",
+    "break_ratio_pct",
+    "current_pe_median",
+    "discount_pct",
+    "hist_90d_pe_median",
+    "total_count",
+    "trade_date"
+   ]
+  },
+  "public-market-derivatives": {
+   "raw-stats": [
+    "basis_source_date",
+    "basis_value",
+    "basis_zscore_60d",
+    "instrument",
+    "missing_reason",
+    "oi_volume_ratio_zscore_60d",
+    "pcr_source_date",
+    "pcr_value",
+    "pcr_zscore_60d",
+    "position_ratio",
+    "position_source_date"
+   ]
+  },
+  "public-market-index-position": {
+   "history": [
+    "close",
+    "date",
+    "index_code",
+    "valuation"
+   ],
+   "overview": [
+    "close",
+    "date",
+    "drawdown_pct",
+    "index_code",
+    "index_name",
+    "return_1d_pct",
+    "return_20d_pct",
+    "valuation",
+    "valuation_position_5y_pct"
+   ]
+  },
+  "public-market-participation": {
+   "bottom-observation": [
+    "calc_version",
+    "conditions",
+    "data_status",
+    "history_obs",
+    "trade_date"
+   ],
+   "breadth": [
+    "down_count",
+    "index_change_pct",
+    "index_code",
+    "turnover_yi",
+    "up_count"
+   ],
+   "current": [
+    "buy_sell_change_pp",
+    "date",
+    "duration_is_lower_bound",
+    "long_position_pct",
+    "low_participation_days",
+    "pressure_change_pp",
+    "pressure_trend_pp",
+    "recent_position_pct",
+    "relative_turnover",
+    "selling_pressure_pct",
+    "selling_share_reference_pct",
+    "status",
+    "turnover",
+    "turnover_deviation_pct",
+    "turnover_display_unit",
+    "turnover_display_value"
+   ],
+   "history": [
+    "buy_sell_change_pp",
+    "date",
+    "duration_is_lower_bound",
+    "long_position_pct",
+    "low_participation_days",
+    "pressure_change_pp",
+    "pressure_trend_pp",
+    "recent_position_pct",
+    "relative_turnover",
+    "selling_pressure_pct",
+    "selling_share_reference_pct",
+    "status",
+    "turnover",
+    "turnover_deviation_pct",
+    "turnover_display_unit",
+    "turnover_display_value"
+   ],
+   "observation": [
+    "active_sell_ratio",
+    "amount_ratio_20d",
+    "calc_version",
+    "count_stocks",
+    "data_status",
+    "low_participation_streak",
+    "order_imbalance",
+    "order_imbalance_delta_1d",
+    "participation_pctile_250d",
+    "participation_pctile_60d",
+    "sell_pressure_change_1d",
+    "sell_pressure_change_3d",
+    "source_trade_date",
+    "status_reason",
+    "total_amount_yi",
+    "trade_date"
+   ]
+  },
+  "public-market-short-feedback": {
+   "current": [
+    "consecutive_count",
+    "first_board_return_pct",
+    "maximum_boards",
+    "repair_rate_pct",
+    "seal_rate_pct"
+   ]
+  },
+  "public-market-style-rotation": {
+   "current": [
+    "available",
+    "date",
+    "index_code",
+    "index_name",
+    "key",
+    "missing_reason",
+    "name",
+    "status",
+    "strength",
+    "strength_series",
+    "z_score"
+   ],
+   "history": [
+    "available",
+    "date",
+    "history_available",
+    "index_code",
+    "index_name",
+    "key",
+    "missing_reason",
+    "name",
+    "status",
+    "strength",
+    "strength_series",
+    "z_score"
+   ]
+  },
+  "public-theme-limit-stats": {
+   "ladder": [
+    "count",
+    "tier"
+   ],
+   "seal-time": [
+    "bucket",
+    "count",
+    "theme"
+   ],
+   "themes": [
+    "avg_pct",
+    "broken_count",
+    "highest_tier",
+    "theme",
+    "up_count"
+   ]
+  }
+ }
+}

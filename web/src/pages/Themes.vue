@@ -2,17 +2,17 @@
   <PageFrame title="题材与涨跌结构" question="当日涨停、炸板、跌停如何分布？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools><input type="date" v-model="tradeDate" aria-label="交易日" /></template>
 
-    <div class="panel" v-if="st">
+    <div class="panel" v-module="'structure'" v-if="st">
       <h2>涨跌停结构<small>来自股票池统计</small></h2>
       <div class="grid">
-        <div class="stat"><div class="label">涨停</div><div class="value">{{ fmt.num(st.limit_up_count, 0) }}</div></div>
-        <div class="stat"><div class="label">炸板</div><div class="value">{{ fmt.num(st.broken_board_count, 0) }}</div></div>
-        <div class="stat"><div class="label">跌停</div><div class="value">{{ fmt.num(st.limit_down_count, 0) }}</div></div>
-        <div class="stat">
+        <div class="stat" v-ind="'themes.structure.limit_up_count'"><div class="label">涨停</div><div class="value">{{ fmt.num(st.limit_up_count, 0) }}</div></div>
+        <div class="stat" v-ind="'themes.structure.broken_board_count'"><div class="label">炸板</div><div class="value">{{ fmt.num(st.broken_board_count, 0) }}</div></div>
+        <div class="stat" v-ind="'themes.structure.limit_down_count'"><div class="label">跌停</div><div class="value">{{ fmt.num(st.limit_down_count, 0) }}</div></div>
+        <div class="stat" v-ind="'themes.structure.broken_board_rate'">
           <div class="label">炸板率</div><div class="value">{{ fmt.ratio(st.broken_board_rate?.value) }}</div>
           <div class="sub">{{ st.broken_board_rate?.numerator }} / {{ st.broken_board_rate?.denominator }}，{{ st.broken_board_rate?.definition }}</div>
         </div>
-        <div class="stat">
+        <div class="stat" v-ind="'themes.structure.limit_up_down_ratio'">
           <div class="label">涨停 / 跌停</div><div class="value">{{ fmt.num(st.limit_up_down_ratio?.value, 2) }}</div>
           <div class="sub">{{ st.limit_up_down_ratio?.numerator }} / {{ st.limit_up_down_ratio?.denominator }}</div>
         </div>
@@ -23,14 +23,14 @@
       </div>
     </div>
 
-    <div class="panel" v-if="pools">
+    <div class="panel" v-module="'pools'" v-if="pools">
       <h2>股票池当日计数<small>仅计数，不含名单</small></h2>
       <div class="grid">
-        <div class="stat" v-if="pools.high_recognition">
+        <div class="stat" v-ind="'themes.pools.high_recognition'" v-if="pools.high_recognition">
           <div class="label">高标认知池</div><div class="value">{{ fmt.num(pools.high_recognition.count, 0) }}</div>
           <div class="sub"><DateTag :date="pools.high_recognition.latest_date" :page-date="env.trade_date" /></div>
         </div>
-        <div class="stat" v-for="(w, k) in pools.momentum_extreme || {}" :key="k">
+        <div class="stat" v-ind="'themes.pools.momentum_extreme'" v-for="(w, k) in pools.momentum_extreme || {}" :key="k">
           <div class="label">动量极端池（{{ w.window_days }} 日窗）</div><div class="value">{{ fmt.num(w.count, 0) }}</div>
           <div class="sub">{{ w.reason || w.status || '' }}</div>
         </div>
@@ -38,12 +38,12 @@
       <p class="note">计数为当日进入各池的个股数；池内个股名单与入选规则不提供。</p>
     </div>
 
-    <div class="panel" v-if="history.length">
+    <div class="panel" v-module="'history'" v-if="history.length">
       <h2>涨停、炸板、跌停的近期变化<small>{{ history.length }} 个交易日</small></h2>
       <EChart :option="historyOption" height="300px" />
     </div>
 
-    <div class="panel">
+    <div class="panel" v-module="'themes'">
       <h2>题材榜<small>{{ rule }}；当日样本 {{ env.data?.limit_up_sample_size ?? '—' }} 只涨停</small></h2>
       <div class="table-wrap" v-if="themes.length">
         <table>

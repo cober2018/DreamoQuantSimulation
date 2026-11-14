@@ -1,0 +1,450 @@
+{
+ "raw-stats|2026-09-08|": {
+  "service_key": "public-market-derivatives",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "raw-stats",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "instrument": {
+    "name": "衍生品标的",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "衍生品标的保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "basis_value": {
+    "name": "基差",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "基差用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "basis_zscore_60d": {
+    "name": "基差60日标准分",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "基差60日标准分用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "position_ratio": {
+    "name": "持仓比",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "持仓比用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "pcr_value": {
+    "name": "认沽认购比",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "认沽认购比用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "pcr_zscore_60d": {
+    "name": "认沽认购比60日标准分",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "认沽认购比60日标准分用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "oi_volume_ratio_zscore_60d": {
+    "name": "成交持仓比60日标准分",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "成交持仓比的60日标准分（原始统计，不是拥挤度标签）。",
+    "display_decimals": 4
+   },
+   "basis_source_date": {
+    "name": "基差数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "基差数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "pcr_source_date": {
+    "name": "认沽认购比数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "认沽认购比数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "position_source_date": {
+    "name": "持仓数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "持仓数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "missing_reason": {
+    "name": "原因代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "原因代码用于识别本次观察对象；不能当成排序或评分。"
+   }
+  },
+  "row_count": 6,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {
+    "pcr_value": "unavailable",
+    "pcr_zscore_60d": "unavailable",
+    "pcr_source_date": "unavailable"
+   },
+   "1": {
+    "missing_reason": "unavailable"
+   },
+   "2": {
+    "missing_reason": "unavailable"
+   },
+   "3": {
+    "oi_volume_ratio_zscore_60d": "unavailable",
+    "basis_source_date": "unavailable",
+    "position_source_date": "unavailable"
+   },
+   "4": {
+    "missing_reason": "unavailable"
+   },
+   "5": {
+    "oi_volume_ratio_zscore_60d": "unavailable"
+   }
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.852270+00:00",
+  "rows": [
+   {
+    "instrument": "CSI1000",
+    "basis_value": -0.124883,
+    "basis_zscore_60d": -0.3153,
+    "position_ratio": 1.150023,
+    "pcr_value": null,
+    "pcr_zscore_60d": null,
+    "oi_volume_ratio_zscore_60d": -0.9001,
+    "basis_source_date": "2026-09-08",
+    "pcr_source_date": null,
+    "position_source_date": "2026-09-08",
+    "missing_reason": "csi1000_etf_option_not_listed"
+   },
+   {
+    "instrument": "CSI500",
+    "basis_value": -0.128379,
+    "basis_zscore_60d": -0.3164,
+    "position_ratio": 1.085342,
+    "pcr_value": 0.835621,
+    "pcr_zscore_60d": -0.3662,
+    "oi_volume_ratio_zscore_60d": -1.2164,
+    "basis_source_date": "2026-09-08",
+    "pcr_source_date": "2026-09-08",
+    "position_source_date": "2026-09-08",
+    "missing_reason": null
+   },
+   {
+    "instrument": "HS300",
+    "basis_value": -0.093974,
+    "basis_zscore_60d": 0.0154,
+    "position_ratio": 1.125892,
+    "pcr_value": 0.760111,
+    "pcr_zscore_60d": 0.7586,
+    "oi_volume_ratio_zscore_60d": -0.9973,
+    "basis_source_date": "2026-09-08",
+    "pcr_source_date": "2026-09-08",
+    "position_source_date": "2026-09-08",
+    "missing_reason": null
+   },
+   {
+    "instrument": "LEGACY50ETF",
+    "basis_value": -0.148124,
+    "basis_zscore_60d": -1.8701,
+    "position_ratio": 1.229794,
+    "pcr_value": 0.419883,
+    "pcr_zscore_60d": -0.9139,
+    "oi_volume_ratio_zscore_60d": null,
+    "basis_source_date": null,
+    "pcr_source_date": "2026-09-08",
+    "position_source_date": null,
+    "missing_reason": "legacy50etf_proxy_via_IH_same_index"
+   },
+   {
+    "instrument": "SSE50",
+    "basis_value": -0.148124,
+    "basis_zscore_60d": -1.8701,
+    "position_ratio": 1.229794,
+    "pcr_value": 0.419883,
+    "pcr_zscore_60d": -0.9139,
+    "oi_volume_ratio_zscore_60d": -1.5212,
+    "basis_source_date": "2026-09-08",
+    "pcr_source_date": "2026-09-08",
+    "position_source_date": "2026-09-08",
+    "missing_reason": null
+   },
+   {
+    "instrument": "STAR50",
+    "basis_value": -0.124883,
+    "basis_zscore_60d": -0.3153,
+    "position_ratio": 1.150023,
+    "pcr_value": 0.375031,
+    "pcr_zscore_60d": -0.6685,
+    "oi_volume_ratio_zscore_60d": null,
+    "basis_source_date": "2026-09-08",
+    "pcr_source_date": "2026-09-08",
+    "position_source_date": "2026-09-08",
+    "missing_reason": "star50_proxy_via_CSI1000_IM_same_run"
+   }
+  ]
+ },
+ "raw-stats|2026-09-09|": {
+  "service_key": "public-market-derivatives",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "raw-stats",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "instrument": {
+    "name": "衍生品标的",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "衍生品标的保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "basis_value": {
+    "name": "基差",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "基差用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "basis_zscore_60d": {
+    "name": "基差60日标准分",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "基差60日标准分用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "position_ratio": {
+    "name": "持仓比",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "持仓比用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "pcr_value": {
+    "name": "认沽认购比",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "认沽认购比用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "pcr_zscore_60d": {
+    "name": "认沽认购比60日标准分",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "认沽认购比60日标准分用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "oi_volume_ratio_zscore_60d": {
+    "name": "成交持仓比60日标准分",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "成交持仓比的60日标准分（原始统计，不是拥挤度标签）。",
+    "display_decimals": 4
+   },
+   "basis_source_date": {
+    "name": "基差数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "基差数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "pcr_source_date": {
+    "name": "认沽认购比数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "认沽认购比数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "position_source_date": {
+    "name": "持仓数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "持仓数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "missing_reason": {
+    "name": "原因代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "原因代码用于识别本次观察对象；不能当成排序或评分。"
+   }
+  },
+  "row_count": 6,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {
+    "pcr_value": "unavailable",
+    "pcr_zscore_60d": "unavailable",
+    "pcr_source_date": "unavailable"
+   },
+   "1": {
+    "missing_reason": "unavailable"
+   },
+   "2": {
+    "missing_reason": "unavailable"
+   },
+   "3": {
+    "oi_volume_ratio_zscore_60d": "unavailable",
+    "basis_source_date": "unavailable",
+    "position_source_date": "unavailable"
+   },
+   "4": {
+    "missing_reason": "unavailable"
+   },
+   "5": {
+    "oi_volume_ratio_zscore_60d": "unavailable"
+   }
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.973023+00:00",
+  "rows": [
+   {
+    "instrument": "CSI1000",
+    "basis_value": -0.160116,
+    "basis_zscore_60d": -1.2945,
+    "position_ratio": 1.155751,
+    "pcr_value": null,
+    "pcr_zscore_60d": null,
+    "oi_volume_ratio_zscore_60d": -1.3204,
+    "basis_source_date": "2026-09-09",
+    "pcr_source_date": null,
+    "position_source_date": "2026-09-09",
+    "missing_reason": "csi1000_etf_option_not_listed"
+   },
+   {
+    "instrument": "CSI500",
+    "basis_value": -0.154041,
+    "basis_zscore_60d": -1.0332,
+    "position_ratio": 1.085971,
+    "pcr_value": 0.947494,
+    "pcr_zscore_60d": -0.2477,
+    "oi_volume_ratio_zscore_60d": -1.5896,
+    "basis_source_date": "2026-09-09",
+    "pcr_source_date": "2026-09-09",
+    "position_source_date": "2026-09-09",
+    "missing_reason": null
+   },
+   {
+    "instrument": "HS300",
+    "basis_value": -0.111748,
+    "basis_zscore_60d": -0.7739,
+    "position_ratio": 1.128999,
+    "pcr_value": 0.886473,
+    "pcr_zscore_60d": 1.0931,
+    "oi_volume_ratio_zscore_60d": -1.4024,
+    "basis_source_date": "2026-09-09",
+    "pcr_source_date": "2026-09-09",
+    "position_source_date": "2026-09-09",
+    "missing_reason": null
+   },
+   {
+    "instrument": "LEGACY50ETF",
+    "basis_value": -0.128218,
+    "basis_zscore_60d": -1.3573,
+    "position_ratio": 1.226774,
+    "pcr_value": 0.828137,
+    "pcr_zscore_60d": -0.3504,
+    "oi_volume_ratio_zscore_60d": null,
+    "basis_source_date": null,
+    "pcr_source_date": "2026-09-09",
+    "position_source_date": null,
+    "missing_reason": "legacy50etf_proxy_via_IH_same_index"
+   },
+   {
+    "instrument": "SSE50",
+    "basis_value": -0.128218,
+    "basis_zscore_60d": -1.3573,
+    "position_ratio": 1.226774,
+    "pcr_value": 0.828137,
+    "pcr_zscore_60d": -0.3504,
+    "oi_volume_ratio_zscore_60d": -1.725,
+    "basis_source_date": "2026-09-09",
+    "pcr_source_date": "2026-09-09",
+    "position_source_date": "2026-09-09",
+    "missing_reason": null
+   },
+   {
+    "instrument": "STAR50",
+    "basis_value": -0.160116,
+    "basis_zscore_60d": -1.2945,
+    "position_ratio": 1.155751,
+    "pcr_value": 0.5939,
+    "pcr_zscore_60d": -0.6274,
+    "oi_volume_ratio_zscore_60d": null,
+    "basis_source_date": "2026-09-09",
+    "pcr_source_date": "2026-09-09",
+    "position_source_date": "2026-09-09",
+    "missing_reason": "star50_proxy_via_CSI1000_IM_same_run"
+   }
+  ]
+ }
+}

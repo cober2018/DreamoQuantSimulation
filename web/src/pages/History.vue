@@ -7,38 +7,38 @@
       <input type="date" v-model="tradeDate" aria-label="交易日" />
     </template>
 
-    <div class="panel">
+    <div class="panel" v-module="'structure'">
       <h2>板块结构统计<small>{{ env.data?.idx_type }}，分母为当日有效板块数</small></h2>
       <div class="grid">
-        <div class="stat"><div class="label">上涨板块占比</div><div class="value">{{ fmt.ratio(s.rising_sector_ratio?.value) }}</div>
+        <div class="stat" v-ind="'history.structure.rising_sector_ratio'"><div class="label">上涨板块占比</div><div class="value">{{ fmt.ratio(s.rising_sector_ratio?.value) }}</div>
           <div class="sub">{{ frac(s.rising_sector_ratio) }}</div></div>
-        <div class="stat"><div class="label">扩散度均值</div><div class="value">{{ fmt.num(s.di_mean?.value, 3) }}</div>
+        <div class="stat" v-ind="'history.structure.di_mean'"><div class="label">扩散度均值</div><div class="value">{{ fmt.num(s.di_mean?.value, 3) }}</div>
           <div class="sub">n = {{ s.di_mean?.denominator ?? '—' }}</div></div>
-        <div class="stat"><div class="label">站上MA20占比（中位数）</div><div class="value">{{ fmt.ratio(s.above_ma20_ratio_median?.value) }}</div>
+        <div class="stat" v-ind="'history.structure.above_ma20_ratio_median'"><div class="label">站上MA20占比（中位数）</div><div class="value">{{ fmt.ratio(s.above_ma20_ratio_median?.value) }}</div>
           <div class="sub">n = {{ s.above_ma20_ratio_median?.denominator ?? '—' }}</div></div>
-        <div class="stat"><div class="label">成交额前十集中度</div><div class="value">{{ fmt.ratio(s.top10_amount_concentration?.value) }}</div>
+        <div class="stat" v-ind="'history.structure.top10_amount_concentration'"><div class="label">成交额前十集中度</div><div class="value">{{ fmt.ratio(s.top10_amount_concentration?.value) }}</div>
           <div class="sub">{{ fmt.num(s.top10_amount_concentration?.numerator, 0) }} / {{ fmt.num(s.top10_amount_concentration?.denominator, 0) }} 亿元</div></div>
-        <div class="stat"><div class="label">资金与价格方向背离比例</div><div class="value">{{ fmt.ratio(s.flow_price_divergence_ratio?.value) }}</div>
+        <div class="stat" v-ind="'history.structure.flow_price_divergence_ratio'"><div class="label">资金与价格方向背离比例</div><div class="value">{{ fmt.ratio(s.flow_price_divergence_ratio?.value) }}</div>
           <div class="sub">{{ frac(s.flow_price_divergence_ratio) }}，剔除任一为 0 或缺失</div></div>
       </div>
     </div>
 
-    <div class="panel" v-if="open5">
+    <div class="panel" v-module="'open5'" v-if="open5">
       <h2>开盘 5 分钟统计（Open5）<small>全市场</small><DateTag :date="open5.trade_date" :page-date="env.trade_date" /></h2>
       <div class="grid">
-        <div class="stat"><div class="label">覆盖率</div><div class="value">{{ fmt.ratio(open5.coverage_ratio) }}</div>
+        <div class="stat" v-ind="'history.open5.coverage_ratio'"><div class="label">覆盖率</div><div class="value">{{ fmt.ratio(open5.coverage_ratio) }}</div>
           <div class="sub">{{ fmt.num(open5.open5_ready_count, 0) }} / {{ fmt.num(open5.expected_stock_count, 0) }}</div></div>
-        <div class="stat"><div class="label">开盘 5 分钟为正占比</div><div class="value">{{ fmt.ratio(open5.positive_open5_ratio) }}</div>
+        <div class="stat" v-ind="'history.open5.positive_open5_ratio'"><div class="label">开盘 5 分钟为正占比</div><div class="value">{{ fmt.ratio(open5.positive_open5_ratio) }}</div>
           <div class="sub">分母 {{ fmt.num(open5.open5_ready_count, 0) }}</div></div>
-        <div class="stat"><div class="label">收盘延续占比</div><div class="value">{{ fmt.ratio(open5.continuation_ratio) }}</div>
+        <div class="stat" v-ind="'history.open5.continuation_ratio'"><div class="label">收盘延续占比</div><div class="value">{{ fmt.ratio(open5.continuation_ratio) }}</div>
           <div class="sub">分母 {{ fmt.num(open5.close_ready_count, 0) }}</div></div>
-        <div class="stat"><div class="label">过度反应占比</div><div class="value">{{ fmt.ratio(open5.over_response_ratio) }}</div>
+        <div class="stat" v-ind="'history.open5.over_response_ratio'"><div class="label">过度反应占比</div><div class="value">{{ fmt.ratio(open5.over_response_ratio) }}</div>
           <div class="sub">分母 {{ fmt.num(open5.close_ready_count, 0) }}</div></div>
       </div>
       <p class="note">数据不完整的股票不计入分子，也不计入占比分母；覆盖率反映数据完整程度，不代表市场表现。</p>
     </div>
 
-    <div class="panel">
+    <div class="panel" v-module="'flow'">
       <h2>板块资金净流入排行<small>全量 {{ ranking.length }} 个，单位亿元</small></h2>
       <div class="toolbar">
         <div class="seg">

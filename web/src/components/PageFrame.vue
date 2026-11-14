@@ -27,6 +27,7 @@
     </div>
     <template v-else>
       <div v-if="env.status === 'partial' && gapItems.length" class="banner fixture">部分内容暂缺：{{ gapItems.join('、') }}。其余内容正常展示。</div>
+      <div v-if="lockedMods.length" class="banner info">以下内容需要更高等级或未在当前等级开放：{{ lockedMods.join('、') }}。<router-link to="/plans">查看会员套餐</router-link></div>
       <slot />
     </template>
 
@@ -84,5 +85,6 @@ const errorText = computed(() => ({
   rate_limited: '请求过于频繁，请稍后再试。',
 }[props.env.status] || '服务出现错误，请稍后重试。'))
 const canJump = computed(() => props.env.latest_available_date && props.env.latest_available_date !== props.env.trade_date)
+const lockedMods = computed(() => (props.env.restricted_modules || []).map((m) => (m.state === 'partial' ? `${m.label}（开放 ${m.open}/${m.total} 项）` : m.label)))
 const gapItems = computed(() => [...new Set((props.env.gaps || []).map((g) => g.item).filter(Boolean))])
 </script>

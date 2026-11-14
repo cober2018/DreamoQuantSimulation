@@ -1,6 +1,6 @@
 <template>
   <StateView :state="state" :detail="detail" :env="env" perm="page.themes" @retry="load">
-    <view class="card" v-if="st">
+    <view class="card" v-if="st && vis(env, 'structure')">
       <view class="card-title">涨跌停结构</view>
       <view class="card-sub">{{ env.trade_date }}</view>
       <view class="grid">
@@ -10,7 +10,7 @@
         <view class="stat"><view class="label">炸板率</view><view class="value">{{ ratio(st.broken_board_rate && st.broken_board_rate.value) }}</view></view>
       </view>
     </view>
-    <view class="card" v-if="themes.length">
+    <view class="card" v-if="themes.length && vis(env, 'themes')">
       <view class="card-title">题材榜</view>
       <view class="row" v-for="t in themes" :key="t.industry">
         <text>{{ t.industry }}</text><text>涨停 {{ t.up_count }} · 炸板 {{ t.broken_count }}</text>
@@ -25,7 +25,7 @@
 import { computed } from 'vue'
 import StateView from '../../utils/StateView.vue'
 import { useData } from '../../utils/useData'
-import { ratio } from '../../utils/fmt'
+import { ratio, vis } from '../../utils/fmt'
 import { DISCLAIMER } from '../../utils/config'
 
 const { env, state, detail, load } = useData('/api/v1/themes')

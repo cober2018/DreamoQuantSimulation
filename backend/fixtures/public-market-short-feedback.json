@@ -1,0 +1,382 @@
+{
+ "current|2026-09-08|": {
+  "service_key": "public-market-short-feedback",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "current",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "seal_rate_pct": {
+    "name": "封板率",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "封板率的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "封板率",
+      "type": "number",
+      "nullable": true,
+      "unit": "%",
+      "description": "封板率用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   },
+   "consecutive_count": {
+    "name": "连板家数",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "连板家数的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "连板家数",
+      "type": "number",
+      "nullable": true,
+      "unit": "家",
+      "description": "连板家数用于比较对应业务观察，单位为家；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   },
+   "maximum_boards": {
+    "name": "最高连板数",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "最高连板数的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "最高连板数",
+      "type": "number",
+      "nullable": true,
+      "unit": "板",
+      "description": "最高连板数用于比较对应业务观察，单位为板；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   },
+   "first_board_return_pct": {
+    "name": "昨日首板今日平均收益",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "昨日首板今日平均收益的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "昨日首板今日平均收益",
+      "type": "number",
+      "nullable": true,
+      "unit": "%",
+      "description": "昨日首板今日平均收益保留实际方向及期限，单位为百分数；历史表现不代表未来收益，未成熟或缺失为 null。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   },
+   "repair_rate_pct": {
+    "name": "炸板即时回封率",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "炸板即时回封率的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "炸板即时回封率",
+      "type": "number",
+      "nullable": true,
+      "unit": "%",
+      "description": "炸板即时回封率用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "partial",
+  "field_status": {
+   "0": {}
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide",
+    "erp.erp_regime",
+    "sentinel.chinext_over_sse50",
+    "sentinel.csi500_over_csi300",
+    "materialization.incomplete"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.841804+00:00",
+  "rows": [
+   {
+    "seal_rate_pct": {
+     "value": 47.95,
+     "available": true
+    },
+    "consecutive_count": {
+     "value": 19.0,
+     "available": true
+    },
+    "maximum_boards": {
+     "value": 4.0,
+     "available": true
+    },
+    "first_board_return_pct": {
+     "value": 2.55,
+     "available": true
+    },
+    "repair_rate_pct": {
+     "value": 13.51,
+     "available": true
+    }
+   }
+  ]
+ },
+ "current|2026-09-09|": {
+  "service_key": "public-market-short-feedback",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "current",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "seal_rate_pct": {
+    "name": "封板率",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "封板率的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "封板率",
+      "type": "number",
+      "nullable": true,
+      "unit": "%",
+      "description": "封板率用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   },
+   "consecutive_count": {
+    "name": "连板家数",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "连板家数的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "连板家数",
+      "type": "number",
+      "nullable": true,
+      "unit": "家",
+      "description": "连板家数用于比较对应业务观察，单位为家；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   },
+   "maximum_boards": {
+    "name": "最高连板数",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "最高连板数的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "最高连板数",
+      "type": "number",
+      "nullable": true,
+      "unit": "板",
+      "description": "最高连板数用于比较对应业务观察，单位为板；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   },
+   "first_board_return_pct": {
+    "name": "昨日首板今日平均收益",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "昨日首板今日平均收益的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "昨日首板今日平均收益",
+      "type": "number",
+      "nullable": true,
+      "unit": "%",
+      "description": "昨日首板今日平均收益保留实际方向及期限，单位为百分数；历史表现不代表未来收益，未成熟或缺失为 null。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   },
+   "repair_rate_pct": {
+    "name": "炸板即时回封率",
+    "type": "object",
+    "nullable": true,
+    "unit": null,
+    "description": "炸板即时回封率的已有业务明细；仅包含所列公开子字段，缺失内容保持未知。",
+    "properties": {
+     "value": {
+      "name": "炸板即时回封率",
+      "type": "number",
+      "nullable": true,
+      "unit": "%",
+      "description": "炸板即时回封率用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+      "display_decimals": 2
+     },
+     "available": {
+      "name": "是否可用",
+      "type": "boolean",
+      "nullable": true,
+      "unit": null,
+      "description": "是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "partial",
+  "field_status": {
+   "0": {}
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide",
+    "erp.erp_regime",
+    "sentinel.chinext_over_sse50",
+    "sentinel.csi500_over_csi300",
+    "materialization.incomplete"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.961797+00:00",
+  "rows": [
+   {
+    "seal_rate_pct": {
+     "value": 38.78,
+     "available": true
+    },
+    "consecutive_count": {
+     "value": 21.0,
+     "available": true
+    },
+    "maximum_boards": {
+     "value": 5.0,
+     "available": true
+    },
+    "first_board_return_pct": {
+     "value": -0.32,
+     "available": true
+    },
+    "repair_rate_pct": {
+     "value": 7.41,
+     "available": true
+    }
+   }
+  ]
+ }
+}

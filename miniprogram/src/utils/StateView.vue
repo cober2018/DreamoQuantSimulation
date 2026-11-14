@@ -23,6 +23,7 @@
     </view>
     <template v-else>
       <view v-if="gapItems.length" class="note">部分内容暂缺：{{ gapItems.join('、') }}。其余内容正常展示。</view>
+      <view v-if="lockedMods.length" class="note">以下内容需要更高等级或未在当前等级开放：{{ lockedMods.join('、') }}。可到“我的”查看会员套餐。</view>
       <slot />
     </template>
   </view>
@@ -43,6 +44,7 @@ defineEmits(['retry'])
 const goMine = () => uni.switchTab({ url: '/pages/mine/index' })
 const preview = computed(() => PREVIEW[props.perm])
 const need = computed(() => session.user?.perm_min_role?.[props.perm] || '会员')
+const lockedMods = computed(() => ((props.env && props.env.restricted_modules) || []).map((m) => (m.state === 'partial' ? `${m.label}（开放 ${m.open}/${m.total} 项）` : m.label)))
 const gapItems = computed(() => (props.env?.status === 'partial'
   ? [...new Set((props.env.gaps || []).map((g) => g.item).filter(Boolean))] : []))
 const expireDays = computed(() => {

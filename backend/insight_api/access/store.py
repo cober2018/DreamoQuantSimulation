@@ -75,6 +75,19 @@ CREATE TABLE IF NOT EXISTS membership_grants(
   expires_before REAL, expires_after REAL, source TEXT NOT NULL, plan_id INTEGER, amount_cents INTEGER NOT NULL DEFAULT 0,
   channel TEXT, note TEXT, ref_id INTEGER, actor TEXT, at REAL NOT NULL);
 CREATE INDEX IF NOT EXISTS ix_grants_at ON membership_grants(at);
+CREATE TABLE IF NOT EXISTS role_policy_versions(
+  version INTEGER PRIMARY KEY, policy TEXT NOT NULL, status TEXT NOT NULL, reason TEXT NOT NULL,
+  created_by TEXT NOT NULL, created_at REAL NOT NULL, approved_by TEXT, approved_at REAL, activated_at REAL,
+  based_on INTEGER);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_policy_active ON role_policy_versions(status) WHERE status='active';
+CREATE TABLE IF NOT EXISTS end_user_refs(user_id INTEGER PRIMARY KEY, ref TEXT UNIQUE NOT NULL, created_at REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS upstream_route_log(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, at REAL NOT NULL, request_id TEXT NOT NULL, user_id INTEGER NOT NULL,
+  end_user_ref TEXT NOT NULL, role_at_request TEXT NOT NULL, account TEXT, rule_version INTEGER, client TEXT NOT NULL,
+  service_key TEXT NOT NULL, view TEXT, cache_hit INTEGER NOT NULL, result TEXT NOT NULL, upstream_status INTEGER,
+  latency_ms INTEGER);
+CREATE INDEX IF NOT EXISTS ix_route_log_at ON upstream_route_log(at);
+CREATE INDEX IF NOT EXISTS ix_route_log_user ON upstream_route_log(user_id, at);
 """
 
 

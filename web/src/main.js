@@ -4,6 +4,7 @@ import App from './App.vue'
 import './styles.css'
 import { can, restore, session } from './auth'
 import { PAGES } from './pageCatalog'
+import { moduleAccess } from './useModule'
 
 const PAGE_META = Object.fromEntries(PAGES.map((p) => [p.path, { title: p.title, page: p }]))
 const routes = [
@@ -38,4 +39,11 @@ router.beforeEach(async (to) => {
 })
 router.afterEach((to) => { document.title = `${to.meta.title || ''} · 量化数据洞察` })
 
-createApp(App).use(router).mount('#app')
+// 后端已裁掉无权限指标；整块无权限的模块在前端隐藏（以后端裁剪为准）
+const applyModule = (el, binding) => { el.style.display = moduleAccess.map[binding.value] === 'none' ? 'none' : '' }
+const vModule = { mounted: applyModule, updated: applyModule }
+// 单个指标被裁掉时隐藏对应数值卡片，避免把"无权限"显示成"暂无数据"
+const applyInd = (el, binding) => { el.style.display = moduleAccess.restricted.includes(binding.value) ? 'none' : '' }
+const vInd = { mounted: applyInd, updated: applyInd }
+
+createApp(App).directive('module', vModule).directive('ind', vInd).use(router).mount('#app')

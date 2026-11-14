@@ -1,0 +1,750 @@
+{
+ "observation|2026-09-08|": {
+  "service_key": "public-market-participation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "observation",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "trade_date": {
+    "name": "数据日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "source_trade_date": {
+    "name": "来源数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "来源数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "total_amount_yi": {
+    "name": "市场总成交额",
+    "type": "number",
+    "nullable": true,
+    "unit": "亿元",
+    "description": "【原始观测】市场总成交额，单位亿元（上游元已换算）；与 current 视图 turnover 同源。",
+    "display_decimals": 2
+   },
+   "count_stocks": {
+    "name": "统计股票数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "统计股票数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0,
+    "value_range": {
+     "minimum": 0,
+     "maximum": 5
+    }
+   },
+   "amount_ratio_20d": {
+    "name": "相对二十日成交",
+    "type": "number",
+    "nullable": true,
+    "unit": "倍",
+    "description": "【原始观测】与 current 视图 relative_turnover 同源。",
+    "display_decimals": 4
+   },
+   "participation_pctile_60d": {
+    "name": "近期参与位置",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【原始观测】与 current 视图 recent_position_pct 同源。",
+    "display_decimals": 2,
+    "value_range": {
+     "minimum": 0,
+     "maximum": 100
+    }
+   },
+   "participation_pctile_250d": {
+    "name": "长期参与位置",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【原始观测】与 current 视图 long_position_pct 同源。",
+    "display_decimals": 2,
+    "value_range": {
+     "minimum": 0,
+     "maximum": 100
+    }
+   },
+   "low_participation_streak": {
+    "name": "低参与连续天数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "交易日",
+    "description": "低参与连续天数按对应业务期限表达已观察的日数；真实零与未知分别保留。",
+    "display_decimals": 0
+   },
+   "active_sell_ratio": {
+    "name": "主动卖出占比",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "【原始观测】卖出÷(买入+卖出)，取值0～1（覆盖样本代理口径）；current 视图 selling_share_reference_pct 是同一字段×100。不是 selling_pressure_pct。",
+    "display_decimals": 6
+   },
+   "sell_pressure_change_1d": {
+    "name": "卖压1日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "【原始观测】卖压1日变化，正值表示卖压缓和；与 current 视图 pressure_change_pp（解读口径）取数路径不同。",
+    "display_decimals": 6
+   },
+   "sell_pressure_change_3d": {
+    "name": "卖压3日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "【原始观测】卖压原始3日变化值，正值表示卖压缓和；不是 current 视图 pressure_trend_pp 的三次观测斜率。",
+    "display_decimals": 6
+   },
+   "order_imbalance": {
+    "name": "委托失衡",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "委托失衡用于比较对应业务观察，单位为比例；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "order_imbalance_delta_1d": {
+    "name": "委托失衡1日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "委托失衡1日变化用于比较对应业务观察，单位为比例；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "data_status": {
+    "name": "数据状态代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据状态代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "status_reason": {
+    "name": "原因代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "原因代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "calc_version": {
+    "name": "计算版本",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "计算版本保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {
+    "source_trade_date": "unavailable",
+    "total_amount_yi": "unavailable",
+    "count_stocks": "unavailable",
+    "amount_ratio_20d": "unavailable",
+    "participation_pctile_60d": "unavailable",
+    "participation_pctile_250d": "unavailable",
+    "low_participation_streak": "unavailable",
+    "active_sell_ratio": "unavailable",
+    "sell_pressure_change_1d": "unavailable",
+    "sell_pressure_change_3d": "unavailable",
+    "order_imbalance": "unavailable",
+    "order_imbalance_delta_1d": "unavailable"
+   }
+  },
+  "notes": [],
+  "context": {
+   "history_coverage": {
+    "available": null,
+    "requested": null,
+    "start": null,
+    "end": null
+   },
+   "history_gaps": null,
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.786392+00:00",
+  "rows": [
+   {
+    "trade_date": "2026-09-08",
+    "source_trade_date": null,
+    "total_amount_yi": null,
+    "count_stocks": null,
+    "amount_ratio_20d": null,
+    "participation_pctile_60d": null,
+    "participation_pctile_250d": null,
+    "low_participation_streak": null,
+    "active_sell_ratio": null,
+    "sell_pressure_change_1d": null,
+    "sell_pressure_change_3d": null,
+    "order_imbalance": null,
+    "order_imbalance_delta_1d": null,
+    "data_status": "missing",
+    "status_reason": "observation_compute_failed",
+    "calc_version": "participation_observation_v2"
+   }
+  ]
+ },
+ "bottom-observation|2026-09-08|": {
+  "service_key": "public-market-participation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "bottom-observation",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "trade_date": {
+    "name": "数据日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "history_obs": {
+    "name": "历史样本数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "历史样本数用于判断数据可用程度和统计范围；低覆盖与负向业务信号不同，也不是预测概率。",
+    "display_decimals": 0
+   },
+   "data_status": {
+    "name": "数据状态代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据状态代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "calc_version": {
+    "name": "计算版本",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "计算版本保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "conditions": {
+    "name": "底部条件观察值",
+    "type": "array",
+    "nullable": true,
+    "unit": null,
+    "description": "底部条件观察值的已有记录，保留每条记录的业务日期或观测序号；空记录不表示数值为零。",
+    "items": {
+     "type": "object",
+     "properties": {
+      "key": {
+       "name": "条件代码",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "条件代码用于识别本次观察对象；不能当成排序或评分。"
+      },
+      "label": {
+       "name": "条件名称",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "条件名称保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+      },
+      "value": {
+       "name": "观察值",
+       "type": "number",
+       "nullable": true,
+       "unit": null,
+       "description": "观察值用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+       "display_decimals": 4
+      },
+      "threshold": {
+       "name": "规则阈值",
+       "type": "number",
+       "nullable": true,
+       "unit": null,
+       "description": "规则阈值用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+       "display_decimals": 4
+      },
+      "condition": {
+       "name": "阈值比较结果",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "观察值与规则阈值的比较结果：met 达到、near 接近、unmet 未达到；不推断下一状态。",
+       "enum": [
+        "met",
+        "near",
+        "unmet"
+       ]
+      }
+     },
+     "additionalProperties": false
+    }
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {}
+  },
+  "notes": [],
+  "context": {
+   "history_coverage": {
+    "available": null,
+    "requested": null,
+    "start": null,
+    "end": null
+   },
+   "history_gaps": null,
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.902575+00:00",
+  "rows": [
+   {
+    "trade_date": "2026-09-08",
+    "history_obs": 15,
+    "data_status": "WARN",
+    "calc_version": "next_state_v1_2026-09-12",
+    "conditions": [
+     {
+      "key": "breadth",
+      "label": "宽度承接",
+      "value": 91.67,
+      "threshold": 70.0,
+      "condition": "met"
+     },
+     {
+      "key": "risk",
+      "label": "风险偏好",
+      "value": 59.072,
+      "threshold": 57.31,
+      "condition": "met"
+     },
+     {
+      "key": "liquidity",
+      "label": "流动性",
+      "value": 31.94,
+      "threshold": 56.809,
+      "condition": "unmet"
+     }
+    ]
+   }
+  ]
+ },
+ "observation|2026-09-09|": {
+  "service_key": "public-market-participation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "observation",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "trade_date": {
+    "name": "数据日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "source_trade_date": {
+    "name": "来源数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "来源数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "total_amount_yi": {
+    "name": "市场总成交额",
+    "type": "number",
+    "nullable": true,
+    "unit": "亿元",
+    "description": "【原始观测】市场总成交额，单位亿元（上游元已换算）；与 current 视图 turnover 同源。",
+    "display_decimals": 2
+   },
+   "count_stocks": {
+    "name": "统计股票数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "统计股票数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0,
+    "value_range": {
+     "minimum": 0,
+     "maximum": 5
+    }
+   },
+   "amount_ratio_20d": {
+    "name": "相对二十日成交",
+    "type": "number",
+    "nullable": true,
+    "unit": "倍",
+    "description": "【原始观测】与 current 视图 relative_turnover 同源。",
+    "display_decimals": 4
+   },
+   "participation_pctile_60d": {
+    "name": "近期参与位置",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【原始观测】与 current 视图 recent_position_pct 同源。",
+    "display_decimals": 2,
+    "value_range": {
+     "minimum": 0,
+     "maximum": 100
+    }
+   },
+   "participation_pctile_250d": {
+    "name": "长期参与位置",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【原始观测】与 current 视图 long_position_pct 同源。",
+    "display_decimals": 2,
+    "value_range": {
+     "minimum": 0,
+     "maximum": 100
+    }
+   },
+   "low_participation_streak": {
+    "name": "低参与连续天数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "交易日",
+    "description": "低参与连续天数按对应业务期限表达已观察的日数；真实零与未知分别保留。",
+    "display_decimals": 0
+   },
+   "active_sell_ratio": {
+    "name": "主动卖出占比",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "【原始观测】卖出÷(买入+卖出)，取值0～1（覆盖样本代理口径）；current 视图 selling_share_reference_pct 是同一字段×100。不是 selling_pressure_pct。",
+    "display_decimals": 6
+   },
+   "sell_pressure_change_1d": {
+    "name": "卖压1日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "【原始观测】卖压1日变化，正值表示卖压缓和；与 current 视图 pressure_change_pp（解读口径）取数路径不同。",
+    "display_decimals": 6
+   },
+   "sell_pressure_change_3d": {
+    "name": "卖压3日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "【原始观测】卖压原始3日变化值，正值表示卖压缓和；不是 current 视图 pressure_trend_pp 的三次观测斜率。",
+    "display_decimals": 6
+   },
+   "order_imbalance": {
+    "name": "委托失衡",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "委托失衡用于比较对应业务观察，单位为比例；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "order_imbalance_delta_1d": {
+    "name": "委托失衡1日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "委托失衡1日变化用于比较对应业务观察，单位为比例；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "data_status": {
+    "name": "数据状态代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据状态代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "status_reason": {
+    "name": "原因代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "原因代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "calc_version": {
+    "name": "计算版本",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "计算版本保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {
+    "source_trade_date": "unavailable",
+    "total_amount_yi": "unavailable",
+    "count_stocks": "unavailable",
+    "amount_ratio_20d": "unavailable",
+    "participation_pctile_60d": "unavailable",
+    "participation_pctile_250d": "unavailable",
+    "low_participation_streak": "unavailable",
+    "active_sell_ratio": "unavailable",
+    "sell_pressure_change_1d": "unavailable",
+    "sell_pressure_change_3d": "unavailable",
+    "order_imbalance": "unavailable",
+    "order_imbalance_delta_1d": "unavailable"
+   }
+  },
+  "notes": [],
+  "context": {
+   "history_coverage": {
+    "available": null,
+    "requested": null,
+    "start": null,
+    "end": null
+   },
+   "history_gaps": null,
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.918713+00:00",
+  "rows": [
+   {
+    "trade_date": "2026-09-09",
+    "source_trade_date": null,
+    "total_amount_yi": null,
+    "count_stocks": null,
+    "amount_ratio_20d": null,
+    "participation_pctile_60d": null,
+    "participation_pctile_250d": null,
+    "low_participation_streak": null,
+    "active_sell_ratio": null,
+    "sell_pressure_change_1d": null,
+    "sell_pressure_change_3d": null,
+    "order_imbalance": null,
+    "order_imbalance_delta_1d": null,
+    "data_status": "missing",
+    "status_reason": "observation_compute_failed",
+    "calc_version": "participation_observation_v2"
+   }
+  ]
+ },
+ "bottom-observation|2026-09-09|": {
+  "service_key": "public-market-participation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "bottom-observation",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "trade_date": {
+    "name": "数据日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "history_obs": {
+    "name": "历史样本数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "历史样本数用于判断数据可用程度和统计范围；低覆盖与负向业务信号不同，也不是预测概率。",
+    "display_decimals": 0
+   },
+   "data_status": {
+    "name": "数据状态代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据状态代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "calc_version": {
+    "name": "计算版本",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "计算版本保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "conditions": {
+    "name": "底部条件观察值",
+    "type": "array",
+    "nullable": true,
+    "unit": null,
+    "description": "底部条件观察值的已有记录，保留每条记录的业务日期或观测序号；空记录不表示数值为零。",
+    "items": {
+     "type": "object",
+     "properties": {
+      "key": {
+       "name": "条件代码",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "条件代码用于识别本次观察对象；不能当成排序或评分。"
+      },
+      "label": {
+       "name": "条件名称",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "条件名称保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+      },
+      "value": {
+       "name": "观察值",
+       "type": "number",
+       "nullable": true,
+       "unit": null,
+       "description": "观察值用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+       "display_decimals": 4
+      },
+      "threshold": {
+       "name": "规则阈值",
+       "type": "number",
+       "nullable": true,
+       "unit": null,
+       "description": "规则阈值用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+       "display_decimals": 4
+      },
+      "condition": {
+       "name": "阈值比较结果",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "观察值与规则阈值的比较结果：met 达到、near 接近、unmet 未达到；不推断下一状态。",
+       "enum": [
+        "met",
+        "near",
+        "unmet"
+       ]
+      }
+     },
+     "additionalProperties": false
+    }
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {}
+  },
+  "notes": [],
+  "context": {
+   "history_coverage": {
+    "available": null,
+    "requested": null,
+    "start": null,
+    "end": null
+   },
+   "history_gaps": null,
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:54.026600+00:00",
+  "rows": [
+   {
+    "trade_date": "2026-09-09",
+    "history_obs": 16,
+    "data_status": "WARN",
+    "calc_version": "next_state_v1_2026-09-12",
+    "conditions": [
+     {
+      "key": "breadth",
+      "label": "宽度承接",
+      "value": 61.38,
+      "threshold": 70.0,
+      "condition": "unmet"
+     },
+     {
+      "key": "risk",
+      "label": "风险偏好",
+      "value": 56.544,
+      "threshold": 57.68,
+      "condition": "near"
+     },
+     {
+      "key": "liquidity",
+      "label": "流动性",
+      "value": 30.73,
+      "threshold": 50.837,
+      "condition": "unmet"
+     }
+    ]
+   }
+  ]
+ }
+}

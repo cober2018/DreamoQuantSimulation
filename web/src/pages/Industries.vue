@@ -38,7 +38,7 @@
         <p class="note">涨跌幅为小数口径换算的百分比；成交额、资金净流入单位为亿元。扩散度、成交额占比等指标的精确公式以数据中台定义为准。</p>
       </div>
 
-      <div class="panel">
+      <div class="panel" v-module="'rrg'">
         <h2>相对强度—动量（RRG 原始坐标）</h2>
         <EChart :option="rrgOption" height="420px" />
         <p class="note">横轴为相对强度（RS-Ratio），纵轴为相对动量（RS-Momentum），参考线为 100。图形仅呈现历史相对位置。</p>

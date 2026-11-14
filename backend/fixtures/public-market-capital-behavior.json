@@ -1,0 +1,164 @@
+{
+ "factor-breadth|2026-09-08|": {
+  "service_key": "public-market-capital-behavior",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": null,
+  "view": "factor-breadth",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "factor": {
+    "name": "因子代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "因子代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "display": {
+    "name": "因子截面值",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "因子截面值用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "net_breadth": {
+    "name": "净广度",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "净广度用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "pos_share": {
+    "name": "正向占比",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "正向占比用于比较对应业务观察，单位为比例；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "neg_share": {
+    "name": "负向占比",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "负向占比用于比较对应业务观察，单位为比例；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   }
+  },
+  "row_count": 0,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "unavailable",
+  "field_status": {},
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": "not_generated",
+   "factor_rows": null,
+   "factor_expected_pool_rows": null,
+   "factor_breadth_threshold": null,
+   "factor_date": "2026-09-08",
+   "factor_available": false,
+   "factor_missing_reason": "unavailable"
+  },
+  "source_dates": {
+   "snapshot": null,
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.873941+00:00",
+  "rows": []
+ },
+ "factor-breadth|2026-09-09|": {
+  "service_key": "public-market-capital-behavior",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": null,
+  "view": "factor-breadth",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "factor": {
+    "name": "因子代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "因子代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "display": {
+    "name": "因子截面值",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "因子截面值用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "net_breadth": {
+    "name": "净广度",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "净广度用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "pos_share": {
+    "name": "正向占比",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "正向占比用于比较对应业务观察，单位为比例；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   },
+   "neg_share": {
+    "name": "负向占比",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "负向占比用于比较对应业务观察，单位为比例；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 6
+   }
+  },
+  "row_count": 0,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "unavailable",
+  "field_status": {},
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": "not_generated",
+   "factor_rows": null,
+   "factor_expected_pool_rows": null,
+   "factor_breadth_threshold": null,
+   "factor_date": "2026-09-09",
+   "factor_available": false,
+   "factor_missing_reason": "unavailable"
+  },
+  "source_dates": {
+   "snapshot": null,
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.994161+00:00",
+  "rows": []
+ }
+}

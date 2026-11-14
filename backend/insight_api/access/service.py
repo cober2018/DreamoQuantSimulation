@@ -5,7 +5,7 @@ import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Callable, Any, Dict, List, Optional
 
 from . import security
 from .store import ALL_PERMS, BUILTIN_ROLES, NUMERIC_PERMS, Store, sha256
@@ -50,6 +50,8 @@ class AccessService:
         self._secrets = jwt_secrets
         self.registration = registration  # open | invite_only
         self._perm_cache: Dict[str, tuple] = {}
+        # D9：返回生效策略里的 roles（{角色: 权限配置}）；None 表示尚未启用角色策略，权限仍读 role_permissions
+        self.policy_roles: Callable[[], Optional[Dict[str, Any]]] = lambda: None
 
     # ------------------------------------------------------------------ 角色/权限
     def role_permissions(self, role: str) -> Dict[str, int]:
@@ -57,10 +59,26 @@ class AccessService:
         hit = self._perm_cache.get(role)
         if hit and hit[0] == ver:
             return hit[1]
-        rows = self.store.q("SELECT perm,value FROM role_permissions WHERE role=?", (role,))
-        perms = {r["perm"]: int(r["value"]) for r in rows}
+        roles = self.policy_roles()
+        if roles is not None:
+            from .policy import perms_for
+            perms = perms_for(roles[role]) if role in roles else {}
+        else:
+            perms = self.legacy_role_permissions(role)
         self._perm_cache[role] = (ver, perms)
         return perms
+
+    def legacy_role_permissions(self, role: str) -> Dict[str, int]:
+        rows = self.store.q("SELECT perm,value FROM role_permissions WHERE role=?", (role,))
+        return {r["perm"]: int(r["value"]) for r in rows}
+
+    def role_indicators(self, role: str) -> Optional[set]:
+        """角色可见的指标编号；None 表示未启用指标级策略。"""
+        roles = self.policy_roles()
+        if roles is None:
+            return None
+        from .policy import allowed_indicators
+        return allowed_indicators(roles[role]) if role in roles else set()
 
     def effective_role(self, user) -> str:
         if user["base_role"] == "admin":
@@ -76,6 +94,7 @@ class AccessService:
             client=client, session=session, sign_key=sign_key,
             must_change_password=bool(user["must_change_password"]),
             member_expires_at=user["member_expires_at"] if role == user["member_role"] else None,
+            extra={"indicators": self.role_indicators(role)},
         )
 
     # ------------------------------------------------------------------ 注册/登录
@@ -510,8 +529,10 @@ class AccessService:
             raise AccessError(409, "角色已存在")
         if not create and not exists:
             raise AccessError(404, "角色不存在")
-        clean = self._validate_perms(perms)
-        if name == "admin" and "admin.console" not in clean:
+        if self.policy_roles() is not None and perms:
+            raise AccessError(410, "角色权限已改由“角色权限配置”页按策略版本修改")
+        clean = self._validate_perms(perms) if self.policy_roles() is None else {}
+        if self.policy_roles() is None and name == "admin" and "admin.console" not in clean:
             raise AccessError(409, "管理员角色必须保留 admin.console")
         with self.store.tx() as c:
             if create:
@@ -532,6 +553,8 @@ class AccessService:
             raise AccessError(409, "内置角色不可删除")
         if self.store.q1("SELECT 1 FROM users WHERE base_role=? OR member_role=? LIMIT 1", (name, name)):
             raise AccessError(409, "仍有用户使用该角色")
+        if name in (self.policy_roles() or {}):
+            raise AccessError(409, "该角色仍在生效的角色策略中，请先在角色权限配置页移除")
         with self.store.tx() as c:
             c.execute("DELETE FROM role_permissions WHERE role=?", (name,))
             c.execute("DELETE FROM roles WHERE name=?", (name,))

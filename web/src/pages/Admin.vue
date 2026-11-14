@@ -98,16 +98,19 @@
       </table></div>
     </div>
 
+    <RolePolicy v-if="tab === 'policy'" />
+
     <div v-if="tab === 'roles'" class="panel">
-      <h2>角色与权限<small>改动对用户下一次请求立即生效；内置角色不可删除</small></h2>
+      <h2>角色<small>内置角色不可删除</small></h2>
+      <p v-if="policyActive" class="banner info">权限已改由“角色权限配置”页按策略版本修改（看差异、二次确认后生效）；这里只管理角色名称。新建的角色要在配置页加入策略后才能访问数据。</p>
       <div v-for="r in roles" :key="r.name" class="role">
         <h3>{{ r.label }} <small>{{ r.name }}{{ r.builtin ? ' · 内置' : '' }}</small></h3>
-        <div class="perms">
+        <div class="perms" v-if="!policyActive">
           <label v-for="p in boolPerms" :key="p"><input type="checkbox" :checked="!!r.permissions[p]" @change="toggle(r, p, $event.target.checked)" /> {{ permLabel[p] || p }}</label>
           <label v-for="p in numPerms" :key="p">{{ permLabel[p] }}
             <input type="number" min="1" :max="numeric[p][1]" :value="r.permissions[p] || ''" @change="setNum(r, p, $event.target.value)" /></label>
         </div>
-        <button class="btn" @click="saveRole(r)">保存</button>
+        <button class="btn" v-if="!policyActive" @click="saveRole(r)">保存</button>
         <button v-if="!r.builtin" class="btn" @click="delRole(r)">删除</button>
       </div>
       <h3>新建角色</h3>
@@ -156,14 +159,16 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { api } from '../auth'
+import RolePolicy from './RolePolicy.vue'
 
-const tabs = [{ k: 'users', l: '用户' }, { k: 'plans', l: '套餐' }, { k: 'grants', l: '开通记录' }, { k: 'roles', l: '角色权限' },
+const tabs = [{ k: 'users', l: '用户' }, { k: 'plans', l: '套餐' }, { k: 'grants', l: '开通记录' }, { k: 'policy', l: '角色权限配置' }, { k: 'roles', l: '角色' },
   { k: 'invites', l: '邀请码' }, { k: 'audit', l: '审计' }]
 const SRC = { admin: '后台开通', invite: '邀请码', payment: '在线支付' }
 const tab = ref('users')
 const msg = ref('')
 const users = ref([])
 const roles = ref([])
+const policyActive = ref(false)
 const allPerms = ref([])
 const numeric = ref({})
 const invites = ref([])
@@ -196,7 +201,7 @@ async function load() {
   msg.value = ''
   if (tab.value === 'users' || tab.value === 'roles' || tab.value === 'invites') {
     const r = await api('GET', '/api/v1/admin/roles')
-    if (r.ok) { roles.value = r.data.items; allPerms.value = r.data.all_permissions; numeric.value = r.data.numeric }
+    if (r.ok) { roles.value = r.data.items; allPerms.value = r.data.all_permissions; numeric.value = r.data.numeric; policyActive.value = !!r.data.policy_active }
   }
   if (tab.value === 'users') {
     const r = await api('GET', `/api/v1/admin/users${expiringOnly.value ? '?expiring_within_days=7' : ''}`)
@@ -278,7 +283,7 @@ async function saveRole(r) {
   msg.value = res.ok ? '角色已保存，即时生效' : (res.data.detail || '失败')
 }
 async function createRole() {
-  const res = await api('POST', '/api/v1/admin/roles', { name: newRole.name, label: newRole.label, permissions: { 'client.web': 1, 'page.overview': 1, 'data.history_days': 5, max_sessions: 1 } })
+  const res = await api('POST', '/api/v1/admin/roles', { name: newRole.name, label: newRole.label, permissions: policyActive.value ? {} : { 'client.web': 1, 'page.overview': 1, 'data.history_days': 5, max_sessions: 1 } })
   msg.value = res.ok ? '已创建' : (res.data.detail || '失败')
   load()
 }

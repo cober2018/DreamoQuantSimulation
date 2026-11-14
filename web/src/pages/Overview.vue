@@ -2,17 +2,17 @@
   <PageFrame title="市场总览" question="今天市场发生了什么？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools><input type="date" v-model="tradeDate" aria-label="交易日" /></template>
     <div class="grid">
-      <div class="stat">
+      <div class="stat" v-ind="'overview.market.index_change_pct'">
         <div class="label">基准指数 {{ d.index_code || '' }}</div>
         <div :class="['value', fmt.dir(d.index_change_pct)]">{{ d.index_change_pct == null ? '—' : fmt.signed(d.index_change_pct) + '%' }}</div>
       </div>
-      <div class="stat"><div class="label">上涨家数</div><div class="value rise">{{ fmt.num(d.up_count, 0) }}</div></div>
-      <div class="stat"><div class="label">下跌家数</div><div class="value fall">{{ fmt.num(d.down_count, 0) }}</div></div>
-      <div class="stat">
+      <div class="stat" v-ind="'overview.market.up_count'"><div class="label">上涨家数</div><div class="value rise">{{ fmt.num(d.up_count, 0) }}</div></div>
+      <div class="stat" v-ind="'overview.market.down_count'"><div class="label">下跌家数</div><div class="value fall">{{ fmt.num(d.down_count, 0) }}</div></div>
+      <div class="stat" v-ind="'overview.market.up_ratio'">
         <div class="label">上涨占比</div><div class="value">{{ fmt.ratio(d.up_ratio) }}</div>
         <div class="sub">上涨 ÷（上涨 + 下跌）</div>
       </div>
-      <div class="stat"><div class="label">两市成交额</div><div class="value">{{ fmt.num(d.turnover_yi, 0) }}</div><div class="sub">亿元</div></div>
+      <div class="stat" v-ind="'overview.market.turnover_yi'"><div class="label">两市成交额</div><div class="value">{{ fmt.num(d.turnover_yi, 0) }}</div><div class="sub">亿元</div></div>
     </div>
     <div class="panel" style="margin-top:16px" v-if="d.up_count != null">
       <h2>涨跌家数分布</h2>

@@ -2,59 +2,59 @@
   <PageFrame title="参与度与资金环境" question="参与和资金结构相对历史怎样变化？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools><input type="date" v-model="tradeDate" aria-label="交易日" /></template>
 
-    <div class="panel" v-if="obs">
+    <div class="panel" v-module="'observation'" v-if="obs">
       <h2>市场参与与卖压<small>原始统计</small><DateTag :date="obs.trade_date" :page-date="env.trade_date" /></h2>
       <div class="grid">
         <div class="stat"><div class="label">全市场成交额</div><div class="value">{{ fmt.num(obs.total_amount_billion, 0) }} 亿元</div><div class="sub">{{ fmt.num(obs.count_stocks, 0) }} 只股票</div></div>
-        <div class="stat"><div class="label">成交额 / 前 20 日中位数</div><div class="value">{{ fmt.num(obs.amount_ratio_20d, 2) }} 倍</div></div>
-        <div class="stat"><div class="label">成交额分位（60 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_60d, 1) }}</div><div class="sub">0–100，不含当日</div></div>
-        <div class="stat"><div class="label">成交额分位（250 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_250d, 1) }}</div></div>
-        <div class="stat"><div class="label">低参与连续天数</div><div class="value">{{ fmt.num(obs.low_participation_streak, 0) }}</div></div>
-        <div class="stat"><div class="label">主动卖出占比</div><div class="value">{{ fmt.ratio(obs.active_sell_ratio) }}</div></div>
-        <div class="stat"><div class="label">卖压缓和程度（1 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_1d, 3) }}</div></div>
-        <div class="stat"><div class="label">卖压缓和程度（3 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
+        <div class="stat" v-ind="'participation.observation.amount_ratio_20d'"><div class="label">成交额 / 前 20 日中位数</div><div class="value">{{ fmt.num(obs.amount_ratio_20d, 2) }} 倍</div></div>
+        <div class="stat" v-ind="'participation.observation.participation_pctile_60d'"><div class="label">成交额分位（60 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_60d, 1) }}</div><div class="sub">0–100，不含当日</div></div>
+        <div class="stat" v-ind="'participation.observation.participation_pctile_250d'"><div class="label">成交额分位（250 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_250d, 1) }}</div></div>
+        <div class="stat" v-ind="'participation.observation.low_participation_streak'"><div class="label">低参与连续天数</div><div class="value">{{ fmt.num(obs.low_participation_streak, 0) }}</div></div>
+        <div class="stat" v-ind="'participation.observation.active_sell_ratio'"><div class="label">主动卖出占比</div><div class="value">{{ fmt.ratio(obs.active_sell_ratio) }}</div></div>
+        <div class="stat" v-ind="'participation.observation.sell_pressure_change_1d'"><div class="label">卖压缓和程度（1 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_1d, 3) }}</div></div>
+        <div class="stat" v-ind="'participation.observation.sell_pressure_change_3d'"><div class="label">卖压缓和程度（3 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
         <div class="stat"><div class="label">委托失衡</div><div class="value">{{ fmt.signed(obs.order_imbalance, 3) }}</div><div class="sub">1 日变化 {{ fmt.signed(obs.order_imbalance_delta_1d, 3) }}</div></div>
       </div>
       <p class="note">分位为相对此前历史窗口的位置，只描述历史相对水平，不是概率或参与人数比例。</p>
     </div>
 
-    <div class="panel">
-      <h2>股权风险溢价（ERP）<small>可用 {{ erp.available_count ?? '—' }}/{{ erp.total_count ?? '—' }} 项</small></h2>
+    <div class="panel" v-module="'erp'">
+      <h2>股权风险溢价（ERP）<small>数据源可用 {{ erp.available_count ?? '—' }}/{{ erp.total_count ?? '—' }} 项{{ openText('erp') }}</small></h2>
       <div class="grid">
-        <div class="stat"><div class="label">ERP</div><div class="value">{{ pctPoint(erp.erp_value_pct) }}</div><div class="sub">盈利收益率 − 10 年期国债收益率</div></div>
-        <div class="stat"><div class="label">盈利收益率</div><div class="value">{{ fmt.ratio(erp.earnings_yield, 2) }}</div></div>
-        <div class="stat"><div class="label">10 年期国债收益率</div><div class="value">{{ pctPoint(erp.yield_10y) }}</div><div class="sub">来源 {{ erp.yield_source_flag || '—' }}</div></div>
-        <div class="stat"><div class="label">ERP 5 日变化</div><div class="value">{{ pp(erp.erp_change_5d_pct) }}</div></div>
-        <div class="stat"><div class="label">ERP 20 日变化</div><div class="value">{{ pp(erp.erp_change_20d_pct) }}</div></div>
-        <div class="stat"><div class="label">近 252 日分位</div><div class="value">{{ pctl(erp.erp_percentile_252d) }}</div></div>
-        <div class="stat"><div class="label">近 3 年分位</div><div class="value">{{ pctl(erp.erp_percentile_3y) }}</div></div>
-        <div class="stat"><div class="label">近 5 年分位</div><div class="value">{{ pctl(erp.erp_percentile_5y) }}</div></div>
+        <div class="stat" v-ind="'participation.erp.erp_value_pct'"><div class="label">ERP</div><div class="value">{{ pctPoint(erp.erp_value_pct) }}</div><div class="sub">盈利收益率 − 10 年期国债收益率</div></div>
+        <div class="stat" v-ind="'participation.erp.earnings_yield'"><div class="label">盈利收益率</div><div class="value">{{ fmt.ratio(erp.earnings_yield, 2) }}</div></div>
+        <div class="stat" v-ind="'participation.erp.yield_10y'"><div class="label">10 年期国债收益率</div><div class="value">{{ pctPoint(erp.yield_10y) }}</div><div class="sub">来源 {{ erp.yield_source_flag || '—' }}</div></div>
+        <div class="stat" v-ind="'participation.erp.erp_change_5d_pct'"><div class="label">ERP 5 日变化</div><div class="value">{{ pp(erp.erp_change_5d_pct) }}</div></div>
+        <div class="stat" v-ind="'participation.erp.erp_change_20d_pct'"><div class="label">ERP 20 日变化</div><div class="value">{{ pp(erp.erp_change_20d_pct) }}</div></div>
+        <div class="stat" v-ind="'participation.erp.erp_percentile_252d'"><div class="label">近 252 日分位</div><div class="value">{{ pctl(erp.erp_percentile_252d) }}</div></div>
+        <div class="stat" v-ind="'participation.erp.erp_percentile_3y'"><div class="label">近 3 年分位</div><div class="value">{{ pctl(erp.erp_percentile_3y) }}</div></div>
+        <div class="stat" v-ind="'participation.erp.erp_percentile_5y'"><div class="label">近 5 年分位</div><div class="value">{{ pctl(erp.erp_percentile_5y) }}</div></div>
       </div>
     </div>
 
-    <div class="panel">
-      <h2>估值端统计<small>可用 {{ val.available_count ?? '—' }}/{{ val.total_count ?? '—' }} 项</small></h2>
+    <div class="panel" v-module="'valuation'">
+      <h2>估值端统计<small>数据源可用 {{ val.available_count ?? '—' }}/{{ val.total_count ?? '—' }} 项{{ openText('valuation') }}</small></h2>
       <div class="grid">
-        <div class="stat"><div class="label">全市场市盈率中位数</div><div class="value">{{ fmt.num(val.current_pe_median) }}</div></div>
-        <div class="stat"><div class="label">近 90 日市盈率中位数</div><div class="value">{{ fmt.num(val.hist_90d_pe_median) }}</div></div>
-        <div class="stat"><div class="label">破净股占比</div><div class="value">{{ pctPoint(val.break_ratio_pct) }}</div></div>
-        <div class="stat"><div class="label">折价比例</div><div class="value">{{ pctPoint(val.discount_pct) }}</div></div>
+        <div class="stat" v-ind="'participation.valuation.current_pe_median'"><div class="label">全市场市盈率中位数</div><div class="value">{{ fmt.num(val.current_pe_median) }}</div></div>
+        <div class="stat" v-ind="'participation.valuation.hist_90d_pe_median'"><div class="label">近 90 日市盈率中位数</div><div class="value">{{ fmt.num(val.hist_90d_pe_median) }}</div></div>
+        <div class="stat" v-ind="'participation.valuation.break_ratio_pct'"><div class="label">破净股占比</div><div class="value">{{ pctPoint(val.break_ratio_pct) }}</div></div>
+        <div class="stat" v-ind="'participation.valuation.discount_pct'"><div class="label">折价比例</div><div class="value">{{ pctPoint(val.discount_pct) }}</div></div>
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" v-module="'limit_up'">
       <h2>涨停结构（当日观察）</h2>
       <div class="grid">
-        <div class="stat"><div class="label">封板率</div><div class="value">{{ fmt.ratio(lu.seal_rate) }}</div></div>
-        <div class="stat"><div class="label">连板股数</div><div class="value">{{ fmt.num(lu.consecutive_board_count, 0) }}</div></div>
-        <div class="stat"><div class="label">最高连板天数</div><div class="value">{{ fmt.num(lu.max_consecutive_days, 0) }}</div></div>
-        <div class="stat"><div class="label">首板溢价</div><div :class="['value', fmt.dir(lu.first_board_premium)]">{{ fmt.signedPct(lu.first_board_premium) }}</div></div>
-        <div class="stat"><div class="label">回封率</div><div class="value">{{ fmt.ratio(lu.broken_repair_rate) }}</div></div>
+        <div class="stat" v-ind="'participation.limit_up.seal_rate'"><div class="label">封板率</div><div class="value">{{ fmt.ratio(lu.seal_rate) }}</div></div>
+        <div class="stat" v-ind="'participation.limit_up.consecutive_board_count'"><div class="label">连板股数</div><div class="value">{{ fmt.num(lu.consecutive_board_count, 0) }}</div></div>
+        <div class="stat" v-ind="'participation.limit_up.max_consecutive_days'"><div class="label">最高连板天数</div><div class="value">{{ fmt.num(lu.max_consecutive_days, 0) }}</div></div>
+        <div class="stat" v-ind="'participation.limit_up.first_board_premium'"><div class="label">首板溢价</div><div :class="['value', fmt.dir(lu.first_board_premium)]">{{ fmt.signedPct(lu.first_board_premium) }}</div></div>
+        <div class="stat" v-ind="'participation.limit_up.broken_repair_rate'"><div class="label">回封率</div><div class="value">{{ fmt.ratio(lu.broken_repair_rate) }}</div></div>
       </div>
       <p class="note">{{ lu.note }}</p>
     </div>
 
-    <div class="panel" v-if="sm">
+    <div class="panel" v-module="'smart_money'" v-if="sm">
       <h2>聪明钱五因子<small>截面统计 · 模型 {{ sm.model_version || '—' }}</small><DateTag :date="sm.trade_date" :page-date="env.trade_date" /></h2>
       <div class="grid">
         <div class="stat" v-for="f in sm.factors" :key="f.key">
@@ -66,7 +66,7 @@
       <p class="note">{{ sm.note }}；样本 {{ fmt.num(sm.sample_rows, 0) }} 只（入池 {{ fmt.num(sm.pool_rows, 0) }} 只）。共振评分与风险分不提供。</p>
     </div>
 
-    <div class="panel" v-if="styleData">
+    <div class="panel" v-module="'style'" v-if="styleData">
       <h2>风格相对强度<small>阵营历史序列，非当前风格选择建议</small><DateTag :date="styleCamps[0]?.source_date" :page-date="env.trade_date" /></h2>
       <div class="table-wrap">
         <table>
@@ -85,7 +85,7 @@
       <p class="note">{{ styleData.definition }}；按固定阵营顺序展示，不按强度排序，不提供 leader/signal 结论。</p>
     </div>
 
-    <div class="panel" v-if="bc">
+    <div class="panel" v-module="'bottom'" v-if="bc">
       <h2>底部条件观察<small>样本 {{ fmt.num(bc.history_obs, 0) }} 个交易日</small></h2>
       <div class="grid">
         <div class="stat" v-for="c in bc.conditions" :key="c.key">
@@ -97,7 +97,7 @@
       <p class="note">{{ bc.note }}；下一状态预测与准备度总分不提供。</p>
     </div>
 
-    <div class="panel">
+    <div class="panel" v-module="'derivatives'">
       <h2>股指衍生品原始指标</h2>
       <div class="table-wrap">
         <table>
@@ -128,7 +128,7 @@ import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import DateTag from '../components/DateTag.vue'
 import { fmt } from '../api'
-import { useModule } from '../useModule'
+import { openText, useModule } from '../useModule'
 
 const COND = { met: '已达标', near: '接近', unmet: '未达标' }
 const tradeDate = ref('')

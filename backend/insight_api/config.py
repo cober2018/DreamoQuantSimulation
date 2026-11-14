@@ -6,6 +6,9 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from .tier_routing import account_keys
+
+PAGES = frozenset({"overview", "participation", "industries", "themes", "history", "calendar"})
 FIXTURE_DIR = Path(__file__).resolve().parent.parent / "fixtures"
 
 
@@ -33,6 +36,13 @@ class Settings:
     wechat_appid: str = ""
     wechat_secret: str = ""
     mp_mock_login: bool = False
+    # 过渡期旧 Key：只用于 review-*；未设置时 review-* 沿用 INSIGHT_UPSTREAM_API_KEY（切换前的兼容）
+    legacy_api_key: str = ""
+    # 等级账号名 → Key（D2）：insight-svip 用 INSIGHT_UPSTREAM_API_KEY，其余用 INSIGHT_UPSTREAM_API_KEY_<后缀>
+    account_keys: tuple = ()
+    policy_require_second_approver: bool = False
+    # 已切到 public-* 事实视图的页面 (D4)：overview,participation,industries,themes,history,calendar
+    public_pages: frozenset = frozenset()
 
 
 def load_settings() -> Settings:
@@ -55,6 +65,10 @@ def load_settings() -> Settings:
         wechat_appid=os.getenv("INSIGHT_WECHAT_APPID", "").strip(),
         wechat_secret=os.getenv("INSIGHT_WECHAT_SECRET", "").strip(),
         mp_mock_login=os.getenv("INSIGHT_MP_MOCK_LOGIN", "") == "1",
+        legacy_api_key=os.getenv("INSIGHT_UPSTREAM_LEGACY_API_KEY", ""),
+        account_keys=tuple(sorted(account_keys(os.getenv("INSIGHT_UPSTREAM_API_KEY", ""), dict(os.environ)).items())),
+        policy_require_second_approver=os.getenv("INSIGHT_POLICY_REQUIRE_SECOND_APPROVER", "") == "1",
+        public_pages=frozenset(x.strip() for x in os.getenv("INSIGHT_PUBLIC_PAGES", "").split(",") if x.strip()),
     )
     if settings.data_mode not in {"live", "fixture"}:
         raise ConfigError("INSIGHT_DATA_MODE 只允许 live / fixture")
@@ -72,6 +86,9 @@ def load_settings() -> Settings:
             raise ConfigError("production 必须配置至少 32 位的 INSIGHT_JWT_SECRET")
         if settings.mp_mock_login:
             raise ConfigError("production 环境禁止启用小程序模拟登录")
+    unknown_pages = settings.public_pages - PAGES
+    if unknown_pages:
+        raise ConfigError(f"INSIGHT_PUBLIC_PAGES 含未知页面: {', '.join(sorted(unknown_pages))}")
     if settings.data_mode == "live" and not settings.upstream_api_key:
         raise ConfigError("live 模式必须配置 INSIGHT_UPSTREAM_API_KEY")
     return settings

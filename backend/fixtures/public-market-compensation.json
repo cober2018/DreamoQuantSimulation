@@ -1,0 +1,502 @@
+{
+ "erp-filter|2026-09-08|": {
+  "service_key": "public-market-compensation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "erp-filter",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "earnings_yield": {
+    "name": "盈利收益率",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "【估值过滤口径】来源市场情绪 ERP 过滤块；与 current 视图（补偿表口径）earnings_yield_pct 来源不同。",
+    "display_decimals": 6
+   },
+   "erp_value_pct": {
+    "name": "ERP",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】股权风险补偿；与 current 视图 compensation_pct（补偿表口径）来源不同，数值可能有差异。",
+    "display_decimals": 4
+   },
+   "yield_10y": {
+    "name": "十年期国债收益率",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】",
+    "display_decimals": 4
+   },
+   "erp_change_5d_pct": {
+    "name": "ERP五日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": "百分点",
+    "description": "【估值过滤口径】",
+    "display_decimals": 4
+   },
+   "erp_change_20d_pct": {
+    "name": "ERP二十日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": "百分点",
+    "description": "【估值过滤口径】单位百分点；补偿表口径 change_20d_bp 单位为 bp。",
+    "display_decimals": 4
+   },
+   "erp_percentile_252d": {
+    "name": "ERP一年分位",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】",
+    "display_decimals": 2
+   },
+   "erp_percentile_3y": {
+    "name": "ERP三年分位",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】",
+    "display_decimals": 2
+   },
+   "erp_percentile_5y": {
+    "name": "ERP五年分位",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】",
+    "display_decimals": 2
+   },
+   "yield_source_flag": {
+    "name": "原因代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "原因代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "available_count": {
+    "name": "可用指标数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "可用指标数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "total_count": {
+    "name": "指标总数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "指标总数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {
+    "erp_percentile_252d": "unavailable",
+    "erp_percentile_3y": "unavailable",
+    "erp_percentile_5y": "unavailable"
+   }
+  },
+  "notes": [],
+  "context": {
+   "history_coverage": {
+    "available": null,
+    "requested": null,
+    "start": null,
+    "end": null
+   },
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.798554+00:00",
+  "rows": [
+   {
+    "earnings_yield": 0.073452,
+    "erp_value_pct": 5.6637,
+    "yield_10y": 1.6815,
+    "erp_change_5d_pct": 0.1154,
+    "erp_change_20d_pct": 0.4495,
+    "erp_percentile_252d": null,
+    "erp_percentile_3y": null,
+    "erp_percentile_5y": null,
+    "yield_source_flag": "cn_10y",
+    "available_count": 4,
+    "total_count": 6
+   }
+  ]
+ },
+ "valuation-breadth|2026-09-08|": {
+  "service_key": "public-market-compensation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "valuation-breadth",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "current_pe_median": {
+    "name": "全市场市盈率中位数",
+    "type": "number",
+    "nullable": true,
+    "unit": "倍",
+    "description": "全市场市盈率中位数；不是 index-position 的分指数市盈率。",
+    "display_decimals": 4
+   },
+   "hist_90d_pe_median": {
+    "name": "近90日市盈率中位数",
+    "type": "number",
+    "nullable": true,
+    "unit": "倍",
+    "description": "近90日市盈率中位数用于比较对应业务观察，单位为倍；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "break_ratio_pct": {
+    "name": "破净占比",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "破净占比用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 2
+   },
+   "discount_pct": {
+    "name": "折价幅度",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "折价幅度用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 2
+   },
+   "available_count": {
+    "name": "可用指标数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "可用指标数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "total_count": {
+    "name": "指标总数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "指标总数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {}
+  },
+  "notes": [],
+  "context": {
+   "history_coverage": {
+    "available": null,
+    "requested": null,
+    "start": null,
+    "end": null
+   },
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.810704+00:00",
+  "rows": [
+   {
+    "current_pe_median": 40.6206,
+    "hist_90d_pe_median": 40.7688,
+    "break_ratio_pct": 6.91,
+    "discount_pct": 0.36,
+    "available_count": 5,
+    "total_count": 5
+   }
+  ]
+ },
+ "erp-filter|2026-09-09|": {
+  "service_key": "public-market-compensation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "erp-filter",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "earnings_yield": {
+    "name": "盈利收益率",
+    "type": "number",
+    "nullable": true,
+    "unit": "比例",
+    "description": "【估值过滤口径】来源市场情绪 ERP 过滤块；与 current 视图（补偿表口径）earnings_yield_pct 来源不同。",
+    "display_decimals": 6
+   },
+   "erp_value_pct": {
+    "name": "ERP",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】股权风险补偿；与 current 视图 compensation_pct（补偿表口径）来源不同，数值可能有差异。",
+    "display_decimals": 4
+   },
+   "yield_10y": {
+    "name": "十年期国债收益率",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】",
+    "display_decimals": 4
+   },
+   "erp_change_5d_pct": {
+    "name": "ERP五日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": "百分点",
+    "description": "【估值过滤口径】",
+    "display_decimals": 4
+   },
+   "erp_change_20d_pct": {
+    "name": "ERP二十日变化",
+    "type": "number",
+    "nullable": true,
+    "unit": "百分点",
+    "description": "【估值过滤口径】单位百分点；补偿表口径 change_20d_bp 单位为 bp。",
+    "display_decimals": 4
+   },
+   "erp_percentile_252d": {
+    "name": "ERP一年分位",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】",
+    "display_decimals": 2
+   },
+   "erp_percentile_3y": {
+    "name": "ERP三年分位",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】",
+    "display_decimals": 2
+   },
+   "erp_percentile_5y": {
+    "name": "ERP五年分位",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "【估值过滤口径】",
+    "display_decimals": 2
+   },
+   "yield_source_flag": {
+    "name": "原因代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "原因代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "available_count": {
+    "name": "可用指标数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "可用指标数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "total_count": {
+    "name": "指标总数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "指标总数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {
+    "erp_percentile_252d": "unavailable",
+    "erp_percentile_3y": "unavailable",
+    "erp_percentile_5y": "unavailable"
+   }
+  },
+  "notes": [],
+  "context": {
+   "history_coverage": {
+    "available": null,
+    "requested": null,
+    "start": null,
+    "end": null
+   },
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.930442+00:00",
+  "rows": [
+   {
+    "earnings_yield": 0.073189,
+    "erp_value_pct": 5.6373,
+    "yield_10y": 1.6816,
+    "erp_change_5d_pct": 0.0195,
+    "erp_change_20d_pct": 0.4169,
+    "erp_percentile_252d": null,
+    "erp_percentile_3y": null,
+    "erp_percentile_5y": null,
+    "yield_source_flag": "cn_10y",
+    "available_count": 4,
+    "total_count": 6
+   }
+  ]
+ },
+ "valuation-breadth|2026-09-09|": {
+  "service_key": "public-market-compensation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "valuation-breadth",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "current_pe_median": {
+    "name": "全市场市盈率中位数",
+    "type": "number",
+    "nullable": true,
+    "unit": "倍",
+    "description": "全市场市盈率中位数；不是 index-position 的分指数市盈率。",
+    "display_decimals": 4
+   },
+   "hist_90d_pe_median": {
+    "name": "近90日市盈率中位数",
+    "type": "number",
+    "nullable": true,
+    "unit": "倍",
+    "description": "近90日市盈率中位数用于比较对应业务观察，单位为倍；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "break_ratio_pct": {
+    "name": "破净占比",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "破净占比用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 2
+   },
+   "discount_pct": {
+    "name": "折价幅度",
+    "type": "number",
+    "nullable": true,
+    "unit": "%",
+    "description": "折价幅度用于比较对应业务观察，单位为%；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 2
+   },
+   "available_count": {
+    "name": "可用指标数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "可用指标数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "total_count": {
+    "name": "指标总数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "个",
+    "description": "指标总数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {}
+  },
+  "notes": [],
+  "context": {
+   "history_coverage": {
+    "available": null,
+    "requested": null,
+    "start": null,
+    "end": null
+   },
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.941695+00:00",
+  "rows": [
+   {
+    "current_pe_median": 40.3736,
+    "hist_90d_pe_median": 40.7621,
+    "break_ratio_pct": 7.02,
+    "discount_pct": 0.95,
+    "available_count": 5,
+    "total_count": 5
+   }
+  ]
+ }
+}

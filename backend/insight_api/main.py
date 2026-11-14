@@ -19,10 +19,13 @@ from .access.routes import build_router
 from .access.service import AccessService
 from .access.store import Store
 
-from . import modules
+from . import modules, public_modules
 from .config import load_settings
 from .content_scope import CONTENT_SCOPE, DISCLAIMER, ContentGuardViolation, validate_registry
 from .upstream import Upstream, UpstreamError
+from .access.policy import UpstreamScope, trim
+from .tier_routing import (PolicyService, RequestContext, RouteLog, RouteRejected, TierRouter, end_user_ref,
+                           new_request_id, set_context)
 
 logger = logging.getLogger("insight_api")
 
@@ -36,7 +39,7 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        app.state.upstream = Upstream(settings)
+        app.state.upstream = Upstream(settings, router, RouteLog(store))
         yield
         await app.state.upstream.close()
 
@@ -59,8 +62,26 @@ def create_app() -> FastAPI:
         if settings.bootstrap_admin_user and settings.bootstrap_admin_password:
             access.bootstrap_admin(settings.bootstrap_admin_user, settings.bootstrap_admin_password)
     gate = Gate(access, auth_off=settings.auth_mode == "off")
+
+    # ---- 等级路由 (D7) ----
+    store = access.store if access else None
+    if not settings.legacy_api_key and settings.data_mode == "live":
+        logger.warning("未配置 INSIGHT_UPSTREAM_LEGACY_API_KEY，review-* 暂用 INSIGHT_UPSTREAM_API_KEY（切换前兼容）")
+    router = TierRouter(store, dict(settings.account_keys), settings.legacy_api_key or settings.upstream_api_key,
+                        require_keys=settings.data_mode == "live",
+                        dev_fallback=store is None and settings.env != "production")
+    scope = UpstreamScope(settings, dict(settings.account_keys))
+
+    def _policy_activated():
+        # 角色策略生效：权限缓存按 role_version 失效
+        store.bump_role_version()
+
+    policies = PolicyService(store, router, settings.policy_require_second_approver, scope=scope,
+                             on_activate=_policy_activated) if store else None
     if access:
-        app.include_router(build_router(access, gate, settings))
+        access.policy_roles = lambda: router.active_roles
+    if access:
+        app.include_router(build_router(access, gate, settings, policies, scope))
     else:
         @app.get("/api/v1/auth/me")
         async def _dev_me():
@@ -83,12 +104,21 @@ def create_app() -> FastAPI:
             "data_mode": settings.data_mode, "disclaimer": DISCLAIMER,
         })
 
+    @app.exception_handler(RouteRejected)
+    async def route_rejected(_: Request, exc: RouteRejected):
+        logger.warning("route_rejected %s", exc)
+        return JSONResponse(status_code=403, content={"detail": "当前账号等级暂无数据权限", "disclaimer": DISCLAIMER})
+
     @app.exception_handler(ContentGuardViolation)
     async def guard_violation(_: Request, exc: ContentGuardViolation):
         # 守卫命中说明投影有缺陷：失败关闭，只记录日志，不回显任何数据
         logger.error("content_guard_violation %s", exc)
         return JSONResponse(status_code=500, content={"status": "content_guard_violation", "data": {},
                                                       "disclaimer": DISCLAIMER})
+
+    def src(page: str):
+        """按页切换 (D4)：同一页全部模块走同一条链路。"""
+        return public_modules if page in settings.public_pages else modules
 
     def up(request: Request) -> Upstream:
         return request.app.state.upstream
@@ -97,7 +127,9 @@ def create_app() -> FastAPI:
 
     @app.get("/api/v1/health")
     async def health():
-        return {"status": "ok", "data_mode": settings.data_mode}
+        version = router.active_version()
+        return {"status": "ok", "data_mode": settings.data_mode,
+                "route_rule": {"active_version": version, "ok": version is not None}}
 
     @app.get("/api/v1/meta/content-scope")
     async def content_scope():
@@ -106,22 +138,28 @@ def create_app() -> FastAPI:
     def entitled(request: Request, perm: str, trade_date: Optional[str] = None):
         p = gate.require(request, perm)
         gate.check_trade_date(p, trade_date)
+        set_context(RequestContext(request_id=new_request_id(), user_id=p.user_id,
+                                   end_user_ref=end_user_ref(store, p.user_id), role=p.role, client=p.client))
         return p
+
+    def out_for(page: str, out, p):
+        """D9：按角色 × 看板 × 指标统一裁剪（唯一入口），再打溯源标记。"""
+        return gate.stamp(trim(page, out, p.extra.get("indicators")), p)
 
     @app.get("/api/v1/overview")
     async def overview(request: Request, trade_date: Optional[str] = TradeDate):
         p = entitled(request, "page.overview", trade_date)
-        return gate.stamp(await modules.overview(up(request), trade_date), p)
+        return out_for("overview", await src("overview").overview(up(request), trade_date), p)
 
     @app.get("/api/v1/participation")
     async def participation(request: Request, trade_date: Optional[str] = TradeDate):
         p = entitled(request, "page.participation", trade_date)
-        return gate.stamp(await modules.participation(up(request), trade_date), p)
+        return out_for("participation", await src("participation").participation(up(request), trade_date), p)
 
     @app.get("/api/v1/industries")
     async def industries(request: Request, trade_date: Optional[str] = TradeDate, idx_type: IdxType = "行业板块"):
         p = entitled(request, "page.industries", trade_date)
-        return gate.stamp(await modules.industries(up(request), trade_date, idx_type), p)
+        return out_for("industries", await src("industries").industries(up(request), trade_date, idx_type), p)
 
     @app.get("/api/v1/industries/{sector_code}/series")
     async def industry_series(
@@ -131,23 +169,28 @@ def create_app() -> FastAPI:
         days: int = Query(5, ge=2, le=20),
     ):
         p = entitled(request, "page.industries", end_date)
-        if not p.can("data.detail") or p.client == "mp":
+        ind = p.extra.get("indicators")
+        series_ok = (p.can("data.detail") if ind is None else any(i.startswith("industries.series.") for i in ind)) \
+            and p.client != "mp"
+        if not series_ok:
             raise HTTPException(403, "板块序列属于下钻明细，需要更高等级")
-        return gate.stamp(await modules.industry_series(up(request), sector_code, end_date, min(days, p.history_days)), p)
+        out = await src("industries").industry_series(up(request), sector_code, end_date, min(days, p.history_days))
+        return gate.stamp(trim("industries", out, ind, only_module="series"), p)
 
     @app.get("/api/v1/themes")
     async def themes(request: Request, trade_date: Optional[str] = TradeDate):
         p = entitled(request, "page.themes", trade_date)
-        out = await modules.themes(up(request), trade_date)
+        out = await src("themes").themes(up(request), trade_date)
         data = out.get("data") or {}
-        if not p.can("data.detail") or p.client == "mp":
+        ind = p.extra.get("indicators")
+        if p.client == "mp" or ((not p.can("data.detail")) if ind is None else ("themes.seal_time.seal_time_buckets" not in ind)):
             for t in data.get("themes", []):
                 t.pop("seal_time_buckets", None)
             data.pop("seal_time_buckets", None)
             data["detail_locked"] = True
         if data.get("history"):
             data["history"] = data["history"][-p.history_days:]
-        return gate.stamp(out, p)
+        return out_for("themes", out, p)
 
     @app.get("/api/v1/history")
     async def history(
@@ -157,7 +200,7 @@ def create_app() -> FastAPI:
         period: Literal["1d", "5d", "20d"] = "1d",
     ):
         p = entitled(request, "page.history", trade_date)
-        return gate.stamp(await modules.history(up(request), trade_date, idx_type, period), p)
+        return out_for("history", await src("history").history(up(request), trade_date, idx_type, period), p)
 
     @app.get("/api/v1/calendar")
     async def calendar(
@@ -166,7 +209,7 @@ def create_app() -> FastAPI:
         days: int = Query(14, ge=1, le=60, description="自数据日起的前瞻事件天数窗口"),
     ):
         p = entitled(request, "page.calendar", trade_date)
-        return gate.stamp(await modules.calendar(up(request), trade_date, days), p)
+        return out_for("calendar", await src("calendar").calendar(up(request), trade_date, days), p)
 
     return app
 

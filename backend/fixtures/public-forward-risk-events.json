@@ -1,0 +1,310 @@
+{
+ "calendar-facts|2026-09-08|event_family=macro|window_days=14": {
+  "service_key": "public-forward-risk-events",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": null,
+  "view": "calendar-facts",
+  "entity": {},
+  "filters": {
+   "event_family": "macro",
+   "window_days": 14
+  },
+  "columns": {
+   "event_ref": {
+    "name": "事件引用",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件引用保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "event_date": {
+    "name": "事件日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "event_time": {
+    "name": "事件时间",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件时间保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "country": {
+    "name": "国家",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "国家保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "event_type_label": {
+    "name": "事件类别",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件类别保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "title": {
+    "name": "事件标题",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件标题保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "indicator_code": {
+    "name": "宏观指标",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "宏观指标保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "period": {
+    "name": "所属周期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "所属周期保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "unit": {
+    "name": "来源单位",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "来源单位保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "publication_status": {
+    "name": "公布状态",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "公布状态保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "previous_value": {
+    "name": "前值",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "前值保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "actual_value": {
+    "name": "公布值",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "公布值保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "consensus_value": {
+    "name": "预期值",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "第三方发布的一致预期，非平台预测。"
+   },
+   "consensus_source": {
+    "name": "预期来源",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "预期来源保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "source_importance": {
+    "name": "来源重要性",
+    "type": "integer",
+    "nullable": true,
+    "unit": "星",
+    "description": "来源重要性的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 0,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "unavailable",
+  "field_status": {},
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-09-19T17:00:16+08:00",
+   "coverage_ratio": null,
+   "missing_sources": [
+    "consensus_expectation_snapshot",
+    "undisclosed_source",
+    "fomc_cpi_event_feed",
+    "future_macro_calendar",
+    "llm_research_assessment_table",
+    "real_forward_events"
+   ],
+   "latest_available_date": null,
+   "empty_reason": "not_generated",
+   "window_start": "2026-09-01",
+   "window_end": "2026-10-28",
+   "window_complete": true
+  },
+  "source_dates": {
+   "snapshot": null,
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.681089+00:00",
+  "rows": []
+ },
+ "calendar-facts|2026-09-09|event_family=macro|window_days=14": {
+  "service_key": "public-forward-risk-events",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": null,
+  "view": "calendar-facts",
+  "entity": {},
+  "filters": {
+   "event_family": "macro",
+   "window_days": 14
+  },
+  "columns": {
+   "event_ref": {
+    "name": "事件引用",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件引用保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "event_date": {
+    "name": "事件日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "event_time": {
+    "name": "事件时间",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件时间保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "country": {
+    "name": "国家",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "国家保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "event_type_label": {
+    "name": "事件类别",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件类别保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "title": {
+    "name": "事件标题",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "事件标题保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "indicator_code": {
+    "name": "宏观指标",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "宏观指标保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "period": {
+    "name": "所属周期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "所属周期保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "unit": {
+    "name": "来源单位",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "来源单位保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "publication_status": {
+    "name": "公布状态",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "公布状态保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "previous_value": {
+    "name": "前值",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "前值保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "actual_value": {
+    "name": "公布值",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "公布值保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "consensus_value": {
+    "name": "预期值",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "第三方发布的一致预期，非平台预测。"
+   },
+   "consensus_source": {
+    "name": "预期来源",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "预期来源保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "source_importance": {
+    "name": "来源重要性",
+    "type": "integer",
+    "nullable": true,
+    "unit": "星",
+    "description": "来源重要性的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 0,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "unavailable",
+  "field_status": {},
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-09-19T17:00:16+08:00",
+   "coverage_ratio": null,
+   "missing_sources": [
+    "consensus_expectation_snapshot",
+    "undisclosed_source",
+    "fomc_cpi_event_feed",
+    "future_macro_calendar",
+    "llm_research_assessment_table",
+    "real_forward_events"
+   ],
+   "latest_available_date": null,
+   "empty_reason": "not_generated",
+   "window_start": "2026-09-02",
+   "window_end": "2026-10-29",
+   "window_complete": true
+  },
+  "source_dates": {
+   "snapshot": null,
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.722647+00:00",
+  "rows": []
+ }
+}

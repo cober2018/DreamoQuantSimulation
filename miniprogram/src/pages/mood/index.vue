@@ -1,6 +1,6 @@
 <template>
   <StateView :state="state" :detail="detail" :env="env" perm="page.participation" @retry="load">
-    <view class="card" v-if="obs">
+    <view class="card" v-if="obs && vis(env, 'observation')">
       <view class="card-title">市场参与与卖压</view>
       <view class="card-sub">原始统计 · 数据日期 {{ obs.trade_date }}</view>
       <view class="grid">
@@ -10,7 +10,7 @@
         <view class="stat"><view class="label">主动卖出占比</view><view class="value">{{ ratio(obs.active_sell_ratio) }}</view></view>
       </view>
     </view>
-    <view class="card" v-if="erp">
+    <view class="card" v-if="erp && vis(env, 'erp')">
       <view class="card-title">股权风险溢价 ERP</view>
       <view class="grid">
         <view class="stat"><view class="label">ERP</view><view class="value">{{ erp.erp_value_pct == null ? '—' : num(erp.erp_value_pct) + '%' }}</view></view>
@@ -18,14 +18,14 @@
         <view class="stat"><view class="label">近252日分位</view><view class="value">{{ erp.erp_percentile_252d == null ? '样本不足' : num(erp.erp_percentile_252d, 1) + '%' }}</view></view>
       </view>
     </view>
-    <view class="card" v-if="lu">
+    <view class="card" v-if="lu && vis(env, 'limit_up')">
       <view class="card-title">涨停结构（当日）</view>
       <view class="grid">
         <view class="stat"><view class="label">封板率</view><view class="value">{{ ratio(lu.seal_rate) }}</view></view>
         <view class="stat"><view class="label">最高连板</view><view class="value">{{ num(lu.max_consecutive_days, 0) }} 天</view></view>
       </view>
     </view>
-    <view class="card" v-if="sm">
+    <view class="card" v-if="sm && vis(env, 'smart_money')">
       <view class="card-title">聪明钱五因子</view>
       <view class="card-sub">截面净广度 · 数据日期 {{ sm.trade_date || '—' }}</view>
       <view class="grid">
@@ -35,7 +35,7 @@
         </view>
       </view>
     </view>
-    <view class="card" v-if="styleData">
+    <view class="card" v-if="styleData && vis(env, 'style')">
       <view class="card-title">风格相对强度</view>
       <view class="card-sub">历史序列，非当前风格选择建议</view>
       <view class="grid">
@@ -53,7 +53,7 @@
 import { computed } from 'vue'
 import StateView from '../../utils/StateView.vue'
 import { useData } from '../../utils/useData'
-import { num, ratio, signed } from '../../utils/fmt'
+import { num, ratio, signed, vis } from '../../utils/fmt'
 import { DISCLAIMER } from '../../utils/config'
 
 const { env, state, detail, load } = useData('/api/v1/participation')

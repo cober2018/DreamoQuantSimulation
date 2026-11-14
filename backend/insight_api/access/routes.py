@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from . import security
 from .gate import Gate, client_ip
 from .service import AccessError, AccessService
+from ..tier_routing import PolicyError
 
 REFRESH_COOKIE = "insight_rt"
 COOKIE_PATH = "/api/v1/auth"
@@ -103,6 +104,15 @@ class ContactIn(BaseModel):
     text: str = ""
 
 
+class PolicyDraftIn(BaseModel):
+    policy: Dict[str, Any]
+    reason: str = Field(default="", max_length=500)
+
+
+class PolicyReasonIn(BaseModel):
+    reason: str = Field(default="", max_length=500)
+
+
 def _day_start(date_str: Optional[str], plus_days: int = 0) -> Optional[float]:
     if not date_str:
         return None
@@ -119,7 +129,7 @@ def _err(e: AccessError) -> HTTPException:
     return HTTPException(e.status, e.detail, headers=e.headers or None)
 
 
-def build_router(access: AccessService, gate: Gate, settings) -> APIRouter:
+def build_router(access: AccessService, gate: Gate, settings, policies=None, scope=None) -> APIRouter:
     r = APIRouter(prefix="/api/v1")
 
     def check_origin(request: Request) -> None:
@@ -374,7 +384,8 @@ def build_router(access: AccessService, gate: Gate, settings) -> APIRouter:
     def admin_roles(request: Request):
         admin(request)
         from .store import ALL_PERMS, NUMERIC_PERMS
-        return {"items": access.list_roles(), "all_permissions": ALL_PERMS, "numeric": NUMERIC_PERMS}
+        return {"items": access.list_roles(), "all_permissions": ALL_PERMS, "numeric": NUMERIC_PERMS,
+                "policy_active": access.policy_roles() is not None}
 
     @r.post("/admin/roles")
     def admin_role_create(body: RoleIn, request: Request):
@@ -436,5 +447,90 @@ def build_router(access: AccessService, gate: Gate, settings) -> APIRouter:
     def admin_redemptions(request: Request):
         admin(request)
         return {"items": access.list_redemptions()}
+
+    # ---------------- 角色策略版本 (D7.3) ----------------
+    def policy_writer(request: Request):
+        """写入只有 admin 能调：既要管理后台权限，又必须是 admin 角色。"""
+        p = admin(request)
+        if p.role != "admin":
+            raise HTTPException(403, "只有管理员可以修改角色策略")
+        return p
+
+    def policy_call(fn, *args):
+        try:
+            return fn(*args)
+        except PolicyError as e:
+            raise HTTPException(e.status, str(e))
+
+    @r.get("/admin/policy/versions")
+    def policy_versions(request: Request):
+        admin(request)
+        act = policies.active()
+        return {"items": policies.list(), "active_version": act["version"] if act else None,
+                "requires_second_approver": policies.require_second}
+
+    @r.get("/admin/policy/versions/{version}")
+    def policy_version(version: int, request: Request):
+        admin(request)
+        return policy_call(policies.get, version)
+
+    @r.get("/admin/policy/diff")
+    def policy_diff(request: Request, from_version: int, to_version: int):
+        admin(request)
+        return policy_call(policies.diff_versions, from_version, to_version)
+
+    @r.post("/admin/policy/drafts")
+    def policy_submit(body: PolicyDraftIn, request: Request):
+        p = policy_writer(request)
+        return policy_call(policies.submit, p.username, body.policy, body.reason, client_ip(request))
+
+    @r.get("/admin/policy/catalog")
+    def policy_catalog(request: Request):
+        """配置页数据：看板 → 模块 → 指标；每个账号的上游上限与不可选指标（置灰原因）；当前生效策略与角色列表。"""
+        admin(request)
+        from ..indicator_catalog import INDICATORS, catalog_payload
+        accounts = {}
+        for account in policies.router.known_accounts:
+            sc = scope(account) if scope else None
+            accounts[account] = {
+                "available": sc is not None,
+                "blocked": None if sc is None else {
+                    i.id: f"{account} 未授权 {'/'.join(next(u for u in i.upstream if u not in sc))}"
+                    for i in INDICATORS.values() if any(u not in sc for u in i.upstream)},
+            }
+        act = policies.active()
+        return {"pages": catalog_payload(), "accounts": accounts,
+                "roles": [{"name": x["name"], "label": x["label"], "builtin": x["builtin"]} for x in access.list_roles()],
+                "active": policies.get(act["version"]) if act else None,
+                "requires_second_approver": policies.require_second,
+                "limits": {"history_days": [1, 250], "max_sessions": [1, 20], "entries": ["web", "mp"]}}
+
+    @r.post("/admin/policy/drafts/from-legacy")
+    def policy_from_legacy(body: PolicyReasonIn, request: Request):
+        """迁移第 2 步：由当前 role_permissions 生成完整角色策略草稿（开放看板勾选全部指标）。"""
+        p = policy_writer(request)
+        from .policy import from_legacy
+        current = policies.active_policy()
+        if not current:
+            raise HTTPException(409, "请先确认路由规则版本")
+        routes = current["routes"]
+        legacy = {role: access.legacy_role_permissions(role) for role in routes}
+        return policy_call(policies.submit, p.username, {"routes": routes, "roles": from_legacy(legacy)},
+                           body.reason, client_ip(request))
+
+    @r.post("/admin/policy/versions/{version}/confirm")
+    def policy_confirm(version: int, request: Request):
+        p = policy_writer(request)
+        return policy_call(policies.confirm, p.username, version, client_ip(request))
+
+    @r.post("/admin/policy/versions/{version}/approve")
+    def policy_approve(version: int, request: Request):
+        p = policy_writer(request)
+        return policy_call(policies.approve, p.username, version, client_ip(request))
+
+    @r.post("/admin/policy/versions/{version}/reject")
+    def policy_reject(version: int, body: PolicyReasonIn, request: Request):
+        p = policy_writer(request)
+        return policy_call(policies.reject, p.username, version, body.reason, client_ip(request))
 
     return r

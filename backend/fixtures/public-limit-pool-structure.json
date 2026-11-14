@@ -1,0 +1,1157 @@
+{
+ "current|2026-09-08|": {
+  "service_key": "public-limit-pool-structure",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "current",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "trade_date": {
+    "name": "数据日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "tier_counts": {
+    "name": "连板梯队计数",
+    "type": "array",
+    "nullable": true,
+    "unit": null,
+    "description": "连板梯队计数的已有记录，保留每条记录的业务日期或观测序号；空记录不表示数值为零。",
+    "items": {
+     "type": "object",
+     "properties": {
+      "tier": {
+       "name": "连板梯队",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "连板梯队保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+      },
+      "count": {
+       "name": "个股数",
+       "type": "integer",
+       "nullable": true,
+       "unit": "只",
+       "description": "个股数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+       "display_decimals": 0
+      }
+     },
+     "additionalProperties": false
+    }
+   },
+   "broken_board_count": {
+    "name": "炸板数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "炸板数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "limit_down_count": {
+    "name": "跌停数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "跌停数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {}
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-15T00:35:22+08:00",
+   "coverage_ratio": null,
+   "missing_sources": [
+    "high_recognition_pool",
+    "limit_down_pool"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:54.126848+00:00",
+  "rows": [
+   {
+    "trade_date": "2026-09-08",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 12
+     },
+     {
+      "tier": "3连板",
+      "count": 3
+     },
+     {
+      "tier": "高板",
+      "count": 3
+     }
+    ],
+    "broken_board_count": 37,
+    "limit_down_count": 0
+   }
+  ]
+ },
+ "pool-counts|2026-09-08|": {
+  "service_key": "public-limit-pool-structure",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "pool-counts",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "pool": {
+    "name": "池代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "池代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "window_days": {
+    "name": "窗口天数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "交易日",
+    "description": "窗口天数按对应业务期限表达已观察的日数；真实零与未知分别保留。",
+    "display_decimals": 0
+   },
+   "count": {
+    "name": "池内个股数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "池内个股数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "status": {
+    "name": "数据状态代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据状态代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "reason": {
+    "name": "池说明",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "池说明保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "latest_date": {
+    "name": "最新可用日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "最新可用日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "lag_days": {
+    "name": "滞后天数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "天",
+    "description": "滞后天数按对应业务期限表达已观察的日数；真实零与未知分别保留。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 3,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {
+    "window_days": "unavailable",
+    "reason": "unavailable",
+    "latest_date": "unavailable",
+    "lag_days": "unavailable"
+   },
+   "1": {
+    "lag_days": "unavailable"
+   },
+   "2": {
+    "lag_days": "unavailable"
+   }
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-15T00:35:22+08:00",
+   "coverage_ratio": null,
+   "missing_sources": [
+    "high_recognition_pool",
+    "limit_down_pool"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:54.137081+00:00",
+  "rows": [
+   {
+    "pool": "high_recognition",
+    "window_days": null,
+    "count": 0,
+    "status": "missing",
+    "reason": null,
+    "latest_date": null,
+    "lag_days": null
+   },
+   {
+    "pool": "momentum_extreme_10d",
+    "window_days": 10,
+    "count": 20,
+    "status": "neutral",
+    "reason": "10d 窗口覆盖 7/10 个交易日",
+    "latest_date": "2026-09-30",
+    "lag_days": null
+   },
+   {
+    "pool": "momentum_extreme_20d",
+    "window_days": 20,
+    "count": 20,
+    "status": "neutral",
+    "reason": "20d 窗口覆盖 14/20 个交易日",
+    "latest_date": "2026-09-30",
+    "lag_days": null
+   }
+  ]
+ },
+ "history|2026-09-08|sessions=10": {
+  "service_key": "public-limit-pool-structure",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "history",
+  "entity": {},
+  "filters": {
+   "sessions": 10
+  },
+  "columns": {
+   "trade_date": {
+    "name": "数据日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "tier_counts": {
+    "name": "连板梯队计数",
+    "type": "array",
+    "nullable": true,
+    "unit": null,
+    "description": "连板梯队计数的已有记录，保留每条记录的业务日期或观测序号；空记录不表示数值为零。",
+    "items": {
+     "type": "object",
+     "properties": {
+      "tier": {
+       "name": "连板梯队",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "连板梯队保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+      },
+      "count": {
+       "name": "个股数",
+       "type": "integer",
+       "nullable": true,
+       "unit": "只",
+       "description": "个股数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+       "display_decimals": 0
+      }
+     },
+     "additionalProperties": false
+    }
+   },
+   "broken_board_count": {
+    "name": "炸板数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "炸板数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "limit_down_count": {
+    "name": "跌停数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "跌停数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 10,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {},
+   "1": {},
+   "2": {},
+   "3": {},
+   "4": {},
+   "5": {},
+   "6": {},
+   "7": {},
+   "8": {},
+   "9": {}
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-15T00:35:22+08:00",
+   "coverage_ratio": null,
+   "missing_sources": [
+    "high_recognition_pool",
+    "limit_down_pool"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:54.146754+00:00",
+  "rows": [
+   {
+    "trade_date": "2026-08-26",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 10
+     },
+     {
+      "tier": "3连板",
+      "count": 1
+     },
+     {
+      "tier": "高板",
+      "count": 2
+     }
+    ],
+    "broken_board_count": 20,
+    "limit_down_count": 0
+   },
+   {
+    "trade_date": "2026-08-27",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 8
+     },
+     {
+      "tier": "3连板",
+      "count": 5
+     },
+     {
+      "tier": "高板",
+      "count": 3
+     }
+    ],
+    "broken_board_count": 17,
+    "limit_down_count": 3
+   },
+   {
+    "trade_date": "2026-08-28",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 10
+     },
+     {
+      "tier": "3连板",
+      "count": 3
+     },
+     {
+      "tier": "高板",
+      "count": 5
+     }
+    ],
+    "broken_board_count": 16,
+    "limit_down_count": 1
+   },
+   {
+    "trade_date": "2026-08-31",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 10
+     },
+     {
+      "tier": "3连板",
+      "count": 4
+     },
+     {
+      "tier": "高板",
+      "count": 4
+     }
+    ],
+    "broken_board_count": 30,
+    "limit_down_count": 11
+   },
+   {
+    "trade_date": "2026-09-01",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 9
+     },
+     {
+      "tier": "3连板",
+      "count": 5
+     },
+     {
+      "tier": "高板",
+      "count": 4
+     }
+    ],
+    "broken_board_count": 6,
+    "limit_down_count": 0
+   },
+   {
+    "trade_date": "2026-09-02",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 7
+     },
+     {
+      "tier": "3连板",
+      "count": 4
+     },
+     {
+      "tier": "高板",
+      "count": 2
+     }
+    ],
+    "broken_board_count": 15,
+    "limit_down_count": 8
+   },
+   {
+    "trade_date": "2026-09-03",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 6
+     },
+     {
+      "tier": "3连板",
+      "count": 0
+     },
+     {
+      "tier": "高板",
+      "count": 3
+     }
+    ],
+    "broken_board_count": 33,
+    "limit_down_count": 16
+   },
+   {
+    "trade_date": "2026-09-04",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 6
+     },
+     {
+      "tier": "3连板",
+      "count": 0
+     },
+     {
+      "tier": "高板",
+      "count": 1
+     }
+    ],
+    "broken_board_count": 48,
+    "limit_down_count": 9
+   },
+   {
+    "trade_date": "2026-09-07",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 9
+     },
+     {
+      "tier": "3连板",
+      "count": 3
+     },
+     {
+      "tier": "高板",
+      "count": 1
+     }
+    ],
+    "broken_board_count": 19,
+    "limit_down_count": 2
+   },
+   {
+    "trade_date": "2026-09-08",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 12
+     },
+     {
+      "tier": "3连板",
+      "count": 3
+     },
+     {
+      "tier": "高板",
+      "count": 3
+     }
+    ],
+    "broken_board_count": 37,
+    "limit_down_count": 0
+   }
+  ]
+ },
+ "current|2026-09-09|": {
+  "service_key": "public-limit-pool-structure",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "current",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "trade_date": {
+    "name": "数据日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "tier_counts": {
+    "name": "连板梯队计数",
+    "type": "array",
+    "nullable": true,
+    "unit": null,
+    "description": "连板梯队计数的已有记录，保留每条记录的业务日期或观测序号；空记录不表示数值为零。",
+    "items": {
+     "type": "object",
+     "properties": {
+      "tier": {
+       "name": "连板梯队",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "连板梯队保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+      },
+      "count": {
+       "name": "个股数",
+       "type": "integer",
+       "nullable": true,
+       "unit": "只",
+       "description": "个股数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+       "display_decimals": 0
+      }
+     },
+     "additionalProperties": false
+    }
+   },
+   "broken_board_count": {
+    "name": "炸板数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "炸板数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "limit_down_count": {
+    "name": "跌停数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "跌停数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 1,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {}
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-15T00:35:23+08:00",
+   "coverage_ratio": null,
+   "missing_sources": [
+    "high_recognition_pool"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:54.205529+00:00",
+  "rows": [
+   {
+    "trade_date": "2026-09-09",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 10
+     },
+     {
+      "tier": "3连板",
+      "count": 4
+     },
+     {
+      "tier": "高板",
+      "count": 1
+     }
+    ],
+    "broken_board_count": 27,
+    "limit_down_count": 7
+   }
+  ]
+ },
+ "pool-counts|2026-09-09|": {
+  "service_key": "public-limit-pool-structure",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "pool-counts",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "pool": {
+    "name": "池代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "池代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "window_days": {
+    "name": "窗口天数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "交易日",
+    "description": "窗口天数按对应业务期限表达已观察的日数；真实零与未知分别保留。",
+    "display_decimals": 0
+   },
+   "count": {
+    "name": "池内个股数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "池内个股数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "status": {
+    "name": "数据状态代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据状态代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "reason": {
+    "name": "池说明",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "池说明保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "latest_date": {
+    "name": "最新可用日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "最新可用日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "lag_days": {
+    "name": "滞后天数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "天",
+    "description": "滞后天数按对应业务期限表达已观察的日数；真实零与未知分别保留。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 3,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {
+    "window_days": "unavailable",
+    "reason": "unavailable",
+    "latest_date": "unavailable",
+    "lag_days": "unavailable"
+   },
+   "1": {
+    "lag_days": "unavailable"
+   },
+   "2": {
+    "lag_days": "unavailable"
+   }
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-15T00:35:23+08:00",
+   "coverage_ratio": null,
+   "missing_sources": [
+    "high_recognition_pool"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:54.214432+00:00",
+  "rows": [
+   {
+    "pool": "high_recognition",
+    "window_days": null,
+    "count": 0,
+    "status": "missing",
+    "reason": null,
+    "latest_date": null,
+    "lag_days": null
+   },
+   {
+    "pool": "momentum_extreme_10d",
+    "window_days": 10,
+    "count": 20,
+    "status": "neutral",
+    "reason": "10d 窗口覆盖 8/10 个交易日",
+    "latest_date": "2026-09-30",
+    "lag_days": null
+   },
+   {
+    "pool": "momentum_extreme_20d",
+    "window_days": 20,
+    "count": 20,
+    "status": "neutral",
+    "reason": "20d 窗口覆盖 14/20 个交易日",
+    "latest_date": "2026-09-30",
+    "lag_days": null
+   }
+  ]
+ },
+ "history|2026-09-09|sessions=10": {
+  "service_key": "public-limit-pool-structure",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "history",
+  "entity": {},
+  "filters": {
+   "sessions": 10
+  },
+  "columns": {
+   "trade_date": {
+    "name": "数据日期",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "数据日期对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "tier_counts": {
+    "name": "连板梯队计数",
+    "type": "array",
+    "nullable": true,
+    "unit": null,
+    "description": "连板梯队计数的已有记录，保留每条记录的业务日期或观测序号；空记录不表示数值为零。",
+    "items": {
+     "type": "object",
+     "properties": {
+      "tier": {
+       "name": "连板梯队",
+       "type": "string",
+       "nullable": true,
+       "unit": null,
+       "description": "连板梯队保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+      },
+      "count": {
+       "name": "个股数",
+       "type": "integer",
+       "nullable": true,
+       "unit": "只",
+       "description": "个股数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+       "display_decimals": 0
+      }
+     },
+     "additionalProperties": false
+    }
+   },
+   "broken_board_count": {
+    "name": "炸板数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "炸板数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   },
+   "limit_down_count": {
+    "name": "跌停数",
+    "type": "integer",
+    "nullable": true,
+    "unit": "只",
+    "description": "跌停数的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+    "display_decimals": 0
+   }
+  },
+  "row_count": 10,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "ready",
+  "field_status": {
+   "0": {},
+   "1": {},
+   "2": {},
+   "3": {},
+   "4": {},
+   "5": {},
+   "6": {},
+   "7": {},
+   "8": {},
+   "9": {}
+  },
+  "notes": [],
+  "context": {
+   "snapshot_time": "2026-10-15T00:35:23+08:00",
+   "coverage_ratio": null,
+   "missing_sources": [
+    "high_recognition_pool"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:54.224064+00:00",
+  "rows": [
+   {
+    "trade_date": "2026-08-27",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 8
+     },
+     {
+      "tier": "3连板",
+      "count": 5
+     },
+     {
+      "tier": "高板",
+      "count": 3
+     }
+    ],
+    "broken_board_count": 17,
+    "limit_down_count": 3
+   },
+   {
+    "trade_date": "2026-08-28",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 10
+     },
+     {
+      "tier": "3连板",
+      "count": 3
+     },
+     {
+      "tier": "高板",
+      "count": 5
+     }
+    ],
+    "broken_board_count": 16,
+    "limit_down_count": 1
+   },
+   {
+    "trade_date": "2026-08-31",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 10
+     },
+     {
+      "tier": "3连板",
+      "count": 4
+     },
+     {
+      "tier": "高板",
+      "count": 4
+     }
+    ],
+    "broken_board_count": 30,
+    "limit_down_count": 11
+   },
+   {
+    "trade_date": "2026-09-01",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 9
+     },
+     {
+      "tier": "3连板",
+      "count": 5
+     },
+     {
+      "tier": "高板",
+      "count": 4
+     }
+    ],
+    "broken_board_count": 6,
+    "limit_down_count": 0
+   },
+   {
+    "trade_date": "2026-09-02",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 7
+     },
+     {
+      "tier": "3连板",
+      "count": 4
+     },
+     {
+      "tier": "高板",
+      "count": 2
+     }
+    ],
+    "broken_board_count": 15,
+    "limit_down_count": 8
+   },
+   {
+    "trade_date": "2026-09-03",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 6
+     },
+     {
+      "tier": "3连板",
+      "count": 0
+     },
+     {
+      "tier": "高板",
+      "count": 3
+     }
+    ],
+    "broken_board_count": 33,
+    "limit_down_count": 16
+   },
+   {
+    "trade_date": "2026-09-04",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 6
+     },
+     {
+      "tier": "3连板",
+      "count": 0
+     },
+     {
+      "tier": "高板",
+      "count": 1
+     }
+    ],
+    "broken_board_count": 48,
+    "limit_down_count": 9
+   },
+   {
+    "trade_date": "2026-09-07",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 9
+     },
+     {
+      "tier": "3连板",
+      "count": 3
+     },
+     {
+      "tier": "高板",
+      "count": 1
+     }
+    ],
+    "broken_board_count": 19,
+    "limit_down_count": 2
+   },
+   {
+    "trade_date": "2026-09-08",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 12
+     },
+     {
+      "tier": "3连板",
+      "count": 3
+     },
+     {
+      "tier": "高板",
+      "count": 3
+     }
+    ],
+    "broken_board_count": 37,
+    "limit_down_count": 0
+   },
+   {
+    "trade_date": "2026-09-09",
+    "tier_counts": [
+     {
+      "tier": "首板",
+      "count": 30
+     },
+     {
+      "tier": "2连板",
+      "count": 10
+     },
+     {
+      "tier": "3连板",
+      "count": 4
+     },
+     {
+      "tier": "高板",
+      "count": 1
+     }
+    ],
+    "broken_board_count": 27,
+    "limit_down_count": 7
+   }
+  ]
+ }
+}

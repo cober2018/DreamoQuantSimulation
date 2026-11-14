@@ -1,0 +1,384 @@
+{
+ "current|2026-09-08|": {
+  "service_key": "public-market-style-rotation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-08",
+  "trade_date": "2026-09-08",
+  "view": "current",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "name": {
+    "name": "风格名称",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "风格名称保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "index_name": {
+    "name": "参考指数",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "参考指数用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "index_code": {
+    "name": "指数代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "指数代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "strength": {
+    "name": "强弱分",
+    "type": "number",
+    "nullable": true,
+    "unit": "分",
+    "description": "比较风格当前相对表现，越高表示相对更强；不是收益率，与动能状态分别读取。 缺失为 null，真实零保留。",
+    "display_decimals": 0,
+    "value_range": {
+     "minimum": 0,
+     "maximum": 100
+    }
+   },
+   "z_score": {
+    "name": "强弱标准分",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "强弱标准分用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "strength_series": {
+    "name": "强弱分序列",
+    "type": "array",
+    "nullable": true,
+    "unit": null,
+    "description": "强弱分序列的已有记录，保留每条记录的业务日期或观测序号；空记录不表示数值为零。",
+    "items": {
+     "type": "object",
+     "properties": {
+      "sequence": {
+       "name": "观测序号",
+       "type": "integer",
+       "nullable": true,
+       "unit": "序号",
+       "description": "观测序号的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+       "display_decimals": 0
+      },
+      "value": {
+       "name": "强弱分",
+       "type": "number",
+       "nullable": true,
+       "unit": "分",
+       "description": "比较风格当前相对表现，越高表示相对更强；不是收益率，与动能状态分别读取。 缺失为 null，真实零保留。",
+       "display_decimals": 2,
+       "value_range": {
+        "minimum": 0,
+        "maximum": 100
+       }
+      }
+     },
+     "additionalProperties": false
+    }
+   },
+   "missing_reason": {
+    "name": "原因代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "原因代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "date": {
+    "name": "当前数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "当前数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "available": {
+    "name": "当前是否可用",
+    "type": "boolean",
+    "nullable": true,
+    "unit": null,
+    "description": "当前是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+   }
+  },
+  "row_count": 3,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "partial",
+  "field_status": {
+   "0": {
+    "strength": "unavailable",
+    "z_score": "unavailable",
+    "strength_series": "unavailable",
+    "date": "unavailable"
+   },
+   "1": {
+    "strength": "unavailable",
+    "z_score": "unavailable",
+    "strength_series": "unavailable",
+    "date": "unavailable"
+   },
+   "2": {
+    "strength": "unavailable",
+    "z_score": "unavailable",
+    "strength_series": "unavailable",
+    "date": "unavailable"
+   }
+  },
+  "notes": [
+   "历史图使用观测序号，逐点日期未提供。"
+  ],
+  "context": {
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide",
+    "erp.erp_regime",
+    "sentinel.chinext_over_sse50",
+    "sentinel.csi500_over_csi300",
+    "materialization.incomplete"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-08",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:53.892148+00:00",
+  "rows": [
+   {
+    "name": "消费蓝筹",
+    "index_name": "上证50",
+    "index_code": "000016.SH",
+    "strength": null,
+    "z_score": null,
+    "strength_series": null,
+    "missing_reason": "source_row_missing",
+    "date": null,
+    "available": false
+   },
+   {
+    "name": "红利防守",
+    "index_name": "中证红利",
+    "index_code": "000922.CSI",
+    "strength": null,
+    "z_score": null,
+    "strength_series": null,
+    "missing_reason": "source_row_missing",
+    "date": null,
+    "available": false
+   },
+   {
+    "name": "科技成长",
+    "index_name": "创业板指",
+    "index_code": "399006.SZ",
+    "strength": null,
+    "z_score": null,
+    "strength_series": null,
+    "missing_reason": "source_row_missing",
+    "date": null,
+    "available": false
+   }
+  ]
+ },
+ "current|2026-09-09|": {
+  "service_key": "public-market-style-rotation",
+  "contract_version": "1.0",
+  "requested_trade_date": "2026-09-09",
+  "trade_date": "2026-09-09",
+  "view": "current",
+  "entity": {},
+  "filters": {},
+  "columns": {
+   "name": {
+    "name": "风格名称",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "风格名称保留已有业务身份、经济解释或不确定性；内部实现说明不可安全改写时标为说明暂不可用。"
+   },
+   "index_name": {
+    "name": "参考指数",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "参考指数用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "index_code": {
+    "name": "指数代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "指数代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "strength": {
+    "name": "强弱分",
+    "type": "number",
+    "nullable": true,
+    "unit": "分",
+    "description": "比较风格当前相对表现，越高表示相对更强；不是收益率，与动能状态分别读取。 缺失为 null，真实零保留。",
+    "display_decimals": 0,
+    "value_range": {
+     "minimum": 0,
+     "maximum": 100
+    }
+   },
+   "z_score": {
+    "name": "强弱标准分",
+    "type": "number",
+    "nullable": true,
+    "unit": null,
+    "description": "强弱标准分用于比较对应业务观察，沿原数值标度、无统一分母；需结合日期、方向及可用状态，不代表上涨概率。真实零与未知分别保留。",
+    "display_decimals": 4
+   },
+   "strength_series": {
+    "name": "强弱分序列",
+    "type": "array",
+    "nullable": true,
+    "unit": null,
+    "description": "强弱分序列的已有记录，保留每条记录的业务日期或观测序号；空记录不表示数值为零。",
+    "items": {
+     "type": "object",
+     "properties": {
+      "sequence": {
+       "name": "观测序号",
+       "type": "integer",
+       "nullable": true,
+       "unit": "序号",
+       "description": "观测序号的已有计数，结合对应日期、窗口和筛选范围使用；缺失为 null，不能自动填零。",
+       "display_decimals": 0
+      },
+      "value": {
+       "name": "强弱分",
+       "type": "number",
+       "nullable": true,
+       "unit": "分",
+       "description": "比较风格当前相对表现，越高表示相对更强；不是收益率，与动能状态分别读取。 缺失为 null，真实零保留。",
+       "display_decimals": 2,
+       "value_range": {
+        "minimum": 0,
+        "maximum": 100
+       }
+      }
+     },
+     "additionalProperties": false
+    }
+   },
+   "missing_reason": {
+    "name": "原因代码",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "原因代码用于识别本次观察对象；不能当成排序或评分。"
+   },
+   "date": {
+    "name": "当前数据日",
+    "type": "string",
+    "nullable": true,
+    "unit": null,
+    "description": "当前数据日对应的真实业务日期或时刻；未知为 null，不用请求日期或服务组装时间代替。",
+    "format": "date"
+   },
+   "available": {
+    "name": "当前是否可用",
+    "type": "boolean",
+    "nullable": true,
+    "unit": null,
+    "description": "当前是否可用的已有判断；true/false 分别保留，null 为未评估或证据不足，不能当成 false。"
+   }
+  },
+  "row_count": 3,
+  "pagination": {
+   "limit": 500,
+   "offset": 0,
+   "has_more": false,
+   "next_offset": null
+  },
+  "availability": "partial",
+  "field_status": {
+   "0": {
+    "strength": "unavailable",
+    "z_score": "unavailable",
+    "strength_series": "unavailable",
+    "date": "unavailable"
+   },
+   "1": {
+    "strength": "unavailable",
+    "z_score": "unavailable",
+    "strength_series": "unavailable",
+    "date": "unavailable"
+   },
+   "2": {
+    "strength": "unavailable",
+    "z_score": "unavailable",
+    "strength_series": "unavailable",
+    "date": "unavailable"
+   }
+  },
+  "notes": [
+   "历史图使用观测序号，逐点日期未提供。"
+  ],
+  "context": {
+   "snapshot_time": "2026-10-14T11:28:43+08:00",
+   "coverage_ratio": 0.8333,
+   "missing_sources": [
+    "fund_tide",
+    "erp.erp_regime",
+    "sentinel.chinext_over_sse50",
+    "sentinel.csi500_over_csi300",
+    "materialization.incomplete"
+   ],
+   "latest_available_date": null,
+   "empty_reason": null
+  },
+  "source_dates": {
+   "snapshot": "2026-09-09",
+   "order_flow": null
+  },
+  "observed_at": "2026-11-14T17:08:54.014785+00:00",
+  "rows": [
+   {
+    "name": "消费蓝筹",
+    "index_name": "上证50",
+    "index_code": "000016.SH",
+    "strength": null,
+    "z_score": null,
+    "strength_series": null,
+    "missing_reason": "source_row_missing",
+    "date": null,
+    "available": false
+   },
+   {
+    "name": "红利防守",
+    "index_name": "中证红利",
+    "index_code": "000922.CSI",
+    "strength": null,
+    "z_score": null,
+    "strength_series": null,
+    "missing_reason": "source_row_missing",
+    "date": null,
+    "available": false
+   },
+   {
+    "name": "科技成长",
+    "index_name": "创业板指",
+    "index_code": "399006.SZ",
+    "strength": null,
+    "z_score": null,
+    "strength_series": null,
+    "missing_reason": "source_row_missing",
+    "date": null,
+    "available": false
+   }
+  ]
+ }
+}

@@ -11,11 +11,12 @@ import json
 import time
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
 from .config import Settings
+from .tier_routing import RouteRejected, TierRouter, RouteLog, audit_headers, current_context
 
 PAGE_LIMIT = 500
 MAX_PAGES = 10
@@ -23,7 +24,9 @@ HISTORICAL_TTL = 24 * 3600
 
 
 class UpstreamError(RuntimeError):
-    pass
+    def __init__(self, message: str, status: Optional[int] = None):
+        super().__init__(message)
+        self.status = status
 
 
 class UpstreamUnsupported(UpstreamError):
@@ -34,6 +37,8 @@ class UpstreamUnsupported(UpstreamError):
 class FetchResult:
     rows: List[Dict[str, Any]]
     issues: List[str] = field(default_factory=list)
+    # public-* 响应里 rows 以外的部分（trade_date、context、availability 等），取首页；review-* 为空
+    meta: Dict[str, Any] = field(default_factory=dict)
 
 
 class HttpSource:
@@ -42,26 +47,28 @@ class HttpSource:
         self._client = httpx.AsyncClient(
             base_url=settings.upstream_base_url,
             timeout=settings.upstream_timeout,
-            headers={"X-API-Key": settings.upstream_api_key},
         )
 
-    async def page(self, service_key: str, params: Dict[str, str]) -> List[Dict[str, Any]]:
+    async def page(self, service_key: str, params: Dict[str, str],
+                   headers: Optional[Dict[str, str]] = None) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
         try:
-            resp = await self._client.get(f"/api/v1/data/apis/{service_key}/records", params=params)
+            resp = await self._client.get(f"/api/v1/data/apis/{service_key}/records", params=params,
+                                          headers=headers or {})
         except httpx.HTTPError as e:
             raise UpstreamError(f"{service_key} 请求失败: {type(e).__name__}") from None
         if resp.status_code == 422:
-            raise UpstreamUnsupported(f"{service_key} 返回 HTTP 422")
+            raise UpstreamUnsupported(f"{service_key} 返回 HTTP 422", 422)
         if resp.status_code != 200:
-            raise UpstreamError(f"{service_key} 返回 HTTP {resp.status_code}")
+            raise UpstreamError(f"{service_key} 返回 HTTP {resp.status_code}", resp.status_code)
         try:
             body = resp.json()
-            rows = body["data"]["rows"]
+            data = body["data"]
+            rows = data["rows"]
         except (ValueError, KeyError, TypeError):
             raise UpstreamError(f"{service_key} 响应结构不符合 records 合同") from None
         if not isinstance(rows, list):
             raise UpstreamError(f"{service_key} rows 不是列表")
-        return rows
+        return rows, {k: v for k, v in data.items() if k != "rows"}
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -75,11 +82,15 @@ class FixtureSource:
     def __init__(self, settings: Settings):
         self._dir = settings.fixture_dir
 
-    async def page(self, service_key: str, params: Dict[str, str]) -> List[Dict[str, Any]]:
+    async def page(self, service_key: str, params: Dict[str, str],
+                   headers: Optional[Dict[str, str]] = None) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
         path = self._dir / f"{service_key}.json"
         if not path.exists():
             raise UpstreamError(f"{service_key} 夹具不存在")
-        rows: List[Dict[str, Any]] = json.loads(path.read_text(encoding="utf-8"))
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(loaded, dict):
+            return self._public_page(service_key, loaded, params)
+        rows: List[Dict[str, Any]] = loaded
         if params.get("start_date") or params.get("end_date"):
             rows = [r for r in rows if params.get("start_date", "") <= str(r.get("trade_date")) <= params.get("end_date", "9999")]
         else:
@@ -92,18 +103,38 @@ class FixtureSource:
                 rows = [r for r in rows if str(r.get(column)) == params[name]]
         offset = int(params.get("offset", 0))
         limit = int(params.get("limit", 100))
-        return rows[offset:offset + limit]
+        return rows[offset:offset + limit], {}
+
+    @staticmethod
+    def _public_page(service_key: str, loaded: Dict[str, Any], params: Dict[str, str]):
+        """public-* 夹具: {"<view>|<trade_date>|<其他参数 k=v 按键排序>": data 对象}; latest 取该视图最大日期。"""
+        view = params.get("view", "")
+        extra = "|".join(f"{k}={params[k]}" for k in sorted(params)
+                         if k not in ("view", "trade_date", "limit", "offset", "fields"))
+        day = params.get("trade_date", "latest")
+        if day == "latest":
+            days = sorted(k.split("|")[1] for k in loaded if k.split("|")[0] == view)
+            day = days[-1] if days else ""
+        data = loaded.get(f"{view}|{day}|{extra}")
+        if data is None:
+            return [], {"trade_date": None, "requested_trade_date": params.get("trade_date"),
+                        "context": {"empty_reason": "no_data_for_trade_date", "latest_available_date": None}}
+        rows = data.get("rows") or []
+        offset, limit = int(params.get("offset", 0)), int(params.get("limit", 100))
+        return rows[offset:offset + limit], {k: v for k, v in data.items() if k != "rows"}
 
     async def close(self) -> None:
         return None
 
 
 class Upstream:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, router: TierRouter, route_log: Optional[RouteLog] = None):
         self.data_mode = settings.data_mode
         self._source = FixtureSource(settings) if settings.data_mode == "fixture" else HttpSource(settings)
         self._ttl = settings.cache_ttl
         self._cache: Dict[str, tuple[float, FetchResult]] = {}
+        self._router = router
+        self._route_log = route_log or RouteLog(None)
 
     async def fetch(
         self,
@@ -112,24 +143,49 @@ class Upstream:
         max_rows: Optional[int] = None,
     ) -> FetchResult:
         params = {k: v for k, v in (params or {}).items() if v not in (None, "")}
-        cache_key = f"{service_key}|{max_rows}|{json.dumps(params, sort_keys=True)}"
+        ctx = current_context()
+        view = params.get("view")
+        try:
+            key, account, rule_version = self._router.resolve(service_key, ctx)
+        except RouteRejected:
+            self._route_log.write(ctx, service_key, view, None, self._router.active_version(), False,
+                                  "rejected", None, None)
+            raise
+        # 缓存键含账号名：不同等级账号可读字段不同，不能共用缓存 (D2)
+        cache_key = f"{account}|{service_key}|{max_rows}|{json.dumps(params, sort_keys=True)}"
         ttl = self._ttl_for(params)
         hit = self._cache.get(cache_key)
         if hit and time.monotonic() - hit[0] < ttl:
+            self._route_log.write(ctx, service_key, view, account, rule_version, True,
+                                  "ok" if hit[1].rows else "empty", None, 0)
             return hit[1]
 
+        headers = {"X-API-Key": key, **audit_headers(ctx, rule_version)}
         limit = min(max_rows or PAGE_LIMIT, PAGE_LIMIT)
         rows: List[Dict[str, Any]] = []
         issues: List[str] = []
-        for page_no in range(MAX_PAGES):
-            page = await self._source.page(service_key, {**params, "limit": str(limit), "offset": str(page_no * limit)})
-            rows.extend(page)
-            if len(page) < limit or (max_rows and len(rows) >= max_rows):
-                break
-        else:
-            issues.append(f"{service_key} 达到分页上限 {MAX_PAGES} 页，结果可能不完整")
+        meta: Dict[str, Any] = {}
+        started = time.monotonic()
+        try:
+            for page_no in range(MAX_PAGES):
+                page, page_meta = await self._source.page(
+                    service_key, {**params, "limit": str(limit), "offset": str(page_no * limit)}, headers)
+                if page_no == 0:
+                    meta = page_meta
+                rows.extend(page)
+                if len(page) < limit or (max_rows and len(rows) >= max_rows):
+                    break
+            else:
+                issues.append(f"{service_key} 达到分页上限 {MAX_PAGES} 页，结果可能不完整")
+        except UpstreamError as e:
+            result_code = "upstream_4xx" if e.status and 400 <= e.status < 500 else "upstream_5xx"
+            self._route_log.write(ctx, service_key, view, account, rule_version, False, result_code, e.status,
+                                  int((time.monotonic() - started) * 1000))
+            raise
+        self._route_log.write(ctx, service_key, view, account, rule_version, False, "ok" if rows else "empty", 200,
+                              int((time.monotonic() - started) * 1000))
 
-        result = FetchResult(rows=rows, issues=issues)
+        result = FetchResult(rows=rows, issues=issues, meta=meta)
         if rows:  # 空结果不缓存: 当日数据可能稍后就绪
             self._cache[cache_key] = (time.monotonic(), result)
         return result
