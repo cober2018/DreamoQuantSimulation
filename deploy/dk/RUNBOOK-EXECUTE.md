@@ -57,6 +57,8 @@ WEB-CN-006 已确认原文没有判断（`#!/bin/sh`，固定拷贝 `live/dreamo
 
 ```diff
  #!/bin/sh
++# 只在 dreamotech.cn 这张证书续期时执行（其他证书续期也会调用本 hook）。
++# 手动运行：sudo RENEWED_LINEAGE=/etc/letsencrypt/live/dreamotech.cn sh /etc/letsencrypt/renewal-hooks/deploy/derper.sh
 +[ "$RENEWED_LINEAGE" = /etc/letsencrypt/live/dreamotech.cn ] || exit 0
  # certbot 续期后重新复制证书并重启 derper
  L=/etc/letsencrypt/live/dreamotech.cn
@@ -64,15 +66,20 @@ WEB-CN-006 已确认原文没有判断（`#!/bin/sh`，固定拷贝 `live/dreamo
 
 ```bash
 ssh $H "sudo mkdir -p $B && sudo cp -a /etc/letsencrypt/renewal-hooks/deploy/derper.sh $B/derper.sh"
-# 在 shebang 之后插入一行：只有 dreamotech.cn 这张证书续期时才往下执行
-ssh $H "sudo sed -i '1a [ \"\$RENEWED_LINEAGE\" = \"/etc/letsencrypt/live/dreamotech.cn\" ] || exit 0' /etc/letsencrypt/renewal-hooks/deploy/derper.sh"
-ssh $H "sudo head -3 /etc/letsencrypt/renewal-hooks/deploy/derper.sh; sudo sh -n /etc/letsencrypt/renewal-hooks/deploy/derper.sh && echo syntax-ok"
+# 已经加过就跳过（重跑安全）
+ssh $H 'sudo grep -c RENEWED_LINEAGE /etc/letsencrypt/renewal-hooks/deploy/derper.sh'      # 预期 0；不是 0 就跳过下面的插入
+# 在 shebang 之后插入 3 行（先插判断，再在它前面插两行注释，最终顺序同上面的 diff）
+ssh $H "sudo sed -i '1a [ \"\$RENEWED_LINEAGE\" = /etc/letsencrypt/live/dreamotech.cn ] || exit 0' /etc/letsencrypt/renewal-hooks/deploy/derper.sh"
+ssh $H "sudo sed -i '1a # 手动运行：sudo RENEWED_LINEAGE=/etc/letsencrypt/live/dreamotech.cn sh /etc/letsencrypt/renewal-hooks/deploy/derper.sh' /etc/letsencrypt/renewal-hooks/deploy/derper.sh"
+ssh $H "sudo sed -i '1a # 只在 dreamotech.cn 这张证书续期时执行（其他证书续期也会调用本 hook）。' /etc/letsencrypt/renewal-hooks/deploy/derper.sh"
+ssh $H "sudo head -5 /etc/letsencrypt/renewal-hooks/deploy/derper.sh; sudo sh -n /etc/letsencrypt/renewal-hooks/deploy/derper.sh && echo syntax-ok"
 # 只验证「别的证书不会触发」：用 dk 的路径跑一次，应该在第 2 行就退出，不拷贝、不重启 derper
 ssh $H "sudo env RENEWED_LINEAGE=/etc/letsencrypt/live/dk.dreamotech.cn sh -x /etc/letsencrypt/renewal-hooks/deploy/derper.sh 2>&1 | head -5; sudo stat -c %y /etc/derper/certs/dreamotech.cn.crt"
 ```
 
-- 预期：第 2 行是判断语句；输出 `syntax-ok`；dk 路径的运行轨迹只有判断和 `exit 0`；`/etc/derper/certs/dreamotech.cn.crt` 的修改时间还是 2026-11-11（没有被拷贝）。
-- **不要**用 dreamotech.cn 的路径手动运行它（那样会真的拷贝证书、重启 derper）。
+- 预期：第 2–4 行与上面的 diff 一致；输出 `syntax-ok`；dk 路径的运行轨迹只有判断和 `exit 0`；`/etc/derper/certs/dreamotech.cn.crt` 的修改时间还是 2026-11-11（没有被拷贝）。
+- **不要**在本步骤里用 dreamotech.cn 的路径运行它（那样会真的拷贝证书、重启 derper）。
+- **以后需要手动运行时**（例如手动续期后想立即同步给 derper）：`sudo RENEWED_LINEAGE=/etc/letsencrypt/live/dreamotech.cn sh /etc/letsencrypt/renewal-hooks/deploy/derper.sh`。直接 `sh derper.sh` 会因为变量为空而立即退出、什么都不做——这一点也写在脚本第 3 行的注释里。
 - 失败：`sudo cp -a $B/derper.sh /etc/letsencrypt/renewal-hooks/deploy/derper.sh`，停。
 
 ---
@@ -170,7 +177,8 @@ ssh $H '/opt/dk-insight/venv/bin/python -c "import fastapi,uvicorn;print(fastapi
 ## E6 写 env 文件【写·服务器】
 
 ```bash
-# 6.1 不含密钥的部分：直接写
+# 6.1 不含密钥的部分。文件已存在就停：tee 会覆盖整个文件，连同已经写进去的密钥
+ssh $H 'sudo test -e /etc/dk-insight/insight.env && echo EXISTS || echo NEW'          # 预期 NEW；是 EXISTS 就停下来核对，不要重写
 ssh $H "sudo tee /etc/dk-insight/insight.env >/dev/null" <<'EOF'
 INSIGHT_ENV=production
 INSIGHT_DATA_MODE=live
@@ -184,10 +192,13 @@ INSIGHT_CACHE_TTL=60
 INSIGHT_TRIAL_ROLE=svip
 INSIGHT_TRIAL_UNTIL=2026-12-18
 EOF
-# 6.2 JWT 密钥：在服务器上生成，直接追加，不回显
-ssh $H 'printf "INSIGHT_JWT_SECRET=%s\n" "$(python3 -c "import secrets;print(secrets.token_urlsafe(48))")" | sudo tee -a /etc/dk-insight/insight.env >/dev/null'
-# 6.3 三把上游 Key：临时文件经 scp 放到内存盘，追加后立即删除；本地临时目录同时删除
-scp -q $KF $H:/dev/shm/dk-keys.env && ssh $H 'sudo sh -c "cat /dev/shm/dk-keys.env >> /etc/dk-insight/insight.env" && shred -u /dev/shm/dk-keys.env'
+# 6.2 JWT 密钥：在服务器上生成，直接追加，不回显。已存在就不追加（重跑安全；不轮换已有密钥）
+ssh $H 'if sudo grep -q "^INSIGHT_JWT_SECRET=" /etc/dk-insight/insight.env; then echo "JWT 已存在，跳过"; else printf "INSIGHT_JWT_SECRET=%s\n" "$(python3 -c "import secrets;print(secrets.token_urlsafe(48))")" | sudo tee -a /etc/dk-insight/insight.env >/dev/null && echo "JWT 已写入"; fi'
+# 6.3 三把上游 Key：先只按变量名检查是否已存在——存在就停，不追加（避免重复变量；重复时以哪一行为准取决于读取方式，不能依赖）
+ssh $H 'sudo grep -oE "^INSIGHT_UPSTREAM_API_KEY(_VIP|_FREE)?=" /etc/dk-insight/insight.env | cut -d= -f1'   # 预期：没有输出
+#     有输出 → 停：先确认现有的是哪次签的（dreamo api key list 看前缀与时间），删掉重复的那几行再继续；本次临时文件里的 Key 如果不用了要吊销
+#     没有输出 → 继续：临时文件经 scp 放到内存盘，追加后立即删除；本地临时目录同时删除
+scp -q $KF $H:/dev/shm/dk-keys.env && ssh $H 'if sudo grep -qE "^INSIGHT_UPSTREAM_API_KEY(_VIP|_FREE)?=" /etc/dk-insight/insight.env; then echo "已有上游 Key 变量，停止追加"; shred -u /dev/shm/dk-keys.env; exit 1; fi; sudo sh -c "cat /dev/shm/dk-keys.env >> /etc/dk-insight/insight.env" && shred -u /dev/shm/dk-keys.env && echo "已追加"'
 rm -P $KF $PF 2>/dev/null; rm -rf $KD
 # 6.4 权限与自检（只看变量名）
 ssh $H 'sudo chown root:dk-insight /etc/dk-insight/insight.env && sudo chmod 0640 /etc/dk-insight/insight.env && sudo cut -d= -f1 /etc/dk-insight/insight.env'
@@ -195,7 +206,8 @@ ssh $H 'sudo chown root:dk-insight /etc/dk-insight/insight.env && sudo chmod 064
 
 - 预期 6.4 输出 15 个变量名：11 个固定项，加 `INSIGHT_JWT_SECRET` 和 3 个 `INSIGHT_UPSTREAM_API_KEY*`。**没有** `INSIGHT_PAYMENT_ENABLED`、`INSIGHT_AUTH_MODE`、`INSIGHT_MP_MOCK_LOGIN`。
 - 管理员引导变量放到 E11 再加，由用户本人填写。
-- 失败：重写 6.1，再重新追加；如果 Key 文件已经删了，就到数据中台吊销这 3 把 Key，回到 E4.2 重新签。
+- 自检：`ssh $H 'sudo cut -d= -f1 /etc/dk-insight/insight.env | sort | uniq -d'` 必须没有输出（没有重复变量）。
+- 失败：变量缺了就按缺的那一项单独补（仍然先 grep 变量名）；如果 Key 文件已经删了，就到数据中台吊销这 3 把 Key，回到 E4.2 重新签。
 
 ---
 
@@ -311,6 +323,8 @@ ssh $H 'sudo ls -ld /var/lib/dk-insight /var/lib/dk-insight/backups; sudo ls -l 
 - 预期：`/var/lib/dk-insight` 是 `drwxr-x--- dk-insight dk-insight`（0750）；备份文件是 `-rw-r----- dk-insight dk-insight`（0640）。
 - 如果 E12-13 的第一份备份是在本次修改之前生成的（0600），就再手动跑一次备份。
 - 找不到 rrsync：从 rsync 源码包的 `support/rrsync` 拷到 `/usr/local/bin/rrsync`，`chmod 755`。它是一个 Python 脚本，需要 python3。
+
+> **E13.2、E13.4、E13.5 由用户本人在 Mac mini 上执行**（本会话不连 Mac mini）。可以直接复制的完整命令块在 `deploy/dk/macmini/SETUP-ON-MACMINI.md`：块 A = E13.2，块 B = E13.4，块 C = E13.5。下面保留的命令只是说明。
 
 ### E13.2 Mac mini：生成专用 Key【需在 Mac mini 上执行】
 
