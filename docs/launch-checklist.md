@@ -1,5 +1,7 @@
 # 上线检查清单
 
+> dk.dreamotech.cn 的部署步骤见 `deploy/dk/README.md`。
+
 逐项执行，每项结果只记"通过"或"不通过"。任何一项不通过就不对外开放。
 
 ## 一、主体与资质（上架套餐前必须完成）
@@ -32,6 +34,8 @@
 | 14 | `INSIGHT_DB_PATH` | 指向持久化磁盘，不放在临时目录 |
 | 15 | `INSIGHT_MP_MOCK_LOGIN`、`INSIGHT_AUTH_MODE` | 未设置 |
 | 16 | `INSIGHT_WECHAT_APPID` / `INSIGHT_WECHAT_SECRET` | 小程序上线时填写 |
+| 16a | `INSIGHT_PAYMENT_ENABLED` | 资质与支付打通前**不设置**（付费入口关闭，用户侧套餐接口 403，后台不能记录收款）（DK2） |
+| 16b | `INSIGHT_TRIAL_ROLE` / `INSIGHT_TRIAL_UNTIL` | 免费试用期的等级与截止日（`YYYY-MM-DD`，北京时间当天结束），两项同时设或同时不设 |
 
 ## 四、管理员与运营配置
 

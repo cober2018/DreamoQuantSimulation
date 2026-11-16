@@ -1,0 +1,9 @@
+[Unit]
+Description=知数星耀 SQLite 每日 03:30 备份
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

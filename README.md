@@ -28,6 +28,12 @@ openspec/                规格与变更
 
 与旧平台**零代码引用**：唯一依赖是数据中台的 HTTP 接口 `GET /api/v1/data/apis/{service_key}/records`。
 
+## 2026-11-17 dk.dreamotech.cn 上线准备（DK-001，本地完成、未部署）
+
+- 部署配置与 runbook：`deploy/dk/`（systemd 单实例网关、nginx 独立 server 块、SQLite 每日备份、30 天日志轮转、环境变量清单）；`backend/requirements.lock` 固定依赖版本。
+- DK2 免费试用、不开支付：`INSIGHT_PAYMENT_ENABLED` 默认关闭（套餐接口 403、后台不能记录收款、网页与小程序隐藏价格/套餐/兑换入口）；`INSIGHT_TRIAL_ROLE` + `INSIGHT_TRIAL_UNTIL` 全站试用，不写库，到期回到真实等级，页面显示「免费试用中（至 …）」。
+- 验证：`scripts/sandbox/2026-11-17_verify_payment_trial.py`。
+
 ## 已完成（2026-10-22 六期）
 
 | 期 | 提案 | 内容 | 状态 |

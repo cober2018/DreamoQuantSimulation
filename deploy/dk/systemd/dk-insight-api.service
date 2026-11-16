@@ -1,0 +1,29 @@
+[Unit]
+Description=知数星耀量化平台 网关 (insight_api, dk.dreamotech.cn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dk-insight
+Group=dk-insight
+WorkingDirectory=/opt/dk-insight/app/current/backend
+EnvironmentFile=/etc/dk-insight/insight.env
+# 单实例：限流和签名防重放依赖进程内存（launch-checklist #26），不要加 --workers
+ExecStart=/opt/dk-insight/venv/bin/uvicorn insight_api.main:app --host 127.0.0.1 --port 8090 --proxy-headers --forwarded-allow-ips=127.0.0.1 --no-server-header
+Restart=always
+RestartSec=3
+# SQLite 与备份所在目录：/var/lib/dk-insight
+StateDirectory=dk-insight
+StateDirectoryMode=0750
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/dk-insight
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

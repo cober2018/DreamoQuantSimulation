@@ -10,11 +10,12 @@
         <div class="stat"><div class="label">可查看历史</div><div class="value">{{ u.history_days }} 个交易日</div></div>
       </div>
       <p class="banner info" v-if="u.must_change_password">请先修改初始/临时密码，否则无法访问数据页面。</p>
-      <p v-if="leftDays !== null && leftDays <= 7" class="banner fixture">会员将于 {{ leftDays }} 天后到期，续期请查看会员套餐。</p>
-      <router-link class="btn primary" to="/plans">{{ u.member_expires_at ? '续期 / 升级' : '开通会员' }}</router-link>
+      <p v-if="trialText()" class="banner info">{{ trialText() }}</p>
+      <p v-if="leftDays !== null && leftDays <= 7" class="banner fixture">会员将于 {{ leftDays }} 天后到期<template v-if="payOn()">，续期请查看会员套餐</template>。</p>
+      <router-link v-if="payOn()" class="btn primary" to="/plans">{{ u.member_expires_at ? '续期 / 升级' : '开通会员' }}</router-link>
     </div>
 
-    <div class="panel">
+    <div v-if="payOn()" class="panel">
       <h2>邀请码兑换</h2>
       <p class="muted">已获得邀请码可在此兑换；付费开通请查看<router-link to="/plans">会员套餐</router-link>。</p>
       <form class="row" @submit.prevent="redeem">
@@ -41,7 +42,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api, logout, reloadMe, session } from '../auth'
+import { api, logout, payOn, reloadMe, session, trialText } from '../auth'
 
 const router = useRouter()
 const u = computed(() => session.user || {})

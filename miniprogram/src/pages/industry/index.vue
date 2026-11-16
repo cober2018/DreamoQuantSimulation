@@ -15,7 +15,7 @@
     <view class="card" v-if="picked">
       <view class="card-title">{{ picked.sector_name }} · 近 {{ seriesDays }} 日</view>
       <view v-if="series.state === 'loading'" class="muted">加载中…</view>
-      <view v-else-if="series.state === 'forbidden'" class="card-sub">板块序列属于下钻明细，需要 {{ needDetail }}。可到“我的”查看会员套餐。</view>
+      <view v-else-if="series.state === 'forbidden'" class="card-sub">板块序列属于下钻明细，需要 {{ needDetail }}。<text v-if="payOn()">可到“我的”查看会员套餐。</text></view>
       <view v-else-if="series.state === 'error'" class="card-sub">数据服务暂时不可用，请稍后重试</view>
       <template v-else>
         <view v-if="series.env.gaps && series.env.gaps.length" class="card-sub">{{ series.env.gaps[0].reason }}</view>
@@ -37,7 +37,7 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { get, session } from '../../utils/auth'
+import { get, payOn, session } from '../../utils/auth'
 import StateView from '../../utils/StateView.vue'
 import { useData } from '../../utils/useData'
 import { num, pct, dir } from '../../utils/fmt'

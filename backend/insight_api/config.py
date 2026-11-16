@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from .tier_routing import account_keys
@@ -43,6 +44,25 @@ class Settings:
     policy_require_second_approver: bool = False
     # 已切到 public-* 事实视图的页面 (D4)：overview,participation,industries,themes,history,calendar
     public_pages: frozenset = frozenset()
+    # DK2：上线先免费试用、不开支付。付费入口（套餐、带金额/套餐的开通）默认关闭，=1 才打开
+    payment_enabled: bool = False
+    # 全站试用：截止日（北京时间当天结束）之前，非管理员用户的生效等级至少为 trial_role；不写库
+    trial_role: str = ""
+    trial_until: float = 0.0
+
+
+_CN = timezone(timedelta(hours=8))
+
+
+def _trial_until(value: str) -> float:
+    """YYYY-MM-DD → 该日北京时间 24:00 的时间戳；空串 → 0（不启用）。"""
+    if not value:
+        return 0.0
+    try:
+        day = date.fromisoformat(value)
+    except ValueError:
+        raise ConfigError("INSIGHT_TRIAL_UNTIL 格式为 YYYY-MM-DD") from None
+    return datetime(day.year, day.month, day.day, tzinfo=_CN).timestamp() + 86400
 
 
 def load_settings() -> Settings:
@@ -69,7 +89,14 @@ def load_settings() -> Settings:
         account_keys=tuple(sorted(account_keys(os.getenv("INSIGHT_UPSTREAM_API_KEY", ""), dict(os.environ)).items())),
         policy_require_second_approver=os.getenv("INSIGHT_POLICY_REQUIRE_SECOND_APPROVER", "") == "1",
         public_pages=frozenset(x.strip() for x in os.getenv("INSIGHT_PUBLIC_PAGES", "").split(",") if x.strip()),
+        payment_enabled=os.getenv("INSIGHT_PAYMENT_ENABLED", "") == "1",
+        trial_role=os.getenv("INSIGHT_TRIAL_ROLE", "").strip().lower(),
+        trial_until=_trial_until(os.getenv("INSIGHT_TRIAL_UNTIL", "").strip()),
     )
+    if bool(settings.trial_role) != bool(settings.trial_until):
+        raise ConfigError("INSIGHT_TRIAL_ROLE 与 INSIGHT_TRIAL_UNTIL 必须同时设置或同时不设")
+    if settings.trial_role in {"admin", "free"}:
+        raise ConfigError("INSIGHT_TRIAL_ROLE 不能是 admin 或 free")
     if settings.data_mode not in {"live", "fixture"}:
         raise ConfigError("INSIGHT_DATA_MODE 只允许 live / fixture")
     # 夹具含合成数据，绝不能出现在对外环境

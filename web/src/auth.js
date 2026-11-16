@@ -102,3 +102,11 @@ export async function reloadMe() {
 }
 
 export const can = (perm) => !!session.user && ((session.user.permissions || []).includes(perm) || (session.user.permissions || []).includes('*'))
+
+// DK2：付费入口由服务端开关控制（me.payment_enabled），试用信息来自 me.trial
+export const payOn = () => !!session.user?.payment_enabled
+export const trialText = () => {
+  const t = session.user?.trial
+  // until 是截止日次日 00:00（北京时间），减 1 秒取截止日
+  return t ? `免费试用中（至 ${new Date((t.until - 1) * 1000).toLocaleDateString('zh-CN')}）` : ''
+}

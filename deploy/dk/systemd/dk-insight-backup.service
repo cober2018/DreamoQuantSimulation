@@ -1,0 +1,12 @@
+[Unit]
+Description=知数星耀 SQLite 每日备份
+After=dk-insight-api.service
+
+[Service]
+Type=oneshot
+User=dk-insight
+Group=dk-insight
+ExecStart=/opt/dk-insight/venv/bin/python /opt/dk-insight/app/current/deploy/dk/scripts/backup_sqlite.py /var/lib/dk-insight/insight.sqlite3 /var/lib/dk-insight/backups 14
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/dk-insight

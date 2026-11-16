@@ -20,7 +20,7 @@ from .access.service import AccessService
 from .access.store import Store
 
 from . import modules, public_modules
-from .config import load_settings
+from .config import ConfigError, load_settings
 from .content_scope import CONTENT_SCOPE, DISCLAIMER, ContentGuardViolation, validate_registry
 from .upstream import Upstream, UpstreamError
 from .access.policy import UpstreamScope, trim
@@ -58,7 +58,11 @@ def create_app() -> FastAPI:
         if not settings.jwt_secrets:
             logger.warning("未配置 INSIGHT_JWT_SECRET，使用进程内随机密钥，重启后全部登录失效 (仅限开发)")
         os.makedirs(os.path.dirname(settings.db_path) or ".", exist_ok=True)
-        access = AccessService(Store(settings.db_path), secrets_list, registration=settings.registration)
+        access = AccessService(Store(settings.db_path), secrets_list, registration=settings.registration,
+                               payment_enabled=settings.payment_enabled, trial_role=settings.trial_role,
+                               trial_until=settings.trial_until)
+        if settings.trial_role and not access.store.q1("SELECT 1 FROM roles WHERE name=?", (settings.trial_role,)):
+            raise ConfigError(f"INSIGHT_TRIAL_ROLE 不存在: {settings.trial_role}")
         if settings.bootstrap_admin_user and settings.bootstrap_admin_password:
             access.bootstrap_admin(settings.bootstrap_admin_user, settings.bootstrap_admin_password)
     gate = Gate(access, auth_off=settings.auth_mode == "off")

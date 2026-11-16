@@ -295,6 +295,8 @@ def build_router(access: AccessService, gate: Gate, settings, policies=None, sco
     @r.get("/plans")
     def plans(request: Request):
         gate.principal(request, require_signature=False)
+        if not settings.payment_enabled:
+            raise HTTPException(403, "会员购买暂未开放")
         return {"items": access.list_plans(listed_only=True), "contact_text": access.plan_contact_text()}
 
     @r.get("/admin/users")
@@ -305,6 +307,9 @@ def build_router(access: AccessService, gate: Gate, settings, policies=None, sco
     @r.post("/admin/users/{user_id}/grant")
     def admin_grant(user_id: int, body: GrantIn, request: Request):
         p = admin(request)
+        # 付费关闭时只允许按角色+天数免费开通（运营补偿/试用延长），不允许记录收款或按套餐开通
+        if not settings.payment_enabled and (body.plan_id is not None or body.amount_cents):
+            raise HTTPException(403, "付费功能未开放：只能按角色与天数免费开通")
         try:
             return access.grant_membership(user_id, p.username, **body.model_dump())
         except AccessError as e:

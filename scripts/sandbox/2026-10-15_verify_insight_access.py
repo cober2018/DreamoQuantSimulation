@@ -81,7 +81,7 @@ PW = "Passw0rd-Test-1"
 
 def verify_membership(TestClient):
     """launch-membership-ops-and-page-polish-v1: 套餐、开通、冲正、合计、到期筛选。"""
-    with TestClient(make_app(), base_url="http://testserver") as tc:
+    with TestClient(make_app(INSIGHT_PAYMENT_ENABLED="1"), base_url="http://testserver") as tc:
         for u in ("dave", "erin"):
             tc.post("/api/v1/auth/register", json={"username": u, "password": PW, "accept_terms": True})
         adm = Client(tc)
