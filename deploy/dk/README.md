@@ -1,5 +1,7 @@
 # 部署 runbook：知数星耀量化平台 → dk.dreamotech.cn（腾讯云边缘机）
 
+> **上线当天按 `RUNBOOK-EXECUTE.md` 执行**；它已经按 WEB-CN-006 的线上事实修正过（证书用 nginx 插件、没有 snippets 目录、直接用机器上的 python3.11）。本文件是设计说明，命令有出入时以执行清单为准。
+>
 > **状态：草案，一步都没有执行过。** 每一步都标了类型：
 > - 【只读】只看不改；
 > - 【写】会改服务器、证书、nginx 或数据中台，必须先拿到用户书面批准；
@@ -23,13 +25,13 @@
 | 主机 | 腾讯云轻量 101.35.245.53（和 dreamotech.cn、www 同一台） |
 | 进程 | systemd `dk-insight-api.service`，系统用户 `dk-insight`，只监听 127.0.0.1:8090 |
 | 代码 | `/opt/dk-insight/app/releases/<ts>/`（仓库 `git archive`），`current` 软链 |
-| Python | `/opt/dk-insight/venv`（Python 3.11，`uv pip install -r backend/requirements.lock`） |
+| Python | `/opt/dk-insight/venv`（`/usr/bin/python3.11 -m venv`，`pip install -r backend/requirements.lock`） |
 | 前端 | `/opt/dk-insight/web/releases/<ts>/`（`web/dist`），`current` 软链 |
 | 数据 | `/var/lib/dk-insight/insight.sqlite3`（账号、角色、会员、审计） |
-| 备份 | `/var/lib/dk-insight/backups/`，每日 03:30，保留 14 份；异地副本见 §9 |
+| 备份 | `/var/lib/dk-insight/backups/`，每日 03:30，保留 14 份（0640，组只读）；异地：家里的 Mac mini 每日拉取，保留 30 天 |
 | 配置 | `/etc/dk-insight/insight.env`（root:dk-insight 0640），变量见 `insight.env.example` |
 | 日志 | nginx：`/var/log/nginx/dk-insight/`，保留 30 天；网关：`journalctl -u dk-insight-api` |
-| 证书 | **单独签** `live/dk.dreamotech.cn`。不碰 `live/dreamotech.cn`（derper 依赖） |
+| 证书 | **单独签** `live/dk.dreamotech.cn`，和现有证书一样用 certbot nginx 插件。不碰 `live/dreamotech.cn`（derper 依赖） |
 
 **为什么选 systemd 而不是 docker**：网关只是一个 Python 进程加一个 SQLite 文件；这台边缘机上已经跑着 frps、derper、nginx 和旅游后端，docker 是否安装没有核实。systemd 不增加新组件，崩溃自动重启（launch-checklist #25），`ProtectSystem=strict` 只放行数据目录。如果 S0 发现机器上已经统一用 docker，再改成容器，配置项不变。
 
@@ -91,8 +93,8 @@ sudo useradd --system --home /var/lib/dk-insight --shell /sbin/nologin dk-insigh
 sudo install -d -o root -g root -m 0755 /opt/dk-insight /opt/dk-insight/app/releases /opt/dk-insight/web/releases
 sudo install -d -o root -g dk-insight -m 0750 /etc/dk-insight
 # 代码：本地 git archive <commit> 上传，解到 /opt/dk-insight/app/releases/<ts>，再切 current 软链
-sudo uv venv -p 3.11 /opt/dk-insight/venv
-sudo uv pip install --python /opt/dk-insight/venv/bin/python -r /opt/dk-insight/app/current/backend/requirements.lock
+sudo /usr/bin/python3.11 -m venv /opt/dk-insight/venv
+sudo /opt/dk-insight/venv/bin/pip install -r /opt/dk-insight/app/current/backend/requirements.lock
 # 配置：按 insight.env.example 填写 /etc/dk-insight/insight.env（root:dk-insight 0640），
 #       把 §3 的 /tmp/insight.env.upstream 内容合并进去后 shred 掉
 ```
@@ -127,22 +129,21 @@ curl -s http://127.0.0.1:8090/api/v1/health      # 期望 {"status":"ok","data_m
 ## 6. 【写】证书：dk 单独签一张
 
 ```bash
-# phase 1：只开 :80，供 webroot 验证
+# phase 1：只开 :80，供 certbot nginx 插件验证
 sudo cp deploy/dk/nginx/dk.dreamotech.cn.http-only.conf /etc/nginx/conf.d/dk.dreamotech.cn.conf
 sudo nginx -t && sudo systemctl reload nginx
 # 先演练，再正式签
-sudo certbot certonly --webroot -w /var/www/html -d dk.dreamotech.cn --cert-name dk.dreamotech.cn --dry-run
-sudo certbot certonly --webroot -w /var/www/html -d dk.dreamotech.cn --cert-name dk.dreamotech.cn
+sudo certbot certonly --nginx -d dk.dreamotech.cn --cert-name dk.dreamotech.cn --dry-run
+sudo certbot certonly --nginx -d dk.dreamotech.cn --cert-name dk.dreamotech.cn
 ```
 
-- 用 HTTP-01 webroot，不用泛域名 DNS-01（不把阿里云 DNS 密钥放到服务器上）。
+- 用 HTTP-01（nginx 插件，和线上现有证书的续期方式一致），不用泛域名 DNS-01（不把阿里云 DNS 密钥放到服务器上）。
 - **前提是 S0-a 通过**：确认 derper 的 deploy hook 不会被 dk 证书触发拷贝。
 
 ## 7. 【写】nginx 正式配置与前端
 
 ```bash
 sudo install -d -o nginx -g root -m 0750 /var/log/nginx/dk-insight        # 属主以 S0-g 为准
-sudo cp deploy/dk/nginx/dk-insight-headers.conf /etc/nginx/snippets/
 sudo cp deploy/dk/nginx/dk.dreamotech.cn.conf /etc/nginx/conf.d/dk.dreamotech.cn.conf   # 覆盖 phase 1
 sudo cp deploy/dk/logrotate-dk-insight /etc/logrotate.d/dk-insight && sudo logrotate -d /etc/logrotate.d/dk-insight
 # 前端：本地 cd web && npm run build:prod（含混淆与产物扫描），rsync 到 /opt/dk-insight/web/releases/<ts>，切 current
@@ -160,7 +161,7 @@ nginx 草案要点：`/api/` 覆盖写 `X-Forwarded-For $remote_addr`（配合 u
 ## 9. 【写】备份
 
 - 每日 03:30 `dk-insight-backup.timer` 用 SQLite 在线备份 API 写到 `/var/lib/dk-insight/backups/`，做完整性检查，保留 14 份（`deploy/dk/scripts/backup_sqlite.py`，只依赖 Python 标准库）。
-- 异地：**目的地待用户决定**（§10 B9）。最简单的做法是本机（Mac）每天 `rsync` 拉取一次；也可以用对象存储（有费用）。
+- 异地：家里的 Mac mini 每天 04:30 主动拉取（DK4），只读专用账号 `dk-backup` + rrsync，本地保留 30 天，数据不出境。步骤见 `RUNBOOK-EXECUTE.md` E13。
 - 恢复演练【只读】：抽一份备份 `python3 -c "import sqlite3;print(sqlite3.connect('<备份>').execute('PRAGMA integrity_check').fetchone())"`。
 
 ## 10. 【只读】验收

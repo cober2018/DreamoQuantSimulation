@@ -10,7 +10,7 @@ from pathlib import Path
 
 def main(db: str, out_dir: str, keep: int) -> None:
     out = Path(out_dir)
-    out.mkdir(parents=True, exist_ok=True)
+    out.mkdir(mode=0o750, parents=True, exist_ok=True)
     target = out / f"insight-{datetime.now():%Y%m%d-%H%M%S}.sqlite3"
     src = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
     dst = sqlite3.connect(target)
@@ -22,7 +22,8 @@ def main(db: str, out_dir: str, keep: int) -> None:
     if ok != "ok":
         target.unlink()
         raise SystemExit(f"备份完整性检查失败: {ok}")
-    target.chmod(0o600)
+    # 0640：组内只读，供异地拉取账号 dk-backup（属 dk-insight 组、rrsync 只读）读取
+    target.chmod(0o640)
     for old in sorted(out.glob("insight-*.sqlite3"))[:-keep]:
         old.unlink()
     print(f"backup ok: {target}")
