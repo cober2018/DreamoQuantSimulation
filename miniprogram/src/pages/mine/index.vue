@@ -3,7 +3,7 @@
     <view class="card" v-if="!session.user">
       <view class="card-title">登录</view>
       <view class="card-sub">使用微信登录；首次登录需同意用户协议与隐私政策。</view>
-      <view class="muted" style="font-size:24rpx">本平台仅提供信息汇总与历史数据统计，不构成投资建议；会员可通过邀请码或联系客服线下开通。</view>
+      <view class="muted" style="font-size:24rpx">本平台提供市场数据与历史统计，仅供研究和学习参考，不构成任何投资建议、证券推荐或交易指令。数据可能存在延迟、缺失或误差，请以交易所及上市公司的官方披露为准。投资有风险，决策请独立判断。会员可通过邀请码或联系客服线下开通。</view>
       <label style="display:flex;align-items:center;margin-top:16rpx" @click="terms = !terms">
         <checkbox :checked="terms" /> <text style="font-size:24rpx">我已阅读并同意用户协议与隐私政策</text>
       </label>

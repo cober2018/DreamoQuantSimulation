@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List
 
-DISCLAIMER = "本平台仅提供证券信息汇总与历史数据统计，不构成任何证券投资建议。"
+DISCLAIMER = "本平台提供市场数据与历史统计，仅供研究和学习参考，不构成任何投资建议、证券推荐或交易指令。数据可能存在延迟、缺失或误差，请以交易所及上市公司的官方披露为准。投资有风险，决策请独立判断。"
 
 KEEP, EXCLUDE, PENDING = "keep", "exclude", "pending"
 DELIVERED, NOT_CONNECTED, V1_PENDING, EXCLUDED = "delivered", "not_connected", "pending", "excluded"

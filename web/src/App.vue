@@ -2,7 +2,7 @@
   <router-view v-if="bare" />
   <div v-else class="layout">
     <nav class="sidebar">
-      <div class="brand">量化数据洞察<small>信息汇总 · 历史统计</small></div>
+      <div class="brand">知数星耀量化平台<small>市场事实与历史统计</small></div>
       <router-link v-for="p in PAGES" :key="p.path" :to="p.path" :class="{ 'router-link-active': isActive(p) }">
         {{ p.title }}<span v-if="!can(p.perm)" class="lock">🔒 {{ minRole(p.perm) }}</span>
       </router-link>

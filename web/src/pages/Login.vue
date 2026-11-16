@@ -2,7 +2,7 @@
   <div class="auth-wrap">
     <div class="panel auth-card">
       <h1>{{ mode === 'login' ? '登录' : '注册' }}</h1>
-      <p class="muted">量化数据洞察 · 仅提供信息汇总与历史统计</p>
+      <p class="muted">知数星耀量化平台 · 市场事实与历史统计，不构成投资建议</p>
       <form @submit.prevent="submit">
         <label>用户名<input v-model.trim="username" autocomplete="username" required minlength="3" maxlength="32" /></label>
         <label>密码<input v-model="password" type="password" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required /></label>

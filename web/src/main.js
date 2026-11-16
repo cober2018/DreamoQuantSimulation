@@ -37,7 +37,7 @@ router.beforeEach(async (to) => {
   if (to.meta.page && !can(to.meta.page.perm)) return `/locked/${to.meta.page.key}`
   return true
 })
-router.afterEach((to) => { document.title = `${to.meta.title || ''} · 量化数据洞察` })
+router.afterEach((to) => { document.title = `${to.meta.title || ''} · 知数星耀量化平台` })
 
 // 后端已裁掉无权限指标；整块无权限的模块在前端隐藏（以后端裁剪为准）
 const applyModule = (el, binding) => { el.style.display = moduleAccess.map[binding.value] === 'none' ? 'none' : '' }

@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
         await app.state.upstream.close()
 
     docs = settings.env != "production"
-    app = FastAPI(title="DreamoQuantSimulation Insight API", version="0.2.0", lifespan=lifespan,
+    app = FastAPI(title="知数星耀量化平台 数据 API", version="0.2.0", lifespan=lifespan,
                   docs_url="/api/docs" if docs else None, openapi_url="/api/openapi.json" if docs else None,
                   redoc_url=None)
 
