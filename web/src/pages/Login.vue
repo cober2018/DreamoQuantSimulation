@@ -1,6 +1,7 @@
 <template>
   <div class="auth-wrap">
     <div class="panel auth-card">
+      <img class="auth-logo" src="/brand/zhishu-logo-horizontal.png" alt="知数量化" />
       <h1>{{ mode === 'login' ? '登录' : '注册' }}</h1>
       <p class="muted">知数星耀量化平台 · 市场事实与历史统计，不构成投资建议</p>
       <form @submit.prevent="submit">
@@ -62,6 +63,7 @@ async function submit() {
 .auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
 .auth-card { width: 360px; max-width: 100%; }
 .auth-card h1 { margin: 0 0 4px; }
+.auth-logo { display: block; height: 44px; width: auto; margin: 0 0 16px; }
 form { display: grid; gap: 12px; margin-top: 12px; }
 label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
 input:not([type=checkbox]) { padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }

@@ -29,6 +29,8 @@ a { color: var(--accent); text-decoration: none; }
   position: sticky; top: 0; height: 100vh;
 }
 .brand { padding: 0 20px 18px; font-weight: 600; color: #fff; font-size: 16px; }
+/* 侧栏是深色底，深蓝字对比度不够，只放图形 */
+.brand-mark { display: block; width: 36px; height: 36px; margin-bottom: 8px; }
 .brand small { display: block; font-weight: 400; color: #8a95a8; font-size: 12px; margin-top: 4px; }
 .sidebar a { display: block; padding: 10px 20px; color: #cfd6e2; font-size: 14px; }
 .sidebar a.router-link-active { background: #24314a; color: #fff; border-left: 3px solid #6c9be0; padding-left: 17px; }

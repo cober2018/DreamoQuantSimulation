@@ -1,5 +1,6 @@
 <template>
   <view>
+    <view style="padding:24rpx 24rpx 0"><image src="/static/zhishu-logo-horizontal.png" mode="heightFix" style="height:72rpx" /></view>
     <view class="card" v-if="!session.user">
       <view class="card-title">登录</view>
       <view class="card-sub">使用微信登录；首次登录需同意用户协议与隐私政策。</view>
