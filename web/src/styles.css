@@ -112,6 +112,7 @@ details.fold[open] > summary { margin-bottom: 10px; }
 .date-tag { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 8px; }
 .date-tag .badge { font-style: normal; margin-left: 6px; }
 .badge.lock { background: #eef0f3; color: var(--muted); }
+.badge.ai { background: var(--warn-bg); color: var(--warn-text); font-weight: 400; }
 .btn.primary, button.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 a.btn { display: inline-block; border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 6px 12px; font-size: 13px; }
 .lock-card { border: 1px dashed var(--line); border-radius: var(--radius); padding: 18px; text-align: center; color: var(--muted); font-size: 13px; }

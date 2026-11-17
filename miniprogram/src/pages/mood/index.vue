@@ -11,9 +11,9 @@
       </view>
     </view>
     <view class="card" v-if="erp && vis(env, 'erp')">
-      <view class="card-title">股权风险溢价 ERP</view>
+      <view class="card-title">股债收益差<text class="muted" style="font-size:22rpx;font-weight:400"> 盈利收益率 − 10 年期国债收益率</text></view>
       <view class="grid">
-        <view class="stat"><view class="label">ERP</view><view class="value">{{ erp.erp_value_pct == null ? '—' : num(erp.erp_value_pct) + '%' }}</view></view>
+        <view class="stat"><view class="label">股债收益差</view><view class="value">{{ erp.erp_value_pct == null ? '—' : num(erp.erp_value_pct) + '%' }}</view></view>
         <view class="stat"><view class="label">10年国债</view><view class="value">{{ erp.yield_10y == null ? '—' : num(erp.yield_10y) + '%' }}</view></view>
         <view class="stat"><view class="label">近252日分位</view><view class="value">{{ erp.erp_percentile_252d == null ? '样本不足' : num(erp.erp_percentile_252d, 1) + '%' }}</view></view>
       </view>

@@ -16,7 +16,7 @@
               <tr v-for="e in list" :key="e.event_id">
                 <td class="left">{{ e.event_time || '待定' }}</td>
                 <td class="left">{{ e.country || '—' }}</td>
-                <td class="left wrap"><strong>{{ e.title || '—' }}</strong> <span class="muted" v-if="e.indicator_code && e.indicator_code !== 'UNKNOWN'">{{ e.event_type_label }} {{ e.indicator_code }}</span><span class="muted" v-else-if="e.event_type_label">{{ e.event_type_label }}</span></td>
+                <td class="left wrap"><strong>{{ e.title || '—' }}</strong> <span v-if="e.ai_curated === true" class="badge ai">AI 整理</span> <span class="muted" v-if="e.indicator_code && e.indicator_code !== 'UNKNOWN'">{{ e.event_type_label }} {{ e.indicator_code }}</span><span class="muted" v-else-if="e.event_type_label">{{ e.event_type_label }}</span></td>
                 <td class="left">{{ [e.period, e.unit].filter(Boolean).join(' · ') || '—' }}</td>
                 <td>{{ e.previous_value || '—' }}</td>
                 <td>{{ e.consensus_value || '—' }}</td>
@@ -29,6 +29,7 @@
         </div>
       </div>
       <p class="note">* {{ env.data?.consensus_label }}；来源重要性为数据源自身评级。</p>
+      <p class="note" v-if="hasAi">{{ env.data?.ai_curated_label }}</p>
     </div>
   </PageFrame>
 </template>
@@ -43,6 +44,7 @@ const PUB = { published: '已公布', scheduled: '待公布', upcoming: '待公�
 const tradeDate = ref('')
 const { env, loading, load } = useModule('calendar', () => ({ trade_date: tradeDate.value }))
 const win = computed(() => env.value.data?.window || {})
+const hasAi = computed(() => (env.value.data?.events || []).some((e) => e.ai_curated === true))
 const events = computed(() => env.value.data?.events || [])
 const grouped = computed(() => events.value.reduce((acc, e) => {
   (acc[e.event_date || '日期未定'] ||= []).push(e)

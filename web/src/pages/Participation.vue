@@ -19,13 +19,13 @@
     </div>
 
     <div class="panel" v-module="'erp'">
-      <h2>股权风险溢价（ERP）<small>数据源可用 {{ erp.available_count ?? '—' }}/{{ erp.total_count ?? '—' }} 项{{ openText('erp') }}</small></h2>
+      <h2>股债收益差<small>盈利收益率 − 10 年期国债收益率 · 数据源可用 {{ erp.available_count ?? '—' }}/{{ erp.total_count ?? '—' }} 项{{ openText('erp') }}</small></h2>
       <div class="grid">
-        <div class="stat" v-ind="'participation.erp.erp_value_pct'"><div class="label">ERP</div><div class="value">{{ pctPoint(erp.erp_value_pct) }}</div><div class="sub">盈利收益率 − 10 年期国债收益率</div></div>
+        <div class="stat" v-ind="'participation.erp.erp_value_pct'"><div class="label">股债收益差</div><div class="value">{{ pctPoint(erp.erp_value_pct) }}</div><div class="sub">盈利收益率 − 10 年期国债收益率</div></div>
         <div class="stat" v-ind="'participation.erp.earnings_yield'"><div class="label">盈利收益率</div><div class="value">{{ fmt.ratio(erp.earnings_yield, 2) }}</div></div>
         <div class="stat" v-ind="'participation.erp.yield_10y'"><div class="label">10 年期国债收益率</div><div class="value">{{ pctPoint(erp.yield_10y) }}</div><div class="sub">来源 {{ erp.yield_source_flag || '—' }}</div></div>
-        <div class="stat" v-ind="'participation.erp.erp_change_5d_pct'"><div class="label">ERP 5 日变化</div><div class="value">{{ pp(erp.erp_change_5d_pct) }}</div></div>
-        <div class="stat" v-ind="'participation.erp.erp_change_20d_pct'"><div class="label">ERP 20 日变化</div><div class="value">{{ pp(erp.erp_change_20d_pct) }}</div></div>
+        <div class="stat" v-ind="'participation.erp.erp_change_5d_pct'"><div class="label">股债收益差 5 日变化</div><div class="value">{{ pp(erp.erp_change_5d_pct) }}</div></div>
+        <div class="stat" v-ind="'participation.erp.erp_change_20d_pct'"><div class="label">股债收益差 20 日变化</div><div class="value">{{ pp(erp.erp_change_20d_pct) }}</div></div>
         <div class="stat" v-ind="'participation.erp.erp_percentile_252d'"><div class="label">近 252 日分位</div><div class="value">{{ pctl(erp.erp_percentile_252d) }}</div></div>
         <div class="stat" v-ind="'participation.erp.erp_percentile_3y'"><div class="label">近 3 年分位</div><div class="value">{{ pctl(erp.erp_percentile_3y) }}</div></div>
         <div class="stat" v-ind="'participation.erp.erp_percentile_5y'"><div class="label">近 5 年分位</div><div class="value">{{ pctl(erp.erp_percentile_5y) }}</div></div>

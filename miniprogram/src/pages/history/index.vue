@@ -23,7 +23,7 @@
       </view>
 
       <view class="card" v-if="open5 && vis(env, 'open5')">
-        <view class="card-title">开盘 5 分钟统计（Open5）</view>
+        <view class="card-title">开盘五分钟统计</view>
         <view class="card-sub">全市场 · 数据日 {{ open5.trade_date || '—' }}</view>
         <view class="grid">
           <view class="stat"><view class="label">覆盖率</view><view class="value">{{ ratio(open5.coverage_ratio) }}</view><view class="muted sub">{{ num(open5.open5_ready_count, 0) }} / {{ num(open5.expected_stock_count, 0) }}</view></view>

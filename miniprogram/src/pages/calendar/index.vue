@@ -16,7 +16,7 @@
           <view class="day">{{ g.day }}</view>
           <view class="event" v-for="e in g.list" :key="e.event_id">
             <view class="event-head"><text class="muted">{{ e.event_time || '待定' }} · {{ e.country || '—' }}</text><text class="muted">{{ stars(e.source_importance) }}</text></view>
-            <view class="event-title">{{ e.title || '—' }}</view>
+            <view class="event-title">{{ e.title || '—' }}<text v-if="e.ai_curated === true" class="ai-tag">AI 整理</text></view>
             <view class="muted sub">{{ [e.event_type_label, e.indicator_code !== 'UNKNOWN' ? e.indicator_code : '', e.period, e.unit].filter(Boolean).join(' · ') || '—' }}</view>
             <view class="grid">
               <view class="cell"><view class="muted sub">前值</view><view>{{ e.previous_value || '—' }}</view></view>
@@ -27,6 +27,7 @@
           </view>
         </view>
         <view class="muted sub">* {{ d.consensus_label }}；来源重要性为数据源自身评级。</view>
+        <view v-if="hasAi" class="muted sub">{{ d.ai_curated_label }}</view>
       </view>
       </view>
       <view class="foot">{{ DISCLAIMER }}</view>
@@ -47,6 +48,7 @@ const { env, state, detail, load } = useData('/api/v1/calendar', params)
 const d = computed(() => env.value?.data || {})
 const win = computed(() => d.value.window || {})
 const events = computed(() => d.value.events || [])
+const hasAi = computed(() => events.value.some((e) => e.ai_curated === true))
 const grouped = computed(() => {
   const m = {}
   for (const e of events.value) (m[e.event_date || '日期未定'] = m[e.event_date || '日期未定'] || []).push(e)
@@ -62,6 +64,7 @@ function setDate(v) { params.trade_date = v; load() }
 .event { border-top: 1rpx solid #eef0f3; padding: 14rpx 0; }
 .event-head { display: flex; justify-content: space-between; font-size: 22rpx; }
 .event-title { font-weight: 600; margin: 6rpx 0; }
+.ai-tag { margin-left: 12rpx; padding: 2rpx 12rpx; border-radius: 20rpx; font-size: 20rpx; font-weight: 400; background: #fff6e0; color: #8a5a00; }
 .cell { width: 25%; padding-top: 8rpx; font-size: 24rpx; }
 .strong { font-weight: 600; }
 .sub { font-size: 22rpx; }

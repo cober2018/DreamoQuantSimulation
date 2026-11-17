@@ -4,7 +4,7 @@ export const PAGES = [
     metrics: ['基准指数涨跌幅', '上涨/下跌家数', '上涨占比', '两市成交额'] },
   { key: 'participation', path: '/participation', title: '参与度与资金环境', perm: 'page.participation',
     question: '参与和资金结构相对历史怎样变化？',
-    metrics: ['成交额及历史分位', '主动卖出占比与变化', '股权风险溢价（ERP）及分位', '估值端统计', '涨停结构',
+    metrics: ['成交额及历史分位', '主动卖出占比与变化', '股债收益差及分位', '估值端统计', '涨停结构',
       '聪明钱五因子截面统计', '风格相对强度序列', '底部条件观察值', '股指衍生品基差/持仓/PCR'] },
   { key: 'industries', path: '/industries', title: '行业比较与轮动', perm: 'page.industries',
     question: '不同板块已发生的表现有什么差异？',
