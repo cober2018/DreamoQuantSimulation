@@ -124,6 +124,9 @@ def _series_values(series: Any) -> Optional[List[Any]]:
         return series
     if not any(isinstance(p, dict) for p in series):
         return series
+    # 只转换合同内的 {sequence, value}；出现其他键就原样返回，交给出口禁止键守卫判定，不在这里悄悄丢掉
+    if any(not isinstance(p, dict) or not set(p) <= {"sequence", "value"} for p in series):
+        return series
     points = sorted((p for p in series if isinstance(p, dict)), key=lambda p: to_int(p.get("sequence")) or 0)
     return [clean(to_float(p.get("value"))) for p in points]
 
