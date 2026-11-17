@@ -2,7 +2,7 @@
   <div class="landing">
     <header class="top">
       <div class="wrap top-row">
-        <span class="logo"><img src="/brand/zhishu-logo-horizontal.png" alt="知数量化" /></span>
+        <span class="logo"><img src="/brand/zhishu-favicon.png" alt="" />知数星耀</span>
         <router-link class="btn" to="/login">登录</router-link>
       </div>
     </header>
@@ -103,7 +103,8 @@ onMounted(async () => {
 .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
 .top { background: var(--panel); border-bottom: 1px solid var(--line); }
 .top-row { display: flex; align-items: center; justify-content: space-between; height: 56px; }
-.logo img { height: 28px; display: block; }
+.logo { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; }
+.logo img { width: 28px; height: 28px; display: block; }
 .hero { background: var(--panel); border-bottom: 1px solid var(--line); padding: 56px 0 48px; }
 .hero h1 { font-size: 32px; margin: 0 0 8px; }
 .lead { font-size: 20px; margin: 0 0 16px; font-weight: 500; }
