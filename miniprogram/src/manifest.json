@@ -1,5 +1,5 @@
 {
-  "name": "量化数据洞察",
+  "name": "知数星耀量化平台",
   "appid": "",
   "description": "信息汇总与历史数据统计",
   "versionName": "0.1.0",
@@ -9,6 +9,6 @@
     "setting": { "urlCheck": false, "es6": true, "minified": true },
     "usingComponents": true
   },
-  "h5": { "title": "量化数据洞察" },
+  "h5": { "title": "知数星耀量化平台" },
   "vueVersion": "3"
 }
