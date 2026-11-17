@@ -105,18 +105,21 @@ def r5_erp_extreme(part, _prev, d):
                   "参与度与资金环境 · 股债收益差", ["erp_value_pct", key])]
 
 
-_DERIV_NAMES = {"basis_zscore_60d": "基差", "pcr_zscore_60d": "PCR", "oi_volume_crowding_zscore_60d": "持仓成交比"}
-_INSTRUMENTS = {"CSI300": "沪深300", "CSI500": "中证500", "CSI1000": "中证1000", "SSE50": "上证50"}
+# PCR 来自期权，基差与持仓成交比来自股指期货，正文要写对品种
+_DERIV_NAMES = {"basis_zscore_60d": ("股指期货", "基差"), "pcr_zscore_60d": ("期权", "PCR"),
+                "oi_volume_crowding_zscore_60d": ("股指期货", "持仓成交比")}
+_INSTRUMENTS = {"CSI300": "沪深300", "HS300": "沪深300", "CSI500": "中证500", "CSI1000": "中证1000", "SSE50": "上证50",
+                "LEGACY50ETF": "上证50ETF"}
 
 
 def r6_derivatives(part, _prev, d):
     out = []
     for m in part.get("derivatives") or []:
         inst = _INSTRUMENTS.get(str(m.get("instrument")), str(m.get("instrument")))
-        for key, name in _DERIV_NAMES.items():
+        for key, (kind_name, name) in _DERIV_NAMES.items():
             z = _num(m.get(key))
             if z is not None and abs(z) >= 2:
-                out.append(_fact("极值", f"{inst} 股指期货{name}的 60 日标准分为 {_signed(z)}", abs(z) * 33, d,
+                out.append(_fact("极值", f"{inst} {kind_name}{name}的 60 日标准分为 {_signed(z)}", abs(z) * 33, d,
                                  "参与度与资金环境 · 衍生品统计", [key]))
     return out
 

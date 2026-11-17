@@ -1,11 +1,13 @@
 """ZS-109 R1 回放：只读。用线上网关同一套模块取近 N 个交易日数据，按 brief 规则生成要点，输出 JSON 到 stdout。
-不写网关库（RouteLog 无 store）；上游请求标记 X-End-User-Ref=zs112-r1-replay。"""
-import asyncio, json, sys, time
+不写网关库（RouteLog 无 store）；上游请求标记 X-End-User-Ref=zs112-r1-replay。
+ZS-113 教训：批量请求禁止用线上 svip Key；这里用 v1 路由下线上不使用的 insight-vip Key（额度独立），
+全局限速每分钟 ≤ 50 次，遇 429 退避重试。"""
+import asyncio, json, os, sys, time
 from datetime import date, timedelta
 sys.path.insert(0, "/opt/dk-insight/app/current/backend")
 sys.path.insert(0, sys.argv[1])  # brief.py 所在临时目录
 from insight_api.config import load_settings
-from insight_api.upstream import Upstream
+from insight_api.upstream import HttpSource, Upstream, UpstreamError
 from insight_api import public_modules as pm
 from insight_api.tier_routing import RequestContext, set_context
 from brief import daily_brief
@@ -13,9 +15,35 @@ from brief import daily_brief
 N = int(sys.argv[2]) if len(sys.argv) > 2 else 20
 settings = load_settings()
 
+MIN_INTERVAL = 60 / 50  # 每分钟最多 50 次
+_last = [0.0]
+_orig_page = HttpSource.page
+REQUESTS = [0, 0]  # 总请求, 429 次数
+
+
+async def _paced_page(self, service_key, params, headers=None):
+    for attempt in range(4):
+        wait = _last[0] + MIN_INTERVAL - time.monotonic()
+        if wait > 0:
+            await asyncio.sleep(wait)
+        _last[0] = time.monotonic()
+        REQUESTS[0] += 1
+        try:
+            return await _orig_page(self, service_key, params, headers)
+        except UpstreamError as e:
+            if e.status != 429 or attempt == 3:
+                raise
+            REQUESTS[1] += 1
+            await asyncio.sleep(30 * (attempt + 1))
+
+
+HttpSource.page = _paced_page
+VIP_KEY = os.environ["INSIGHT_UPSTREAM_API_KEY_VIP"]
+
+
 class Router:
     def resolve(self, service_key, ctx):
-        return settings.upstream_api_key, "insight-svip", None
+        return VIP_KEY, "insight-vip", None
     def active_version(self):
         return None
 
@@ -51,7 +79,9 @@ async def main():
         b["trade_date"] = days[i]
         b["module_status"] = {k: v.get("status") for k, v in pages[days[i]].items()}
         b["module_dates"] = {k: v.get("trade_date") for k, v in pages[days[i]].items()}
+        b["module_errors"] = {k: v.get("error") for k, v in pages[days[i]].items() if v.get("status") == "error"}
         result.append(b)
-    print(json.dumps({"generated_at": time.strftime("%Y-%m-%d %H:%M:%S"), "days": result}, ensure_ascii=False))
+    print(json.dumps({"generated_at": time.strftime("%Y-%m-%d %H:%M:%S"), "requests": REQUESTS[0], "retries_429": REQUESTS[1],
+                      "days": result}, ensure_ascii=False))
 
 asyncio.run(main())
