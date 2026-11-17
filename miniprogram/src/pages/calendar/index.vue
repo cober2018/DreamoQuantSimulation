@@ -16,13 +16,13 @@
           <view class="day">{{ g.day }}</view>
           <view class="event" v-for="e in g.list" :key="e.event_id">
             <view class="event-head"><text class="muted">{{ e.event_time || '待定' }} · {{ e.country || '—' }}</text><text class="muted">{{ stars(e.source_importance) }}</text></view>
-            <view class="event-title">{{ e.title }}</view>
+            <view class="event-title">{{ e.title || '—' }}</view>
             <view class="muted sub">{{ [e.event_type_label, e.indicator_code !== 'UNKNOWN' ? e.indicator_code : '', e.period, e.unit].filter(Boolean).join(' · ') || '—' }}</view>
             <view class="grid">
               <view class="cell"><view class="muted sub">前值</view><view>{{ e.previous_value || '—' }}</view></view>
               <view class="cell"><view class="muted sub">市场预期*</view><view>{{ e.consensus_value || '—' }}</view></view>
               <view class="cell"><view class="muted sub">公布值</view><view class="strong">{{ e.actual_value || '未公布' }}</view></view>
-              <view class="cell"><view class="muted sub">状态</view><view>{{ PUB[e.publication_status] || e.publication_status || '—' }}</view></view>
+              <view class="cell"><view class="muted sub">状态</view><view>{{ PUB[e.publication_status] || '—' }}</view></view>
             </view>
           </view>
         </view>
@@ -40,7 +40,8 @@ import StateView from '../../utils/StateView.vue'
 import { useData } from '../../utils/useData'
 import { DISCLAIMER } from '../../utils/config'
 
-const PUB = { published: '已公布', scheduled: '待公布', revised: '已修正', delayed: '延期' }
+// 未登记的状态（含 unknown）显示「—」，不把上游原值的英文露给用户
+const PUB = { published: '已公布', scheduled: '待公布', upcoming: '待公布', revised: '已修正', delayed: '延期' }
 const params = reactive({ trade_date: '' })
 const { env, state, detail, load } = useData('/api/v1/calendar', params)
 const d = computed(() => env.value?.data || {})

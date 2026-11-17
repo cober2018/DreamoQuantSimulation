@@ -16,12 +16,12 @@
               <tr v-for="e in list" :key="e.event_id">
                 <td class="left">{{ e.event_time || '待定' }}</td>
                 <td class="left">{{ e.country || '—' }}</td>
-                <td class="left wrap"><strong>{{ e.title }}</strong> <span class="muted" v-if="e.indicator_code && e.indicator_code !== 'UNKNOWN'">{{ e.event_type_label }} {{ e.indicator_code }}</span><span class="muted" v-else-if="e.event_type_label">{{ e.event_type_label }}</span></td>
+                <td class="left wrap"><strong>{{ e.title || '—' }}</strong> <span class="muted" v-if="e.indicator_code && e.indicator_code !== 'UNKNOWN'">{{ e.event_type_label }} {{ e.indicator_code }}</span><span class="muted" v-else-if="e.event_type_label">{{ e.event_type_label }}</span></td>
                 <td class="left">{{ [e.period, e.unit].filter(Boolean).join(' · ') || '—' }}</td>
                 <td>{{ e.previous_value || '—' }}</td>
                 <td>{{ e.consensus_value || '—' }}</td>
                 <td><strong>{{ e.actual_value || '未公布' }}</strong></td>
-                <td class="left">{{ PUB[e.publication_status] || e.publication_status || '—' }}</td>
+                <td class="left">{{ PUB[e.publication_status] || '—' }}</td>
                 <td>{{ e.source_importance != null ? '★'.repeat(Number(e.source_importance)) || '—' : '—' }}</td>
               </tr>
             </tbody>
@@ -38,7 +38,8 @@ import { computed, ref } from 'vue'
 import PageFrame from '../components/PageFrame.vue'
 import { useModule } from '../useModule'
 
-const PUB = { published: '已公布', scheduled: '待公布', revised: '已修正', delayed: '延期' }
+// 未登记的状态（含 unknown）显示「—」，不把上游原值的英文露给用户
+const PUB = { published: '已公布', scheduled: '待公布', upcoming: '待公布', revised: '已修正', delayed: '延期' }
 const tradeDate = ref('')
 const { env, loading, load } = useModule('calendar', () => ({ trade_date: tradeDate.value }))
 const win = computed(() => env.value.data?.window || {})

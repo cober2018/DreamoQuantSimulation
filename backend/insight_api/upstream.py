@@ -33,6 +33,20 @@ class UpstreamUnsupported(UpstreamError):
     """上游对该参数返回 422 (例如尚未发布的日期区间能力)，调用方可降级。"""
 
 
+# 投研平台对未过审的文本统一返回这个占位；对外一律当缺值，由页面显示「—」，网页、小程序、MCP 口径一致
+UNAVAILABLE_TEXT = "说明暂不可用"
+
+
+def _scrub(value: Any) -> Any:
+    if isinstance(value, str):
+        return None if value.strip() == UNAVAILABLE_TEXT else value
+    if isinstance(value, dict):
+        return {k: _scrub(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_scrub(v) for v in value]
+    return value
+
+
 @dataclass
 class FetchResult:
     rows: List[Dict[str, Any]]
@@ -185,7 +199,7 @@ class Upstream:
         self._route_log.write(ctx, service_key, view, account, rule_version, False, "ok" if rows else "empty", 200,
                               int((time.monotonic() - started) * 1000))
 
-        result = FetchResult(rows=rows, issues=issues, meta=meta)
+        result = FetchResult(rows=[_scrub(r) for r in rows], issues=issues, meta=_scrub(meta))
         if rows:  # 空结果不缓存: 当日数据可能稍后就绪
             self._cache[cache_key] = (time.monotonic(), result)
         return result

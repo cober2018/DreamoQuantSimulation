@@ -115,6 +115,16 @@ def _rename(row: Dict[str, Any], fields: List[str], rename: Dict[str, str]) -> D
     return pick(row, {f: rename.get(f, f) for f in fields})
 
 
+def _series_values(series: Any) -> Optional[List[Any]]:
+    """事实视图的序列是 [{sequence, value}]，本平台对外沿用 review-* 的数字数组（按 sequence 升序）。"""
+    if not isinstance(series, list):
+        return series
+    if not any(isinstance(p, dict) for p in series):
+        return series
+    points = sorted((p for p in series if isinstance(p, dict)), key=lambda p: to_int(p.get("sequence")) or 0)
+    return [clean(to_float(p.get("value"))) for p in points]
+
+
 # ---------------- 总览 ----------------
 async def overview(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
     ids = ["CNT-002", "CNT-004"]
@@ -222,7 +232,7 @@ async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, An
     try:
         sty = await _get(up, STYLE, td)
         camps = [_rename(c, STYLE_CAMP_FIELDS, STYLE_RENAME) for c in sty.rows if isinstance(c, dict)]
-        camps = [c for c in camps if c.get("available")]
+        camps = [{**c, "strength_series": _series_values(c.get("strength_series"))} for c in camps if c.get("available")]
         blocks["style_strength"] = {"camps": camps, "definition": "强度分为阵营指数相对强度的历史评分（0–100）；序列为近 20 个交易日"} if camps else None
     except UpstreamError:
         blocks["style_strength"] = None

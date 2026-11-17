@@ -32,7 +32,7 @@
         </div>
         <div class="stat" v-ind="'themes.pools.momentum_extreme'" v-for="(w, k) in pools.momentum_extreme || {}" :key="k">
           <div class="label">动量极端池（{{ w.window_days }} 日窗）</div><div class="value">{{ fmt.num(w.count, 0) }}</div>
-          <div class="sub">{{ w.reason || w.status || '' }}</div>
+          <div class="sub">{{ w.reason || '' }}</div>
         </div>
       </div>
       <p class="note">计数为当日进入各池的个股数；池内个股名单与入选规则不提供。</p>
