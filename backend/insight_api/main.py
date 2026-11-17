@@ -18,6 +18,7 @@ from .access.gate import Gate
 from .access.routes import build_router
 from .access.service import AccessService
 from .access.store import Store
+from .mcp import McpPages, build_mcp_router
 
 from . import modules, public_modules
 from .config import ConfigError, load_settings
@@ -139,51 +140,42 @@ def create_app() -> FastAPI:
     async def content_scope():
         return {"items": CONTENT_SCOPE, "disclaimer": DISCLAIMER}
 
-    def entitled(request: Request, perm: str, trade_date: Optional[str] = None):
-        p = gate.require(request, perm)
+    def bind(p, trade_date: Optional[str] = None):
+        """取数前的共同一步（网页与 MCP 共用）：历史范围校验 + 路由上下文。"""
         gate.check_trade_date(p, trade_date)
         set_context(RequestContext(request_id=new_request_id(), user_id=p.user_id,
                                    end_user_ref=end_user_ref(store, p.user_id), role=p.role, client=p.client))
         return p
 
+    def entitled(request: Request, perm: str, trade_date: Optional[str] = None):
+        return bind(gate.require(request, perm), trade_date)
+
     def out_for(page: str, out, p):
         """D9：按角色 × 看板 × 指标统一裁剪（唯一入口），再打溯源标记。"""
         return gate.stamp(trim(page, out, p.extra.get("indicators")), p)
 
-    @app.get("/api/v1/overview")
-    async def overview(request: Request, trade_date: Optional[str] = TradeDate):
-        p = entitled(request, "page.overview", trade_date)
-        return out_for("overview", await src("overview").overview(up(request), trade_date), p)
-
-    @app.get("/api/v1/participation")
-    async def participation(request: Request, trade_date: Optional[str] = TradeDate):
-        p = entitled(request, "page.participation", trade_date)
-        return out_for("participation", await src("participation").participation(up(request), trade_date), p)
-
-    @app.get("/api/v1/industries")
-    async def industries(request: Request, trade_date: Optional[str] = TradeDate, idx_type: IdxType = "行业板块"):
-        p = entitled(request, "page.industries", trade_date)
-        return out_for("industries", await src("industries").industries(up(request), trade_date, idx_type), p)
-
-    @app.get("/api/v1/industries/{sector_code}/series")
-    async def industry_series(
-        request: Request,
-        sector_code: str = Path(..., pattern=r"^[A-Za-z0-9._-]{1,32}$"),
-        end_date: Optional[str] = Query(None, pattern=DATE_PATTERN),
-        days: int = Query(5, ge=2, le=20),
-    ):
-        p = entitled(request, "page.industries", end_date)
+    def series_ok(p) -> bool:
         ind = p.extra.get("indicators")
-        series_ok = p.can("data.detail") if ind is None else any(i.startswith("industries.series.") for i in ind)
-        if not series_ok:
-            raise HTTPException(403, "板块序列属于下钻明细，需要更高等级")
-        out = await src("industries").industry_series(up(request), sector_code, end_date, min(days, p.history_days))
-        return gate.stamp(trim("industries", out, ind, only_module="series"), p)
+        return p.can("data.detail") if ind is None else any(i.startswith("industries.series.") for i in ind)
 
-    @app.get("/api/v1/themes")
-    async def themes(request: Request, trade_date: Optional[str] = TradeDate):
-        p = entitled(request, "page.themes", trade_date)
-        out = await src("themes").themes(up(request), trade_date)
+    # ---- 各页取数 + 裁剪：网页路由与 MCP 工具都只调这里，口径不分叉 ----
+    async def load_overview(u: Upstream, p, trade_date=None):
+        return out_for("overview", await src("overview").overview(u, trade_date), p)
+
+    async def load_participation(u: Upstream, p, trade_date=None):
+        return out_for("participation", await src("participation").participation(u, trade_date), p)
+
+    async def load_industries(u: Upstream, p, trade_date=None, idx_type="行业板块"):
+        return out_for("industries", await src("industries").industries(u, trade_date, idx_type), p)
+
+    async def load_industry_series(u: Upstream, p, sector_code, end_date=None, days=5):
+        if not series_ok(p):
+            raise HTTPException(403, "板块序列属于下钻明细，需要更高等级")
+        out = await src("industries").industry_series(u, sector_code, end_date, min(days, p.history_days))
+        return gate.stamp(trim("industries", out, p.extra.get("indicators"), only_module="series"), p)
+
+    async def load_themes(u: Upstream, p, trade_date=None):
+        out = await src("themes").themes(u, trade_date)
         data = out.get("data") or {}
         ind = p.extra.get("indicators")
         if (not p.can("data.detail")) if ind is None else ("themes.seal_time.seal_time_buckets" not in ind):
@@ -195,6 +187,42 @@ def create_app() -> FastAPI:
             data["history"] = data["history"][-p.history_days:]
         return out_for("themes", out, p)
 
+    async def load_history(u: Upstream, p, trade_date=None, idx_type="行业板块", period="1d"):
+        return out_for("history", await src("history").history(u, trade_date, idx_type, period), p)
+
+    async def load_calendar(u: Upstream, p, trade_date=None, days=14):
+        return out_for("calendar", await src("calendar").calendar(u, trade_date, days), p)
+
+    @app.get("/api/v1/overview")
+    async def overview(request: Request, trade_date: Optional[str] = TradeDate):
+        p = entitled(request, "page.overview", trade_date)
+        return await load_overview(up(request), p, trade_date)
+
+    @app.get("/api/v1/participation")
+    async def participation(request: Request, trade_date: Optional[str] = TradeDate):
+        p = entitled(request, "page.participation", trade_date)
+        return await load_participation(up(request), p, trade_date)
+
+    @app.get("/api/v1/industries")
+    async def industries(request: Request, trade_date: Optional[str] = TradeDate, idx_type: IdxType = "行业板块"):
+        p = entitled(request, "page.industries", trade_date)
+        return await load_industries(up(request), p, trade_date, idx_type)
+
+    @app.get("/api/v1/industries/{sector_code}/series")
+    async def industry_series(
+        request: Request,
+        sector_code: str = Path(..., pattern=r"^[A-Za-z0-9._-]{1,32}$"),
+        end_date: Optional[str] = Query(None, pattern=DATE_PATTERN),
+        days: int = Query(5, ge=2, le=20),
+    ):
+        p = entitled(request, "page.industries", end_date)
+        return await load_industry_series(up(request), p, sector_code, end_date, days)
+
+    @app.get("/api/v1/themes")
+    async def themes(request: Request, trade_date: Optional[str] = TradeDate):
+        p = entitled(request, "page.themes", trade_date)
+        return await load_themes(up(request), p, trade_date)
+
     @app.get("/api/v1/history")
     async def history(
         request: Request,
@@ -203,7 +231,7 @@ def create_app() -> FastAPI:
         period: Literal["1d", "5d", "20d"] = "1d",
     ):
         p = entitled(request, "page.history", trade_date)
-        return out_for("history", await src("history").history(up(request), trade_date, idx_type, period), p)
+        return await load_history(up(request), p, trade_date, idx_type, period)
 
     @app.get("/api/v1/calendar")
     async def calendar(
@@ -212,7 +240,14 @@ def create_app() -> FastAPI:
         days: int = Query(14, ge=1, le=60, description="自数据日起的前瞻事件天数窗口"),
     ):
         p = entitled(request, "page.calendar", trade_date)
-        return out_for("calendar", await src("calendar").calendar(up(request), trade_date, days), p)
+        return await load_calendar(up(request), p, trade_date, days)
+
+    # ---- MCP（内部封闭测试）：关闭时不挂路由，/mcp 与令牌接口均 404 ----
+    if access and settings.mcp_enabled:
+        app.include_router(build_mcp_router(access, gate, settings, McpPages(
+            bind=bind, series_ok=series_ok, overview=load_overview, participation=load_participation,
+            industries=load_industries, industry_series=load_industry_series, themes=load_themes,
+            history=load_history, calendar=load_calendar)))
 
     return app
 

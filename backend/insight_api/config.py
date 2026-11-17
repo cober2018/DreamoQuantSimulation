@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -10,6 +11,7 @@ from pathlib import Path
 from .tier_routing import account_keys
 
 PAGES = frozenset({"overview", "participation", "industries", "themes", "history", "calendar"})
+_USERNAME_RE = re.compile(r"^[a-z0-9_.@-]{3,32}$")
 FIXTURE_DIR = Path(__file__).resolve().parent.parent / "fixtures"
 
 
@@ -49,6 +51,9 @@ class Settings:
     # 全站试用：截止日（北京时间当天结束）之前，非管理员用户的生效等级至少为 trial_role；不写库
     trial_role: str = ""
     trial_until: float = 0.0
+    # MCP 内部封闭测试：=1 才挂 /mcp 与令牌接口；名单外只有管理员可用
+    mcp_enabled: bool = False
+    mcp_users: frozenset = frozenset()
 
 
 _CN = timezone(timedelta(hours=8))
@@ -92,6 +97,8 @@ def load_settings() -> Settings:
         payment_enabled=os.getenv("INSIGHT_PAYMENT_ENABLED", "") == "1",
         trial_role=os.getenv("INSIGHT_TRIAL_ROLE", "").strip().lower(),
         trial_until=_trial_until(os.getenv("INSIGHT_TRIAL_UNTIL", "").strip()),
+        mcp_enabled=os.getenv("INSIGHT_MCP_ENABLED", "") == "1",
+        mcp_users=frozenset(x.strip().lower() for x in os.getenv("INSIGHT_MCP_USERS", "").split(",") if x.strip()),
     )
     if bool(settings.trial_role) != bool(settings.trial_until):
         raise ConfigError("INSIGHT_TRIAL_ROLE 与 INSIGHT_TRIAL_UNTIL 必须同时设置或同时不设")
@@ -116,6 +123,11 @@ def load_settings() -> Settings:
     unknown_pages = settings.public_pages - PAGES
     if unknown_pages:
         raise ConfigError(f"INSIGHT_PUBLIC_PAGES 含未知页面: {', '.join(sorted(unknown_pages))}")
+    if settings.mcp_enabled and settings.auth_mode != "required":
+        raise ConfigError("INSIGHT_MCP_ENABLED 需要 INSIGHT_AUTH_MODE=required（令牌要落到具体用户）")
+    bad_users = sorted(u for u in settings.mcp_users if not _USERNAME_RE.match(u))
+    if bad_users:
+        raise ConfigError(f"INSIGHT_MCP_USERS 含非法用户名: {', '.join(bad_users)}")
     if settings.data_mode == "live" and not settings.upstream_api_key:
         raise ConfigError("live 模式必须配置 INSIGHT_UPSTREAM_API_KEY")
     return settings

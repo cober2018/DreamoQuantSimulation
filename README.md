@@ -28,6 +28,17 @@ openspec/                规格与变更
 
 与旧平台**零代码引用**：唯一依赖是数据中台的 HTTP 接口 `GET /api/v1/data/apis/{service_key}/records`。
 
+## 2026-11-18 MCP 只读服务（ZS-108，内部封闭测试，本地完成、未部署）
+
+- 入口 `POST /mcp`（MCP streamable HTTP，无状态，直接回 JSON；GET/DELETE 405）。方法：initialize / notifications/initialized / ping / tools/list / tools/call。手写实现（`insight_api/mcp.py`），不引入 mcp SDK。
+- 开关：`INSIGHT_MCP_ENABLED=1` + `INSIGHT_MCP_USERS=<逗号分隔用户名>`（管理员总是可用）；关闭时 `/mcp` 与令牌接口 404，账号页不显示。门禁 A 无结论前不对外。
+- 鉴权：账号页生成个人令牌 `zsmcp_…`，库里只存 sha256，界面只显示前 12 位；可设有效期、可吊销，每人最多 3 把有效；改密/重置/停用后自动失效。接口 `/api/v1/account/mcp-tokens`（签名网页会话）。
+- 等级与口径：令牌 → 用户 → `principal_for`（含试用、会员到期）→ 页面权限点 → `main.py` 里与网页路由共用的页面装载函数（同一裁剪、历史范围、TierRouter；上下文 client=mcp，上游带 `X-Client-Entry: mcp`）。
+- 工具 9 个：list_datasets、describe_dataset、get_market_overview、get_participation、get_industries、get_industry_series、get_themes、get_history、get_calendar。只读，无分析/建议类工具；返回带数据日、来源说明、免责声明。
+- 限流（每把令牌，只计 tools/call；`mcp.RATE_LIMITS`）：free 10/分钟、200/24 小时；vip 30/1000；svip、admin 60/3000。进程内计数，重启清零。
+- 审计：每次 tools/call 写 `mcp_call_log`（用户、令牌前缀、等级、工具、参数哈希、结果、耗时），`request_id` 与 `upstream_route_log` 关联；保留 180 天。
+- nginx 已加 `location = /mcp`（`deploy/dk/nginx/dk.dreamotech.cn.conf`）。
+
 ## 2026-11-17 dk.dreamotech.cn 上线准备（DK-001，本地完成、未部署）
 
 - 部署配置与 runbook：`deploy/dk/`（systemd 单实例网关、nginx 独立 server 块、SQLite 每日备份、30 天日志轮转、环境变量清单）；`backend/requirements.lock` 固定依赖版本。
