@@ -172,6 +172,18 @@ def rpc_error(msg_id, code: int, message: str, data: Optional[Dict[str, Any]] = 
     return {"jsonrpc": "2.0", "id": msg_id, "error": err}
 
 
+# 中台服务名属于内部信息：MCP 返回里一律去掉（审计日志 upstream_route_log 仍记录），追溯靠数据日期与口径说明
+INTERNAL_KEYS = frozenset({"service_key"})
+
+
+def strip_internal(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: strip_internal(v) for k, v in value.items() if k not in INTERNAL_KEYS}
+    if isinstance(value, list):
+        return [strip_internal(v) for v in value]
+    return value
+
+
 def text_result(payload: Dict[str, Any], is_error: bool = False) -> Dict[str, Any]:
     text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"), default=str)
     return {"content": [{"type": "text", "text": text}], "isError": is_error}
@@ -330,7 +342,7 @@ def build_mcp_router(access: AccessService, gate: Gate, settings, pages: McpPage
                 pages.bind(p, args.get(tool.date_arg))
                 out = await tool.load(pages, request.app.state.upstream, p, args)
                 payload = {"dataset": tool.page, "data_date": out.get("trade_date"), "status": out.get("status"),
-                           "source_note": SOURCE_NOTE, "disclaimer": DISCLAIMER, "result": out}
+                           "source_note": SOURCE_NOTE, "disclaimer": DISCLAIMER, "result": strip_internal(out)}
         except HTTPException as e:
             log("denied")
             return rpc_result(msg_id, text_result({"error": e.detail, "disclaimer": DISCLAIMER}, True))
