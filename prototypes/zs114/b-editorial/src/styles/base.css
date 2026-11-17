@@ -1,0 +1,84 @@
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 var(--fs-md)/var(--lh-body) var(--font-sans);
+  font-feature-settings: 'palt' 0;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--dur-3) var(--ease), color var(--dur-3) var(--ease);
+}
+h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 600; line-height: var(--lh-tight); margin: 0; letter-spacing: .01em; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+img, svg { display: block; }
+
+.num { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: 'tnum' 1, 'lnum' 1; }
+.serif { font-family: var(--font-serif); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-1); }
+
+/* 下划线描画：链接默认一条细线，悬停时墨蓝线从左向右画出 */
+.ink-link {
+  color: inherit;
+  text-decoration: none;
+  background-image: linear-gradient(var(--accent), var(--accent)), linear-gradient(var(--rule), var(--rule));
+  background-size: 0% 1px, 100% 1px;
+  background-position: 0 100%, 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size var(--dur-3) var(--ease), color var(--dur-1) var(--ease);
+  padding-bottom: 1px;
+}
+.ink-link:hover, .ink-link:focus-visible { background-size: 100% 1px, 100% 1px; color: var(--accent); }
+
+/* 小标签：统计 / 类型 / 示例 */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 20px; padding: 0 6px;
+  font: 500 var(--fs-2xs)/1 var(--font-sans);
+  letter-spacing: .04em;
+  border: 1px solid currentColor;
+  border-radius: var(--r-1);
+  white-space: nowrap;
+}
+.tag.solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.tag.accent { color: var(--accent); }
+.tag.muted { color: var(--ink-3); }
+.tag.ai { color: var(--accent); border-style: dashed; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 var(--sp-4);
+  border: 1px solid var(--rule-strong); border-radius: var(--r-1);
+  background: transparent; color: var(--ink);
+  font: 500 var(--fs-md)/1 var(--font-sans); text-decoration: none; cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+}
+.btn:hover { background: var(--paper-3); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.sm { height: 32px; padding: 0 var(--sp-3); font-size: var(--fs-sm); }
+
+.eyebrow { font: 600 var(--fs-xs)/1.2 var(--font-sans); letter-spacing: .16em; color: var(--ink-3); }
+.rule-double { border: 0; height: 4px; border-top: 2px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); margin: 0; }
+.rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+/* 进场：轻微上浮 + 淡入，按 --i 交错；减少动效时直接显示 */
+.reveal { animation: reveal var(--dur-3) var(--ease) both; animation-delay: calc(var(--i, 0) * 50ms); }
+@keyframes reveal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.draw { transform-origin: left center; animation: draw var(--dur-draw) var(--ease) both; animation-delay: calc(var(--i, 0) * 60ms + 120ms); }
+@keyframes draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* 首屏大字只做位移不做淡入：opacity 从 0 起会推迟 LCP */
+.rise { animation: rise var(--dur-3) var(--ease) both; animation-delay: calc(var(--i, 0) * 50ms); }
+@keyframes rise { from { transform: translateY(10px); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .draw, .rise { animation: none; }
+  * { scroll-behavior: auto !important; }
+}
+
+.up { color: var(--up); }
+.down { color: var(--down); }

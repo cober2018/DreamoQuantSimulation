@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>知数星耀 · A 股盘后数据与每日事实要点</title>
+    <meta name="description" content="知数星耀：A 股盘后数据。每天按固定规则整理偏离常态的市场统计事实，每条标明数据日期与口径，可追溯核对。只提供数据，不构成投资建议。" />
+    <meta name="theme-color" content="#f7f4ee" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>
+      // 首帧前定主题，避免暗色用户看到亮色闪一下
+      (function () {
+        var q = new URLSearchParams(location.search).get('theme')
+        var t = q || localStorage.getItem('zs-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        document.documentElement.dataset.theme = t
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,81 @@
+@font-face {
+  font-family: "ZX Serif";
+  src: url("/fonts/zx-serif.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+h1, h2, h3, h4, p, ol, ul, dl, dd, figure { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+img, svg, canvas { display: block; }
+
+.display { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.01em; }
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+:focus-visible { outline: 2px solid var(--c-focus); outline-offset: 2px; border-radius: var(--r-1); }
+
+.skip-link {
+  position: absolute; left: var(--s-4); top: -48px; z-index: 100;
+  padding: var(--s-2) var(--s-4); background: var(--c-accent); color: var(--c-on-accent);
+  border-radius: var(--r-2); font-weight: 600; transition: top var(--dur-2) var(--ease-out);
+}
+.skip-link:focus { top: var(--s-3); }
+
+/* 按钮：主按钮是全站唯一的金色实底 */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  height: 40px; padding: 0 var(--s-5); border-radius: var(--r-2);
+  border: 1px solid var(--c-line-strong); color: var(--c-ink); font-weight: 500;
+  transition: background-color var(--dur-2) var(--ease-std), border-color var(--dur-2) var(--ease-std), color var(--dur-2) var(--ease-std), transform var(--dur-1) var(--ease-std);
+}
+.btn:hover { background: var(--c-surface-hover); border-color: var(--c-ink-3); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.primary { background: var(--c-accent); border-color: var(--c-accent); color: var(--c-on-accent); font-weight: 600; }
+.btn.primary:hover { background: var(--c-accent-ink); border-color: var(--c-accent-ink); }
+.btn.sm { height: 32px; padding: 0 var(--s-3); font-size: var(--fs-sm); }
+.btn.ghost { border-color: transparent; }
+.btn.ghost:hover { border-color: var(--c-line); }
+
+/* 统一徽标：统计 / AI 整理 / 示例 */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 var(--s-2);
+  border-radius: var(--r-pill); font-size: var(--fs-2xs); font-weight: 500; line-height: 1;
+  border: 1px solid var(--c-line-strong); color: var(--c-ink-2); white-space: nowrap;
+}
+.badge.stat::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--c-ink-3); }
+.badge.ai { border-color: var(--c-accent); color: var(--c-accent-ink); background: var(--c-accent-soft); }
+.badge.sample { border-style: dashed; color: var(--c-ink-3); }
+
+.up { color: var(--c-up); }
+.down { color: var(--c-down); }
+
+/* 网格底纹：数据线与网格的品牌语言，径向遮罩让它只在中部若隐若现 */
+.grid-bg {
+  background-image:
+    linear-gradient(var(--c-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c-grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 250ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

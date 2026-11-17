@@ -1,0 +1,6 @@
+const sign = (v) => (v > 0 ? '+' : v < 0 ? '−' : '')
+export const pct = (v, d = 2) => (v == null ? '—' : sign(v) + Math.abs(v * 100).toFixed(d) + '%')
+export const ratio = (v) => (v == null ? '—' : Math.round(v * 100) + '%')
+export const signed = (v, d = 1) => (v == null ? '—' : sign(v) + Math.abs(v).toFixed(d))
+export const fixed = (v, d = 1) => (v == null ? '—' : v.toLocaleString('zh-CN', { minimumFractionDigits: d, maximumFractionDigits: d }))
+export const tone = (v) => (v > 0 ? 'up' : v < 0 ? 'down' : '')
