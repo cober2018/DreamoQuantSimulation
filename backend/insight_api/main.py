@@ -135,6 +135,11 @@ def create_app() -> FastAPI:
         return {"status": "ok", "data_mode": settings.data_mode,
                 "route_rule": {"active_version": version, "ok": version is not None}}
 
+    @app.get("/api/v1/meta/trial")
+    async def trial():
+        # 介绍页未登录可读；只给截止时间，不含其他配置
+        return {"until": access.trial_until if access and access.trial_active() else None}
+
     @app.get("/api/v1/meta/content-scope")
     async def content_scope():
         return {"items": CONTENT_SCOPE, "disclaimer": DISCLAIMER}

@@ -8,7 +8,7 @@ import { moduleAccess } from './useModule'
 
 const PAGE_META = Object.fromEntries(PAGES.map((p) => [p.path, { title: p.title, page: p }]))
 const routes = [
-  { path: '/', redirect: '/overview' },
+  { path: '/', component: () => import('./pages/Landing.vue'), meta: { title: '知数星耀', public: true, bare: true } },
   { path: '/overview', component: () => import('./pages/Overview.vue') },
   { path: '/participation', component: () => import('./pages/Participation.vue') },
   { path: '/industries', component: () => import('./pages/Industries.vue') },
@@ -29,6 +29,8 @@ for (const r of routes) if (PAGE_META[r.path]) r.meta = PAGE_META[r.path]
 export const router = createRouter({ history: createWebHistory(), routes })
 router.beforeEach(async (to) => {
   if (!session.ready) await restore()
+  // 介绍页只给未登录访客；已登录直接进平台，旧的根域名书签行为不变
+  if (to.path === '/' && session.user) return '/overview'
   if (to.meta.public) return true
   if (!session.user) return { path: '/login', query: { next: to.fullPath } }
   if (session.user.must_change_password && to.path !== '/account') return '/account'

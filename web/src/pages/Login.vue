@@ -34,7 +34,7 @@ import { login, register } from '../auth'
 
 const router = useRouter()
 const route = useRoute()
-const mode = ref('login')
+const mode = ref(route.query.mode === 'register' ? 'register' : 'login')
 const username = ref('')
 const password = ref('')
 const invite = ref('')
