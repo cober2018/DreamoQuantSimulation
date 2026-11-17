@@ -4,7 +4,7 @@
     <view class="card" v-if="!session.user">
       <view class="card-title">登录</view>
       <view class="card-sub">使用微信登录；首次登录需同意用户协议与隐私政策。</view>
-      <view class="muted" style="font-size:24rpx">本平台提供市场数据与历史统计，仅供研究和学习参考，不构成任何投资建议、证券推荐或交易指令。数据可能存在延迟、缺失或误差，请以交易所及上市公司的官方披露为准。投资有风险，决策请独立判断。会员可通过邀请码或联系客服线下开通。</view>
+      <view class="muted" style="font-size:24rpx">本平台提供市场数据与历史统计，仅供研究和学习参考，不构成任何投资建议、证券推荐或交易指令。数据可能存在延迟、缺失或误差，请以交易所及上市公司的官方披露为准。投资有风险，决策请独立判断。<text v-if="payOn()">会员可通过邀请码或联系客服线下开通。</text></view>
       <label style="display:flex;align-items:center;margin-top:16rpx" @click="terms = !terms">
         <checkbox :checked="terms" /> <text style="font-size:24rpx">我已阅读并同意用户协议与隐私政策</text>
       </label>
@@ -16,11 +16,12 @@
       <view class="card">
         <view class="card-title">{{ session.user.username }}</view>
         <view class="card-sub">当前等级：{{ session.user.role_label }}
+          <text v-if="trialText()"> · {{ trialText() }}</text>
           <text v-if="session.user.member_expires_at"> · 到期 {{ date(session.user.member_expires_at) }}（剩 {{ leftDays }} 天）</text></view>
         <view class="card-sub">可查看历史 {{ session.user.history_days }} 个交易日</view>
       </view>
-      <view v-if="leftDays !== null && leftDays <= 7" class="note">会员将于 {{ leftDays }} 天后到期，续期方式见下方会员套餐。</view>
-      <view class="card">
+      <view v-if="leftDays !== null && leftDays <= 7" class="note">会员将于 {{ leftDays }} 天后到期<text v-if="payOn()">，续期方式见下方会员套餐</text>。</view>
+      <view v-if="payOn()" class="card">
         <view class="card-title">会员套餐</view>
         <view v-if="!plans.length" class="card-sub">暂未开放购买，如需开通请联系管理员。</view>
         <view class="row" v-for="p in plans" :key="p.id">
@@ -29,7 +30,7 @@
         <view class="card-sub" style="white-space:pre-wrap;margin-top:12rpx">{{ contact || '请联系管理员开通。' }}</view>
         <view class="muted" style="font-size:22rpx;margin-top:8rpx">付款后由管理员为您的账号（{{ session.user.username }}）开通，同等级续期从原到期日顺延。</view>
       </view>
-      <view class="card">
+      <view v-if="payOn()" class="card">
         <view class="card-title">邀请码兑换</view>
         <input class="input" v-model="code" placeholder="XXXX-XXXX-XXXX" />
         <view class="btn" @click="redeem">兑换</view>
@@ -52,7 +53,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { session, wechatLogin, signedRequest, logout } from '../../utils/auth'
+import { payOn, session, trialText, wechatLogin, signedRequest, logout } from '../../utils/auth'
 import { DISCLAIMER } from '../../utils/config'
 import MorePages from '../../utils/MorePages.vue'
 
@@ -71,6 +72,7 @@ async function loadPlans() {
   // 管理员开通后无需重新登录: 进入"我的"即刷新等级与到期时间
   const me = await signedRequest('GET', '/api/v1/auth/me')
   if (me.ok) session.user = me.data
+  if (!session.user?.payment_enabled) return
   const r = await signedRequest('GET', '/api/v1/plans')
   if (r.ok) { plans.value = r.data.items; contact.value = r.data.contact_text }
 }

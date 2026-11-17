@@ -9,7 +9,8 @@
       <h2>开通后可查看</h2>
       <ul class="metrics"><li v-for="m in page?.metrics || []" :key="m">{{ m }}</li></ul>
       <p class="muted">当前等级：{{ session.user?.role_label }}。该页面需要 {{ need }} 及以上等级。</p>
-      <router-link class="btn primary" to="/plans">查看会员套餐</router-link>
+      <router-link v-if="payOn()" class="btn primary" to="/plans">查看会员套餐</router-link>
+      <p v-else class="muted">会员购买暂未开放。</p>
     </div>
     <footer class="footer">本平台提供市场数据与历史统计，仅供研究和学习参考，不构成任何投资建议、证券推荐或交易指令。数据可能存在延迟、缺失或误差，请以交易所及上市公司的官方披露为准。投资有风险，决策请独立判断。</footer>
   </section>
@@ -18,7 +19,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { session } from '../auth'
+import { payOn, session } from '../auth'
 import { pageByKey } from '../pageCatalog'
 
 const route = useRoute()

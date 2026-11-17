@@ -15,7 +15,8 @@
     <div v-if="loading" class="empty-state">加载中…</div>
     <div v-else-if="isError" class="banner error">
       <span>{{ errorText }}</span>
-      <router-link v-if="env.status === 'forbidden'" class="btn" to="/plans">查看会员套餐</router-link>
+      <router-link v-if="env.status === 'forbidden' && payOn()" class="btn" to="/plans">查看会员套餐</router-link>
+      <span v-else-if="env.status === 'forbidden'" class="muted">会员购买暂未开放</span>
       <router-link v-else-if="env.status === 'unauthorized'" class="btn" to="/login">重新登录</router-link>
       <button v-else class="btn" @click="$emit('retry')">重试</button>
     </div>
@@ -27,7 +28,7 @@
     </div>
     <template v-else>
       <div v-if="env.status === 'partial' && gapItems.length" class="banner fixture">部分内容暂缺：{{ gapItems.join('、') }}。其余内容正常展示。</div>
-      <div v-if="lockedMods.length" class="banner info">以下内容需要更高等级或未在当前等级开放：{{ lockedMods.join('、') }}。<router-link to="/plans">查看会员套餐</router-link></div>
+      <div v-if="lockedMods.length" class="banner info">以下内容需要更高等级或未在当前等级开放：{{ lockedMods.join('、') }}。<router-link v-if="payOn()" to="/plans">查看会员套餐</router-link></div>
       <slot />
     </template>
 
@@ -61,6 +62,7 @@
 <script setup>
 import { computed } from 'vue'
 import { fmt, SERVICE_NAMES } from '../api'
+import { payOn } from '../auth'
 
 const DISCLAIMER = '本平台提供市场数据与历史统计，仅供研究和学习参考，不构成任何投资建议、证券推荐或交易指令。数据可能存在延迟、缺失或误差，请以交易所及上市公司的官方披露为准。投资有风险，决策请独立判断。'
 const props = defineProps({

@@ -18,7 +18,7 @@
     </view>
     <view class="card" v-if="themes.length">
       <view class="card-title">封板时间分布</view>
-      <view v-if="locked" class="card-sub">封板时间分布属于下钻明细，需要 {{ needDetail }}。可到“我的”查看会员套餐。</view>
+      <view v-if="locked" class="card-sub">封板时间分布属于下钻明细，需要 {{ needDetail }}。<text v-if="payOn()">可到“我的”查看会员套餐。</text></view>
       <template v-else>
         <view class="card-sub">当日涨停样本 {{ env.data.limit_up_sample_size }} 只 · 按首次封板时间计数</view>
         <view v-for="t in themes" :key="'s' + t.industry" class="seal">
@@ -39,7 +39,7 @@ import StateView from '../../utils/StateView.vue'
 import { useData } from '../../utils/useData'
 import { ratio, vis } from '../../utils/fmt'
 import { DISCLAIMER } from '../../utils/config'
-import { session } from '../../utils/auth'
+import { payOn, session } from '../../utils/auth'
 
 const { env, state, detail, load } = useData('/api/v1/themes')
 const st = computed(() => env.value?.data?.structure || null)

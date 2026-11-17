@@ -1,6 +1,6 @@
 <template>
   <view>
-    <view v-if="expireDays !== null" class="note">{{ session.user.role_label }} 将于 {{ expireDays }} 天后到期，续期请到“我的”查看会员套餐。</view>
+    <view v-if="expireDays !== null" class="note">{{ session.user.role_label }} 将于 {{ expireDays }} 天后到期<text v-if="payOn()">，续期请到“我的”查看会员套餐</text>。</view>
     <view v-if="state === 'loading'" class="state">加载中…</view>
     <view v-else-if="state === 'login'" class="state">
       <view>请先登录后查看数据</view>
@@ -10,7 +10,8 @@
       <view class="card-title">{{ preview ? `开通 ${need} 后可查看` : '暂无权限' }}</view>
       <view class="card-sub">{{ detail || '当前等级无法查看该内容' }}</view>
       <view v-for="m in preview || []" :key="m" class="row"><text>· {{ m }}</text></view>
-      <view class="btn" @click="goMine">查看会员套餐</view>
+      <view v-if="payOn()" class="btn" @click="goMine">查看会员套餐</view>
+      <view v-else class="card-sub">会员购买暂未开放</view>
     </view>
     <view v-else-if="state === 'busy'" class="state">
       <view>请求过于频繁，请稍后再试</view>
@@ -26,7 +27,7 @@
     </view>
     <template v-else>
       <view v-if="gapItems.length" class="note">部分内容暂缺：{{ gapItems.join('、') }}。其余内容正常展示。</view>
-      <view v-if="lockedMods.length" class="note">以下内容需要更高等级或未在当前等级开放：{{ lockedMods.join('、') }}。可到“我的”查看会员套餐。</view>
+      <view v-if="lockedMods.length" class="note">以下内容需要更高等级或未在当前等级开放：{{ lockedMods.join('、') }}。<text v-if="payOn()">可到“我的”查看会员套餐。</text></view>
       <slot />
     </template>
   </view>
@@ -34,7 +35,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { session } from './auth'
+import { payOn, session } from './auth'
 
 // 预告只列指标名称, 不含数值; 真正的权限边界在服务端
 const PREVIEW = {

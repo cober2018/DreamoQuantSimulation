@@ -8,14 +8,15 @@
       </router-link>
       <router-link to="/about">数据与内容说明</router-link>
       <div class="side-foot">
-        <router-link to="/plans">会员套餐</router-link>
+        <div v-if="trialText()" class="trial-badge">{{ trialText() }}</div>
+        <router-link v-if="payOn()" to="/plans">会员套餐</router-link>
         <router-link to="/account">我的账号 · {{ session.user?.role_label }}</router-link>
         <router-link v-if="can('admin.console')" to="/admin">管理后台</router-link>
       </div>
     </nav>
     <main class="main">
       <div v-if="expireDays !== null" class="banner fixture expiry">
-        {{ session.user.role_label }} 将于 {{ expireDays }} 天后到期（{{ expireDate }}），续期请查看<router-link to="/plans">会员套餐</router-link>。
+        {{ session.user.role_label }} 将于 {{ expireDays }} 天后到期（{{ expireDate }}）。<template v-if="payOn()">续期请查看<router-link to="/plans">会员套餐</router-link>。</template>
       </div>
       <router-view />
     </main>
@@ -27,7 +28,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Watermark from './components/Watermark.vue'
-import { can, session } from './auth'
+import { can, payOn, session, trialText } from './auth'
 import { PAGES } from './pageCatalog'
 
 const route = useRoute()

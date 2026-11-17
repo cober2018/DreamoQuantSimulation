@@ -64,7 +64,7 @@
         </table>
       </div>
       <p v-else class="muted">当日没有进入题材榜的行业。</p>
-      <div v-if="env.data?.detail_locked" class="lock-card" style="margin-top:12px">封板时间分布属于下钻明细，需要 {{ session.user?.perm_min_role?.['data.detail'] || '更高等级' }}。<router-link to="/plans">查看会员套餐</router-link></div>
+      <div v-if="env.data?.detail_locked" class="lock-card" style="margin-top:12px">封板时间分布属于下钻明细，需要 {{ session.user?.perm_min_role?.['data.detail'] || '更高等级' }}。<router-link v-if="payOn()" to="/plans">查看会员套餐</router-link></div>
       <p class="note">封板时间为首次封板所在时间段的涨停只数；不展示个股名单、强度分与阶段判断。</p>
     </div>
   </PageFrame>
@@ -77,7 +77,7 @@ import EChart from '../components/EChart.vue'
 import { fmt } from '../api'
 import { useModule } from '../useModule'
 import DateTag from '../components/DateTag.vue'
-import { session } from '../auth'
+import { payOn, session } from '../auth'
 
 const tradeDate = ref('')
 const { env, loading, load } = useModule('themes', () => ({ trade_date: tradeDate.value }))

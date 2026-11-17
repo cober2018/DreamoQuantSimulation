@@ -32,6 +32,7 @@ router.beforeEach(async (to) => {
   if (to.meta.public) return true
   if (!session.user) return { path: '/login', query: { next: to.fullPath } }
   if (session.user.must_change_password && to.path !== '/account') return '/account'
+  if (to.path === '/plans' && !session.user.payment_enabled) return '/overview'
   if (to.meta.perm && !can(to.meta.perm)) return '/overview'
   // 无权限的数据页改走预告页, 预告不请求数据接口
   if (to.meta.page && !can(to.meta.page.perm)) return `/locked/${to.meta.page.key}`

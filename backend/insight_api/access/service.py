@@ -45,8 +45,12 @@ class Principal:
 
 
 class AccessService:
-    def __init__(self, store: Store, jwt_secrets: List[str], *, registration: str = "open"):
+    def __init__(self, store: Store, jwt_secrets: List[str], *, registration: str = "open",
+                 payment_enabled: bool = False, trial_role: str = "", trial_until: float = 0.0):
         self.store = store
+        self.payment_enabled = payment_enabled
+        self.trial_role = trial_role
+        self.trial_until = trial_until
         self._secrets = jwt_secrets
         self.registration = registration  # open | invite_only
         self._perm_cache: Dict[str, tuple] = {}
@@ -80,7 +84,18 @@ class AccessService:
         from .policy import allowed_indicators
         return allowed_indicators(roles[role]) if role in roles else set()
 
+    def trial_active(self) -> bool:
+        return bool(self.trial_role) and time.time() < self.trial_until
+
     def effective_role(self, user) -> str:
+        role = self.actual_role(user)
+        # 试用只抬高、不降低：已有更高等级的用户保持原等级
+        if role != "admin" and self.trial_active() and self._rank(self.trial_role) > self._rank(role):
+            return self.trial_role
+        return role
+
+    def actual_role(self, user) -> str:
+        """不含试用的真实等级；会员开通的升降级判断只看它。"""
         if user["base_role"] == "admin":
             return "admin"
         if user["member_role"] and user["member_expires_at"] and user["member_expires_at"] > time.time():
@@ -229,6 +244,9 @@ class AccessService:
             "permissions": sorted(p.perms), "history_days": p.history_days,
             "member_expires_at": p.member_expires_at, "must_change_password": p.must_change_password,
             "client": p.client, "perm_min_role": self.perm_min_role(),
+            "payment_enabled": self.payment_enabled,
+            "trial": {"role": self.trial_role, "role_label": self.role_label(self.trial_role), "until": self.trial_until}
+            if self.trial_active() else None,
         }
 
     def role_label(self, role: str) -> str:
@@ -319,7 +337,7 @@ class AccessService:
         start = user["member_expires_at"] if active and user["member_role"] == role else now
         expires = start + days * 86400
         new_role = role
-        cur_role = self.effective_role(user)
+        cur_role = self.actual_role(user)
         if cur_role != "free" and self._rank(cur_role) > self._rank(role):
             # 后台开通拒绝降级, 避免误缩短用户已付费时长
             if lower == "reject":
