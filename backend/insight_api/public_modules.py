@@ -43,6 +43,9 @@ OPEN5_PUBLIC = {**OPEN5_FIELDS, "over_response_ratio": "over_response_ratio"}
 CALENDAR_PUBLIC = {**CALENDAR_FIELDS, "event_id": "event_ref", "previous_value": "previous_value",
                    "actual_value": "actual_value", "consensus_value": "consensus_value",
                    "consensus_source": "consensus_source"}
+# ZS-104：AI 周报整理的事件由投研平台在合同里打标识；字段名待投研平台确定后填入。
+# 为空时不向上游请求该字段（避免上游拒绝未知字段），对外 ai_curated 恒为 None，页面不显示标签
+CALENDAR_AI_FIELD = ""
 # short-feedback 以百分数给出（如 seal_rate_pct=38.78），本平台沿用比例口径（0.3878）；待投研平台确认是否改给原始值
 SHORT_MAP = {"seal_rate": ("seal_rate_pct", 0.01), "consecutive_board_count": ("consecutive_count", 1),
              "max_consecutive_days": ("maximum_boards", 1), "first_board_premium": ("first_board_return_pct", 1),
@@ -72,7 +75,7 @@ REQUEST_FIELDS = {
             "above_ma20_ratio", "new_high_20d_ratio", "di", "market_amount_share", "amount_ratio_ma20", "rs_ratio",
             "rs_momentum", "net_flow_1d", "net_flow_5d", "net_flow_20d", "coverage_ratio", "is_fallback"],
     SERIES: ["trade_date", *SERIES_FIELDS, "coverage_ratio"],
-    CALENDAR: list(dict.fromkeys(CALENDAR_PUBLIC.values())),
+    CALENDAR: list(dict.fromkeys([*CALENDAR_PUBLIC.values(), *([CALENDAR_AI_FIELD] if CALENDAR_AI_FIELD else [])])),
     THEMES: ["theme", "up_count", "broken_count", "highest_tier", "avg_pct"],
     LADDER: ["tier", "count"],
     SEAL: ["theme", "bucket", "count"],
@@ -113,6 +116,26 @@ async def _get(up: Upstream, target, trade_date: Optional[str], **params) -> Fet
 
 def _rename(row: Dict[str, Any], fields: List[str], rename: Dict[str, str]) -> Dict[str, Any]:
     return pick(row, {f: rename.get(f, f) for f in fields})
+
+
+def _series_values(series: Any) -> Optional[List[Any]]:
+    """事实视图的序列是 [{sequence, value}]，本平台对外沿用 review-* 的数字数组（按 sequence 升序）。"""
+    if not isinstance(series, list):
+        return series
+    if not any(isinstance(p, dict) for p in series):
+        return series
+    points = sorted((p for p in series if isinstance(p, dict)), key=lambda p: to_int(p.get("sequence")) or 0)
+    return [clean(to_float(p.get("value"))) for p in points]
+
+
+def _ai_flag(row: Dict[str, Any]) -> Optional[bool]:
+    """只认明确的真值；字段缺失或上游旧版本返回 None，页面不显示标签。"""
+    if not CALENDAR_AI_FIELD or CALENDAR_AI_FIELD not in row:
+        return None
+    v = row.get(CALENDAR_AI_FIELD)
+    if isinstance(v, str):
+        return v.strip().lower() in ("true", "1", "yes", "ai")
+    return bool(v) if isinstance(v, (bool, int)) else False
 
 
 # ---------------- 总览 ----------------
@@ -222,7 +245,7 @@ async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, An
     try:
         sty = await _get(up, STYLE, td)
         camps = [_rename(c, STYLE_CAMP_FIELDS, STYLE_RENAME) for c in sty.rows if isinstance(c, dict)]
-        camps = [c for c in camps if c.get("available")]
+        camps = [{**c, "strength_series": _series_values(c.get("strength_series"))} for c in camps if c.get("available")]
         blocks["style_strength"] = {"camps": camps, "definition": "强度分为阵营指数相对强度的历史评分（0–100）；序列为近 20 个交易日"} if camps else None
     except UpstreamError:
         blocks["style_strength"] = None
@@ -483,7 +506,7 @@ async def calendar(up: Upstream, trade_date: Optional[str], days: int = 14) -> D
     if not res.rows and not td:
         return envelope("calendar", ids, up.data_mode, status="empty", trade_date=trade_date,
                         latest_available_date=_latest(res))
-    events = [pick(e, CALENDAR_PUBLIC) for e in res.rows if isinstance(e, dict)]
+    events = [{**pick(e, CALENDAR_PUBLIC), "ai_curated": _ai_flag(e)} for e in res.rows if isinstance(e, dict)]
     events.sort(key=lambda e: (str(e.get("event_date") or ""), str(e.get("event_time") or "")))
     data = {
         "window": {"start_date": c.get("window_start"), "end_date": c.get("window_end"),
@@ -492,6 +515,7 @@ async def calendar(up: Upstream, trade_date: Optional[str], days: int = 14) -> D
         "view_days": days,
         "events": events,
         "consensus_label": "第三方发布的市场预期，非本平台预测",
+        "ai_curated_label": "标有「AI 整理」的事件由模型从公开资讯中整理，可能有遗漏或错误，请以官方发布为准",
     }
     status = status_from([], res.issues)
     if status == "ok" and not events:

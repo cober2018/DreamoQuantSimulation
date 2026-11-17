@@ -24,7 +24,7 @@
     </div>
 
     <div class="panel" v-module="'open5'" v-if="open5">
-      <h2>开盘 5 分钟统计（Open5）<small>全市场</small><DateTag :date="open5.trade_date" :page-date="env.trade_date" /></h2>
+      <h2>开盘五分钟统计<small>全市场</small><DateTag :date="open5.trade_date" :page-date="env.trade_date" /></h2>
       <div class="grid">
         <div class="stat" v-ind="'history.open5.coverage_ratio'"><div class="label">覆盖率</div><div class="value">{{ fmt.ratio(open5.coverage_ratio) }}</div>
           <div class="sub">{{ fmt.num(open5.open5_ready_count, 0) }} / {{ fmt.num(open5.expected_stock_count, 0) }}</div></div>
