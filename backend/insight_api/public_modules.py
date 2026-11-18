@@ -43,9 +43,9 @@ OPEN5_PUBLIC = {**OPEN5_FIELDS, "over_response_ratio": "over_response_ratio"}
 CALENDAR_PUBLIC = {**CALENDAR_FIELDS, "event_id": "event_ref", "previous_value": "previous_value",
                    "actual_value": "actual_value", "consensus_value": "consensus_value",
                    "consensus_source": "consensus_source"}
-# ZS-104：AI 周报整理的事件由投研平台在合同里打标识；字段名待投研平台确定后填入。
-# 为空时不向上游请求该字段（避免上游拒绝未知字段），对外 ai_curated 恒为 None，页面不显示标签
-CALENDAR_AI_FIELD = ""
+# ZS-104：AI 周报整理的事件由投研平台在合同里打标识（布尔，展示时须标明「AI 整理」）。
+# 上游拒绝未公开字段：必须在投研平台发布 ai_curated 之后再部署本值；置空即回到不请求、不显示
+CALENDAR_AI_FIELD = "ai_curated"
 # short-feedback 以百分数给出（如 seal_rate_pct=38.78），本平台沿用比例口径（0.3878）；待投研平台确认是否改给原始值
 SHORT_MAP = {"seal_rate": ("seal_rate_pct", 0.01), "consecutive_board_count": ("consecutive_count", 1),
              "max_consecutive_days": ("maximum_boards", 1), "first_board_premium": ("first_board_return_pct", 1),
