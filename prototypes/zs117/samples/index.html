@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>参与度与行业样张 · 知数星耀</title>
+    <meta name="description" content="知数星耀 ZS-117 精简版样张：参与度与资金环境、行业比较与轮动两页，数据为对外数据服务的只读快照，只给统计事实。" />
+    <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#080e1b" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/brand/zhishu-favicon.png" />
+    <script>
+      // 先于首帧决定主题，避免闪烁：URL ?theme= > 本地偏好 > 系统设置
+      (function () {
+        var q = new URLSearchParams(location.search).get('theme')
+        var t = q === 'light' || q === 'dark' ? q : null
+        try { t = t || localStorage.getItem('zx-theme') } catch (e) {}
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.dataset.theme = t
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
