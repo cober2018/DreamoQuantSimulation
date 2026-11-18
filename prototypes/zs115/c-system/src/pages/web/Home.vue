@@ -30,7 +30,7 @@
         <StatePanel v-else-if="state === 'error'" kind="error" title="这一天的要点没有取到" desc="数据服务暂时没有响应。这是取数问题，不代表市场没有变化；我们不会拿其他日期代替。">
           <button id="retry" class="btn sm" type="button" @click="clearPreview">重试</button>
         </StatePanel>
-        <StatePanel v-else-if="state === 'forbidden'" kind="forbidden" title="当前账号还不能查看每日要点" desc="网页版为会员服务。开通后可看全部要点和 6 个明细页；微信小程序提供免费版。">
+        <StatePanel v-else-if="state === 'forbidden'" kind="forbidden" title="当前账号还不能查看每日要点" desc="你的账号等级还不包含这部分内容。各等级能看的范围见价格与权益页。">
           <router-link class="btn sm primary" to="/pricing">查看价格与权益</router-link>
         </StatePanel>
         <StatePanel v-else-if="state === 'nodate'" kind="nodate" :title="`${date} ${weekday(date)} 没有数据`" desc="这一天不是交易日，或当天数据还没有发布。我们不会拿其他日期的数据代替。">

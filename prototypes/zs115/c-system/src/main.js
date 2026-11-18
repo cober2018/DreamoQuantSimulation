@@ -6,7 +6,7 @@ import App from './App.vue'
 import { COPY } from './config.js'
 
 const STUBS = {
-  pricing: { title: '价格与权益', desc: '网页版为会员服务；微信小程序提供免费版。档位和价格待公布，公布前这里不写任何金额。' },
+  pricing: { title: '价格与权益', desc: '知数星耀免费版与会员权益对照。档位和价格待公布，公布前这里不写任何金额。' },
   docs: { title: '文档', desc: '使用文档正在整理：开始使用、每日要点怎么读、六个明细页的口径、MCP 接入、字段口径表。' },
   blog: { title: '博客', desc: '市场数据方法论：口径怎么读、统计方法、怎样用 MCP 让大模型读数据。首批文章正在撰写。' },
   login: { title: '登录', desc: '原型阶段不接账号系统。网页版与小程序共用同一个账号。' },

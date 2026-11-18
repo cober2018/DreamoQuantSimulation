@@ -23,7 +23,7 @@
               <router-link id="hero-pricing" class="btn primary big" to="/pricing">查看价格与权益</router-link>
               <router-link id="hero-login" class="btn big" to="/login">登录</router-link>
             </div>
-            <p class="mp-note">网页版为会员服务；微信小程序提供免费版。</p>
+            <p class="mp-note">免费版与会员的区别见价格与权益页；档位和价格待公布。</p>
           </div>
         </div>
         <p ref="capEl" class="caption"><span class="cdot" aria-hidden="true"></span>{{ COPY.caption }}</p>
