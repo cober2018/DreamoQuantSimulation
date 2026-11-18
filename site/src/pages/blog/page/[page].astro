@@ -1,0 +1,23 @@
+---
+// 第 2 页起的分页；第 1 页是 /blog/
+import type { GetStaticPaths } from 'astro';
+import Base from '../../../layouts/Base.astro';
+import BlogList from '../../../components/BlogList.astro';
+import { getCollection } from 'astro:content';
+import { isVisible, byDateDesc, PAGE_SIZE } from '../../../lib/blog';
+export const getStaticPaths = (async () => {
+  const all = (await getCollection('blog', isVisible)).sort(byDateDesc);
+  const pages = Math.ceil(all.length / PAGE_SIZE);
+  return Array.from({ length: Math.max(0, pages - 1) }, (_, i) => ({
+    params: { page: String(i + 2) },
+    props: { posts: all.slice((i + 1) * PAGE_SIZE, (i + 2) * PAGE_SIZE), page: i + 2, pages },
+  }));
+}) satisfies GetStaticPaths;
+const { posts, page, pages } = Astro.props;
+---
+<Base title={`博客 · 第 ${page} 页`} description="知数星耀博客文章列表。">
+  <div class="wrap page">
+    <h1 class="page-title">博客 · 第 {page} 页</h1>
+    <BlogList posts={posts} page={page} pages={pages} />
+  </div>
+</Base>

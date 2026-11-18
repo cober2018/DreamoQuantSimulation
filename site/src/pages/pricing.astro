@@ -1,0 +1,86 @@
+---
+// 价格与权益（ZS-115 S4）。所有档位数据只来自 data/pricing.json；价格公布前不写任何数字。
+import Base from '../layouts/Base.astro';
+import P from '../data/pricing.json';
+const cell = (v: string) => (v === '—' ? { text: '—', sr: '不提供' } : v === '✓' ? { text: '✓', sr: '提供' } : { text: v, sr: '' });
+---
+<Base title="价格与权益" description="知数星耀免费版、VIP、SVIP 的权益对照。档位与价格待公布，公布前本页不写任何金额。">
+  <div class="wrap page">
+    <p class="eyebrow">免费版 · VIP · SVIP</p>
+    <h1 class="page-title display">价格与权益</h1>
+    <p class="page-lede">免费版和会员看的是同一份数据，区别在于能看多少：要点条数、明细页、历史天数和 MCP 接入。各档的范围和价格还在确定，公布前本页不写任何金额。</p>
+
+    <ul class="tiers" aria-label="档位">
+      {P.tiers.map((t) => (
+        <li class="tier" id={`tier-${t.id}`}>
+          <h2 class="tn">{t.name}</h2>
+          <p class="price">{t.id === 'free' ? '免费' : P.priceText}</p>
+          <p class="ts">{t.summary}</p>
+          <p class="ch"><span class="sr-only">可用：</span>{t.channels.map((c) => <span class="pill">{c}{c === 'MCP' && <span class="soon">即将推出</span>}</span>)}</p>
+        </li>
+      ))}
+    </ul>
+
+    <section class="cmp" aria-labelledby="cmp-h">
+      <h2 id="cmp-h" class="sec-h">权益对照</h2>
+      <p class="note">标「即将推出」的功能还没有上线。「—」表示该档不提供；「待公布」表示还没定。</p>
+      <div class="tbl" role="region" aria-label="权益对照表，可横向滚动" tabindex="0">
+        <table>
+          <caption class="sr-only">免费版、VIP、SVIP 权益对照</caption>
+          <thead><tr><th scope="col">权益</th>{P.tiers.map((t) => <th scope="col">{t.name}</th>)}</tr></thead>
+          <tbody>
+            {P.rows.map((r) => (
+              <tr>
+                <th scope="row">{r.code ? <code>{r.label}</code> : r.label}{r.soon && <span class="soon">即将推出</span>}</th>
+                {P.tiers.map((t) => {
+                  const c = cell((r.cells as Record<string, string>)[t.id]);
+                  return <td class:list={{ pend: c.text.includes(P.pending), none: c.text === '—' }}>{c.sr ? <><span aria-hidden="true">{c.text}</span><span class="sr-only">{c.sr}</span></> : c.text}</td>;
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="faq" aria-labelledby="faq-h">
+      <h2 id="faq-h" class="sec-h">常见问题</h2>
+      {P.faq.map((f) => (
+        <details>
+          <summary>{f.q}</summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+      <p class="more">更多说明见 <a href="/docs/start/account-tiers/">文档 · 账号与等级</a>。</p>
+    </section>
+  </div>
+</Base>
+<style>
+  .tiers { margin-top: var(--s-7); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); }
+  .tier { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-5); border: 1px solid var(--c-line); border-radius: var(--r-3); background: var(--c-surface); }
+  .tn { font-size: var(--fs-lg); font-weight: 600; }
+  .price { font-size: var(--fs-xl); line-height: var(--lh-tight); color: var(--c-ink); }
+  .ts { color: var(--c-ink-2); line-height: var(--lh-base); flex: 1; }
+  .ch { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .pill { display: inline-flex; align-items: center; gap: var(--s-1); height: 24px; padding: 0 var(--s-2); border: 1px solid var(--c-line); border-radius: var(--r-pill); font-size: var(--fs-xs); color: var(--c-ink-2); }
+  .soon { margin-left: var(--s-2); padding: 0 6px; border: 1px dashed var(--c-line-strong); border-radius: var(--r-pill); font-size: var(--fs-2xs); font-weight: 400; color: var(--c-ink-3); white-space: nowrap; }
+  .pill .soon { margin-left: 2px; border: 0; padding: 0; }
+  .sec-h { margin-top: var(--s-8); font-size: var(--fs-xl); font-weight: 600; }
+  .note { margin-top: var(--s-2); color: var(--c-ink-3); font-size: var(--fs-sm); }
+  .tbl { margin-top: var(--s-4); overflow-x: auto; border: 1px solid var(--c-line); border-radius: var(--r-3); background: var(--c-surface); }
+  table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: var(--fs-sm); }
+  th, td { padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--c-line); text-align: left; }
+  tr:last-child > * { border-bottom: 0; }
+  thead th { color: var(--c-ink-2); font-weight: 600; background: var(--c-surface-2); }
+  tbody th { font-weight: 500; white-space: nowrap; }
+  td.pend { color: var(--c-ink-3); }
+  td.none { color: var(--c-ink-3); }
+  code { font-family: var(--font-mono); font-size: 0.92em; }
+  .faq details { border-bottom: 1px solid var(--c-line); }
+  .faq details:first-of-type { margin-top: var(--s-4); border-top: 1px solid var(--c-line); }
+  summary { cursor: pointer; padding: var(--s-4) 0; font-weight: 500; font-size: var(--fs-md); }
+  details p { padding-bottom: var(--s-4); color: var(--c-ink-2); max-width: 46em; }
+  .more { margin-top: var(--s-4); color: var(--c-ink-2); }
+  .more a { color: var(--c-accent-ink); text-decoration: underline; }
+  @media (max-width: 899px) { .tiers { grid-template-columns: minmax(0, 1fr); } }
+</style>

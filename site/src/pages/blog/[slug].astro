@@ -1,0 +1,115 @@
+---
+// 文章页：标题、摘要、日期、作者、分类、标签、目录、正文、作者卡片（长版）、相关文档、相关文章；Article JSON-LD，写了 faq 才输出 FAQPage
+import type { GetStaticPaths } from 'astro';
+import { getCollection, getEntry, getEntries, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import AuthorCard from '../../components/AuthorCard.astro';
+import { categoryLabel, tagLabel, isVisible, byDateDesc } from '../../lib/blog';
+import { formatDateZh, isoDate } from '../../lib/date';
+import { SITE } from '../../site.config.mjs';
+
+export const getStaticPaths = (async () => {
+  const all = (await getCollection('blog', isVisible)).sort(byDateDesc);
+  return all.map((entry) => ({ params: { slug: entry.id }, props: { entry, all } }));
+}) satisfies GetStaticPaths;
+
+const { entry, all } = Astro.props;
+const d = entry.data;
+const author = (await getEntry(d.author))!;
+const docs = await getEntries(d.related);
+const { Content, headings } = await render(entry);
+const toc = headings.filter((h) => h.depth === 2);
+const url = `${SITE.origin}/blog/${entry.id}/`;
+const score = (e: (typeof all)[number]) => (e.data.category === d.category ? 2 : 0) + e.data.tags.filter((t) => d.tags.includes(t)).length;
+const relatedPosts = all
+  .filter((e) => e.id !== entry.id)
+  .map((e) => ({ e, s: score(e) }))
+  .filter((x) => x.s > 0)
+  .sort((a, b) => b.s - a.s || byDateDesc(a.e, b.e))
+  .slice(0, 3)
+  .map((x) => x.e);
+const authorUrl = `${SITE.origin}/blog/author/${author.id}/`;
+const ld: object[] = [
+  {
+    '@type': 'Article',
+    headline: d.title,
+    description: d.description,
+    datePublished: isoDate(d.pubDate),
+    dateModified: isoDate(d.updatedDate ?? d.pubDate),
+    inLanguage: 'zh-CN',
+    mainEntityOfPage: url,
+    // 署名「知数Talk 主理人」，不写真实姓名
+    author: { '@type': author.data.kind === 'person' ? 'Person' : 'Organization', name: author.data.name, url: authorUrl },
+    publisher: { '@id': `${SITE.origin}/#org` },
+    image: `${SITE.origin}/og.png`,
+    articleSection: categoryLabel(d.category),
+    keywords: d.tags.map(tagLabel).join(','),
+  },
+];
+if (d.faq?.length)
+  ld.push({ '@type': 'FAQPage', mainEntity: d.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) });
+---
+<Base title={d.title} description={d.description} ogType="article" noindex={d.draft} jsonLd={ld}
+  crumbs={[{ name: '博客', path: '/blog/' }, { name: categoryLabel(d.category), path: `/blog/category/${d.category}/` }, { name: d.title, path: `/blog/${entry.id}/` }]}>
+  <article class="wrap post">
+    <header class="hd">
+      <p class="meta"><a href="/blog/">博客</a><span aria-hidden="true">/</span><a href={`/blog/category/${d.category}/`}>{categoryLabel(d.category)}</a>{d.draft && <span class="badge sample">草稿 · 不发布</span>}</p>
+      <h1 class="page-title">{d.title}</h1>
+      <p class="page-lede">{d.description}</p>
+      <dl class="facts">
+        <div><dt>作者</dt><dd><a href={`/blog/author/${author.id}/`}>{author.data.name}</a></dd></div>
+        <div><dt>发布</dt><dd><time datetime={isoDate(d.pubDate)}>{formatDateZh(d.pubDate)}</time></dd></div>
+        {d.updatedDate && <div><dt>更新</dt><dd><time datetime={isoDate(d.updatedDate)}>{formatDateZh(d.updatedDate)}</time></dd></div>}
+      </dl>
+    </header>
+    <div class:list={['body', { 'has-toc': toc.length > 1 }]}>
+      {toc.length > 1 && (
+        <nav class="toc" aria-label="本文目录">
+          <p>目录</p>
+          <ol>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+        </nav>
+      )}
+      <div>
+        <div class="prose"><Content /></div>
+        <ul class="tags" aria-label="标签">{d.tags.map((t) => <li><a href={`/blog/tag/${t}/`}>{tagLabel(t)}</a></li>)}</ul>
+        {docs.length > 0 && (
+          <section class="rel" aria-labelledby="rel-docs">
+            <h2 id="rel-docs">相关文档</h2>
+            <ul>{docs.map((x) => <li><a href={`/docs/${x.id}/`}>{x.data.title}</a></li>)}</ul>
+          </section>
+        )}
+        <AuthorCard author={author} />
+      </div>
+    </div>
+  </article>
+  {relatedPosts.length > 0 && (
+    <section class="wrap more" aria-labelledby="more-h">
+      <h2 id="more-h">相关文章</h2>
+      {relatedPosts.map((e) => <PostCard entry={e} headingLevel="h3" />)}
+    </section>
+  )}
+</Base>
+<style>
+  .post { padding-top: var(--s-7); padding-bottom: var(--s-7); }
+  .meta { display: flex; gap: var(--s-2); align-items: center; font-size: var(--fs-sm); color: var(--c-ink-3); margin-bottom: var(--s-3); }
+  .meta a { color: var(--c-accent-ink); }
+  .hd .page-title { font-weight: 600; max-width: 22em; }
+  .facts { margin-top: var(--s-4); display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-6); font-size: var(--fs-sm); }
+  .facts div { display: flex; gap: var(--s-2); }
+  .facts dt { color: var(--c-ink-3); }
+  .facts a { text-decoration: underline; }
+  .body { margin-top: var(--s-7); display: grid; grid-template-columns: minmax(0, 46em); gap: var(--s-7); }
+  .body.has-toc { grid-template-columns: 200px minmax(0, 46em); }
+  .toc { position: sticky; top: var(--s-5); align-self: start; font-size: var(--fs-sm); }
+  .toc p { color: var(--c-ink-3); font-size: var(--fs-xs); margin-bottom: var(--s-2); }
+  .toc ol { display: grid; gap: var(--s-1); border-left: 1px solid var(--c-line); padding-left: var(--s-3); }
+  .toc a { color: var(--c-ink-2); display: inline-block; min-height: 24px; }
+  .tags { margin-top: var(--s-6); display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .tags a { display: inline-flex; align-items: center; height: 28px; padding: 0 var(--s-3); border: 1px solid var(--c-line); border-radius: var(--r-pill); font-size: var(--fs-xs); color: var(--c-ink-2); }
+  .rel { margin-top: var(--s-6); }
+  .rel h2, .more h2 { font-size: var(--fs-md); font-weight: 600; margin-bottom: var(--s-2); }
+  .rel a { color: var(--c-accent-ink); text-decoration: underline; display: inline-block; min-height: 28px; }
+  .more { padding-bottom: var(--s-8); }
+  @media (max-width: 899px) { .body.has-toc { grid-template-columns: minmax(0, 1fr); } .toc { position: static; } }
+</style>

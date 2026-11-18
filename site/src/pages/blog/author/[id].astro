@@ -1,0 +1,28 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../../layouts/Base.astro';
+import BlogList from '../../../components/BlogList.astro';
+import { getCollection } from 'astro:content';
+import { isVisible, byDateDesc, bioShort, bioParagraphs } from '../../../lib/blog';
+import { SITE } from '../../../site.config.mjs';
+export const getStaticPaths = (async () => {
+  const posts = (await getCollection('blog', isVisible)).sort(byDateDesc);
+  return (await getCollection('authors')).map((a) => ({ params: { id: a.id }, props: { author: a, posts: posts.filter((p) => p.data.author.id === a.id) } }));
+}) satisfies GetStaticPaths;
+const { author, posts } = Astro.props;
+const url = `${SITE.origin}/blog/author/${author.id}/`;
+---
+<Base title={author.data.name} description={bioShort(author.data.bio)} jsonLd={[{ '@type': 'ProfilePage', url, mainEntity: { '@type': author.data.kind === 'person' ? 'Person' : 'Organization', name: author.data.name, description: bioShort(author.data.bio), url } }]}>
+  <div class="wrap page">
+    <p class="eyebrow"><a href="/blog/">博客</a> · 作者</p>
+    <h1 class="page-title display">{author.data.name}</h1>
+    <div class="bio">{bioParagraphs(author.data.bio).map((p) => <p>{p}</p>)}</div>
+    <h2 class="h2">文章</h2>
+    <BlogList posts={posts} />
+  </div>
+</Base>
+<style>
+  .bio { margin-top: var(--s-4); max-width: 46em; color: var(--c-ink-2); font-size: var(--fs-md); line-height: var(--lh-loose); }
+  .bio p + p { margin-top: var(--s-3); }
+  .h2 { margin-top: var(--s-7); font-size: var(--fs-lg); font-weight: 600; }
+</style>
