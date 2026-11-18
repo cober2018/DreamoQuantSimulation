@@ -70,7 +70,7 @@ REQUEST_FIELDS = {
     DERIVATIVES: [("oi_volume_ratio_zscore_60d" if f == "oi_volume_crowding_zscore_60d" else f) for f in DERIVATIVE_FIELDS],
     STYLE: ["key", "name", "index_name", "index_code", "strength", "z_score", "strength_series", "missing_reason", "date",
             "available"],
-    FACTS: ["industry_code", "industry_name", "idx_type", "sector_return", "sector_return_5d", "sector_return_20d",
+    FACTS: ["industry_code", "industry_name", "idx_type", "level", "sector_return", "sector_return_5d", "sector_return_20d",
             "sector_return_60d", "amount", "turnover_rate_1d", "up_num", "down_num", "member_count", "up_stock_ratio",
             "above_ma20_ratio", "new_high_20d_ratio", "di", "market_amount_share", "amount_ratio_ma20", "rs_ratio",
             "rs_momentum", "net_flow_1d", "net_flow_5d", "net_flow_20d", "coverage_ratio", "is_fallback"],
@@ -313,7 +313,8 @@ async def industries(up: Upstream, trade_date: Optional[str], idx_type: str) -> 
     if not res.rows:
         return envelope("industries", ids, up.data_mode, status="empty", trade_date=trade_date,
                         latest_available_date=_latest(res))
-    items = [_rename(r, INDUSTRY_FIELDS, INDUSTRY_RENAME) for r in res.rows]
+    # level：东财一级/二级/三级 = 1/2/3，概念、地域板块为 null；ZS-116 发版前的历史分区全是 null
+    items = [_rename(r, [*INDUSTRY_FIELDS, "level"], INDUSTRY_RENAME) for r in res.rows]
     items.sort(key=lambda x: (x["sector_return"] is None, -(x["sector_return"] or 0)))
     data = {"idx_type": idx_type, "idx_types": list(IDX_TYPES), "items": items, "units": FIELD_UNITS,
             "rrg_reference": 100}
