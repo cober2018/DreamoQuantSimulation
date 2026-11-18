@@ -111,7 +111,7 @@ import { SOCIAL } from '../lib/social.js'
 const DEMO_DATE = '2026-11-04'
 const DENSE = new URLSearchParams(location.search).get('sky') === 'dense'
 const day = getDay(DEMO_DATE)
-const demoFacts = [2, 3, 5].map((i) => day.facts[i])
+const demoFacts = [2, 3, 4].map((i) => day.facts[i])
 
 // 星图数据：星座 = 数据页，星 = 观察指标；当天入选要点的指标变成亮星，标签用要点里的真实数值
 const EXTRA = { overview: ['上涨占比'], industries: ['换手率', '成交额占比', '新高比例'], themes: ['封板率', '股票池计数'], history: ['开盘五分钟上涨占比'], calendar: ['事件重要性', '前值与预期'] }

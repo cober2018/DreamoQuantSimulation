@@ -1,5 +1,5 @@
 {
-  "$description": "关注我们 · 自媒体卡片的唯一数据源。ready=false 的卡片在生产构建里不显示；qr 为空时显示「二维码待补充」。平台标识先用中性占位，以后换各平台官方品牌资源。卡片上只写账号名称，不写扫码后显示的个人昵称或真实姓名。",
+  "$description": "关注知数Talk 主理人 · 自媒体卡片的唯一数据源。ready=false 的卡片在生产构建里不显示；qr 为空时显示「二维码待补充」。平台标识先用中性占位，以后换各平台官方品牌资源。卡片上只写账号名称，不写扫码后显示的个人昵称或真实姓名。",
   "items": [
     { "platform": "wechat-oa", "platformName": "公众号", "name": "知数Talk", "qr": "/social/wechat-qr.png", "qrAlt": "知数Talk 公众号二维码", "url": "", "ready": true },
     { "platform": "douyin", "platformName": "抖音", "name": "知数Talk", "qr": "/social/douyin-code.png", "qrAlt": "知数Talk 抖音码", "url": "", "ready": true },

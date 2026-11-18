@@ -1,10 +1,10 @@
-<!-- 关注我们：卡片数据只来自 content/social.json。ready=false 的卡片默认不显示（原型可用 ?drafts=1 预览占位）。 -->
+<!-- 关注知数Talk 主理人：卡片数据只来自 content/social.json。ready=false 的卡片默认不显示（原型可用 ?drafts=1 预览占位）。 -->
 <template>
   <div class="site">
     <a class="skip-link" href="#main">跳到正文</a>
     <SiteHeader />
     <main id="main" class="wrap pg">
-      <p class="eyebrow">关注我们</p>
+      <p class="eyebrow">公众号 · 抖音 · 小红书</p>
       <h1 class="display">关注知数Talk 主理人</h1>
       <p class="sub">在公众号、抖音、小红书上分享市场数据的口径和读法。用对应 App 扫码即可关注；内容仅作数据与方法交流，不构成投资建议。</p>
 
