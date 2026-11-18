@@ -112,13 +112,17 @@ _INSTRUMENTS = {"CSI300": "沪深300", "HS300": "沪深300", "CSI500": "中证50
                 "LEGACY50ETF": "上证50ETF"}
 
 
+# 用户 11-18：期指 z 门槛从 2 提到 2.5（R1 回放 20 天 18 条 → 11 条），R2 回放后再确认
+DERIV_Z_MIN = 2.5
+
+
 def r6_derivatives(part, _prev, d):
     out = []
     for m in part.get("derivatives") or []:
         inst = _INSTRUMENTS.get(str(m.get("instrument")), str(m.get("instrument")))
         for key, (kind_name, name) in _DERIV_NAMES.items():
             z = _num(m.get(key))
-            if z is not None and abs(z) >= 2:
+            if z is not None and abs(z) >= DERIV_Z_MIN:
                 out.append(_fact("极值", f"{inst} {kind_name}{name}的 60 日标准分为 {_signed(z)}", abs(z) * 33, d,
                                  "参与度与资金环境 · 衍生品统计", [key]))
     return out
@@ -171,20 +175,6 @@ def r9_ma20_change(ind, prev_ind, d):
     r, cur, o = best
     return [_fact("变化", f"「{r['sector_name']}」成分股站上 20 日均线的比例从 {_pct(o, 0)} 变为 {_pct(cur, 0)}",
                   abs(cur - o) * 100, d, "行业比较与轮动 · 站上 20 日线比例", ["above_ma20_ratio"])]
-
-
-def r10_flow_vs_limit(ind, themes, d):
-    flows = [r["sector_name"] for r in _flows(ind)[:5]]
-    tops = [t.get("industry") for t in sorted(themes.get("themes") or [], key=lambda t: _num(t.get("up_count")) or 0,
-                                              reverse=True)[:5] if t.get("industry")]
-    if len(flows) < 5 or len(tops) < 3:
-        return []
-    same = [n for n in flows if n in tops]
-    if len(same) > 1:
-        return []
-    return [_fact("背离", f"单日资金净流入前 5 的行业：{'、'.join(flows)}；涨停数前 5 的行业：{'、'.join(tops)}；名称相同 {len(same)} 个",
-                  55 - 10 * len(same), d, "行业比较与轮动 / 题材与涨跌结构", ["net_flow_1d", "themes.up_count"],
-                  definition="两边行业分类口径不同（板块分类 vs 涨停个股所属行业），只按名称完全相同计数")]
 
 
 def r11_limit_structure(themes, prev_themes, part, prev_part, d):
@@ -261,7 +251,6 @@ def daily_brief(today: Dict[str, Dict[str, Any]], prev: Optional[Dict[str, Dict[
     facts += r7_style(t.get("participation", {}), None, dd.get("participation"))
     facts += r8_flow_rank(t.get("industries", {}), None, dd.get("industries"))
     facts += r9_ma20_change(t.get("industries", {}), p.get("industries", {}), dd.get("industries"))
-    facts += r10_flow_vs_limit(t.get("industries", {}), t.get("themes", {}), dd.get("industries"))
     facts += r11_limit_structure(t.get("themes", {}), p.get("themes", {}), t.get("participation", {}),
                                  p.get("participation", {}), dd.get("themes"))
     facts += r12_open5(t.get("history", {}), None, dd.get("history"))
