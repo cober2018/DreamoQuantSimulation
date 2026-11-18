@@ -6,6 +6,7 @@ nature 一律为「统计」。网页首页、小程序首屏与 MCP 共用本�
 
 from __future__ import annotations
 
+import logging
 from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -147,13 +148,25 @@ def r7_style(part, _prev, d):
     return out
 
 
-def _flows(ind):
-    rows = [r for r in (ind.get("items") or []) if _num(r.get("net_flow_1d")) is not None]
+log = logging.getLogger(__name__)
+
+
+def _level1(ind, rule):
+    """板块排名只看东财一级。整天都没有 level（ZS-116 之前的历史分区）时跳过该规则，不退回混合层级排名。"""
+    items = ind.get("items") or []
+    if items and all(r.get("level") is None for r in items):
+        log.info("brief %s skipped: industries.level 全为空（ZS-116 之前的分区）", rule)
+        return []
+    return [r for r in items if _num(r.get("level")) == 1]
+
+
+def _flows(rows):
+    rows = [r for r in rows if _num(r.get("net_flow_1d")) is not None]
     return sorted(rows, key=lambda r: _num(r["net_flow_1d"]), reverse=True)
 
 
 def r8_flow_rank(ind, _prev, d):
-    rows = _flows(ind)
+    rows = _flows(_level1(ind, "r8"))
     if len(rows) < 6:
         return []
     fmt = lambda rs: "、".join(f"{r['sector_name']} {_signed(_num(r['net_flow_1d']), 1)} 亿" for r in rs)
@@ -164,7 +177,7 @@ def r8_flow_rank(ind, _prev, d):
 def r9_ma20_change(ind, prev_ind, d):
     old = {r.get("sector_code"): _num(r.get("above_ma20_ratio")) for r in (prev_ind.get("items") or [])}
     best = None
-    for r in ind.get("items") or []:
+    for r in _level1(ind, "r9"):
         cur, o = _num(r.get("above_ma20_ratio")), old.get(r.get("sector_code"))
         if cur is None or o is None or (_num(r.get("member_count")) or 0) < 10:
             continue
