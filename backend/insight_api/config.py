@@ -50,6 +50,7 @@ class Settings:
     trial_role: str = ""
     trial_until: float = 0.0
     email_verify: bool = False
+    email_daily_cap: int = 300
     smtp_host: str = ""
     smtp_port: int = 465
     smtp_user: str = ""
@@ -99,6 +100,7 @@ def load_settings() -> Settings:
         trial_role=os.getenv("INSIGHT_TRIAL_ROLE", "").strip().lower(),
         trial_until=_trial_until(os.getenv("INSIGHT_TRIAL_UNTIL", "").strip()),
         email_verify=os.getenv("INSIGHT_EMAIL_VERIFY", "") == "1",
+        email_daily_cap=int(os.getenv("INSIGHT_EMAIL_DAILY_CAP", "300") or 300),
         smtp_host=os.getenv("INSIGHT_SMTP_HOST", "").strip(),
         smtp_port=int(os.getenv("INSIGHT_SMTP_PORT", "465") or 465),
         smtp_user=os.getenv("INSIGHT_SMTP_USER", "").strip(),
