@@ -326,10 +326,18 @@ async def industries(up: Upstream, trade_date: Optional[str], idx_type: str) -> 
         return envelope("industries", ids, up.data_mode, status="empty", trade_date=trade_date,
                         latest_available_date=_latest(res))
     # level：东财一级/二级/三级 = 1/2/3，概念、地域板块为 null；ZS-116 发版前的历史分区全是 null
-    items = [_rename(r, [*INDUSTRY_FIELDS, "level"], INDUSTRY_RENAME) for r in res.rows]
+    # field_status 的行号是本页 rows 的下标；在转换前按原下标挂到每一行上，排序后不会错位
+    fs_map = (res.meta or {}).get("field_status") or {}
+    items = []
+    for idx, r in enumerate(res.rows):
+        it = _rename(r, [*INDUSTRY_FIELDS, "level"], INDUSTRY_RENAME)
+        st = fs_map.get(str(idx))
+        if st:
+            it["field_status"] = st
+        items.append(it)
     items.sort(key=lambda x: (x["sector_return"] is None, -(x["sector_return"] or 0)))
     data = {"idx_type": idx_type, "idx_types": list(IDX_TYPES), "items": items, "units": FIELD_UNITS,
-            "rrg_reference": 100}
+            "rrg_reference": 100, "notes": [str(n) for n in ((res.meta or {}).get("notes") or []) if isinstance(n, str)]}
     return envelope("industries", ids, up.data_mode, trade_date=_date(res), status=status_from([], res.issues),
                     sources=[_industry_source(res, res.rows)], gaps=issue_gaps("CNT-014", res.issues), data=data)
 
