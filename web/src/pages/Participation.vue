@@ -2,139 +2,100 @@
   <PageFrame title="参与度与资金环境" question="参与和资金结构相对历史怎样变化？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools><input type="date" v-model="tradeDate" aria-label="交易日" /></template>
 
-    <div class="panel" v-module="'observation'" v-if="obs">
-      <h2>市场参与与卖压<small>原始统计</small><DateTag :date="obs.trade_date" :page-date="env.trade_date" /></h2>
-      <div class="grid">
-        <div class="stat"><div class="label">全市场成交额</div><div class="value">{{ fmt.num(obs.total_amount_billion, 0) }} 亿元</div><div class="sub">{{ fmt.num(obs.count_stocks, 0) }} 只股票 · 与总览同一口径</div></div>
-        <div class="stat" v-ind="'participation.observation.amount_ratio_20d'"><div class="label">成交额 / 前 20 日中位数</div><div class="value">{{ fmt.num(obs.amount_ratio_20d, 2) }} 倍</div></div>
-        <div class="stat" v-ind="'participation.observation.participation_pctile_60d'"><div class="label">成交额分位（60 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_60d, 1) }}</div><div class="sub">0–100，不含当日</div></div>
-        <div class="stat" v-ind="'participation.observation.participation_pctile_250d'"><div class="label">成交额分位（250 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_250d, 1) }}</div></div>
-        <div class="stat" v-ind="'participation.observation.low_participation_streak'"><div class="label">低参与连续天数</div><div class="value">{{ fmt.num(obs.low_participation_streak, 0) }}</div></div>
-        <div class="stat" v-ind="'participation.observation.active_sell_ratio'"><div class="label">主动卖出占比</div><div class="value">{{ fmt.ratio(obs.active_sell_ratio) }}</div></div>
-        <div class="stat" v-ind="'participation.observation.sell_pressure_change_1d'"><div class="label">卖压缓和程度（1 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_1d, 3) }}</div></div>
-        <div class="stat" v-ind="'participation.observation.sell_pressure_change_3d'"><div class="label">近 3 日卖压趋势（斜率，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
-        <div class="stat"><div class="label">委托失衡</div><div class="value">{{ fmt.signed(obs.order_imbalance, 3) }}</div><div class="sub">1 日变化 {{ fmt.signed(obs.order_imbalance_delta_1d, 3) }}</div></div>
-      </div>
-      <p class="note">分位为相对此前历史窗口的位置，只描述历史相对水平，不是概率或参与人数比例。</p>
-    </div>
-
-    <div class="panel" v-module="'erp'">
-      <h2>股债收益差<small>盈利收益率 − 10 年期国债收益率 · 数据源可用 {{ erp.available_count ?? '—' }}/{{ erp.total_count ?? '—' }} 项{{ openText('erp') }}</small></h2>
-      <div class="grid">
-        <div class="stat" v-ind="'participation.erp.erp_value_pct'"><div class="label">股债收益差</div><div class="value">{{ pctPoint(erp.erp_value_pct) }}</div><div class="sub">盈利收益率 − 10 年期国债收益率</div></div>
-        <div class="stat" v-ind="'participation.erp.earnings_yield'"><div class="label">盈利收益率</div><div class="value">{{ fmt.ratio(erp.earnings_yield, 2) }}</div></div>
-        <div class="stat" v-ind="'participation.erp.yield_10y'"><div class="label">10 年期国债收益率</div><div class="value">{{ pctPoint(erp.yield_10y) }}</div><div class="sub">来源 {{ erp.yield_source_flag || '—' }}</div></div>
-        <div class="stat" v-ind="'participation.erp.erp_change_5d_pct'"><div class="label">股债收益差 5 日变化</div><div class="value">{{ pp(erp.erp_change_5d_pct) }}</div></div>
-        <div class="stat" v-ind="'participation.erp.erp_change_20d_pct'"><div class="label">股债收益差 20 日变化</div><div class="value">{{ pp(erp.erp_change_20d_pct) }}</div></div>
-        <div class="stat" v-ind="'participation.erp.erp_percentile_252d'"><div class="label">近 252 日分位</div><div class="value">{{ pctl(erp.erp_percentile_252d) }}</div></div>
-        <div class="stat" v-ind="'participation.erp.erp_percentile_3y'"><div class="label">近 3 年分位</div><div class="value">{{ pctl(erp.erp_percentile_3y) }}</div></div>
-        <div class="stat" v-ind="'participation.erp.erp_percentile_5y'"><div class="label">近 5 年分位</div><div class="value">{{ pctl(erp.erp_percentile_5y) }}</div></div>
-      </div>
-    </div>
-
-    <div class="panel" v-module="'valuation'">
-      <h2>估值端统计<small>数据源可用 {{ val.available_count ?? '—' }}/{{ val.total_count ?? '—' }} 项{{ openText('valuation') }}</small></h2>
-      <div class="grid">
-        <div class="stat" v-ind="'participation.valuation.current_pe_median'"><div class="label">全市场市盈率中位数</div><div class="value">{{ fmt.num(val.current_pe_median) }}</div></div>
-        <div class="stat" v-ind="'participation.valuation.hist_90d_pe_median'"><div class="label">近 90 日市盈率中位数</div><div class="value">{{ fmt.num(val.hist_90d_pe_median) }}</div></div>
-        <div class="stat" v-ind="'participation.valuation.break_ratio_pct'"><div class="label">破净股占比</div><div class="value">{{ pctPoint(val.break_ratio_pct) }}</div></div>
-        <div class="stat" v-ind="'participation.valuation.discount_pct'"><div class="label">折价比例</div><div class="value">{{ pctPoint(val.discount_pct) }}</div></div>
-      </div>
-    </div>
-
-    <div class="panel" v-module="'limit_up'">
-      <h2>涨停结构（当日观察）</h2>
-      <div class="grid">
-        <div class="stat" v-ind="'participation.limit_up.seal_rate'"><div class="label">封板率</div><div class="value">{{ fmt.ratio(lu.seal_rate) }}</div></div>
-        <div class="stat" v-ind="'participation.limit_up.consecutive_board_count'"><div class="label">连板股数</div><div class="value">{{ fmt.num(lu.consecutive_board_count, 0) }}</div></div>
-        <div class="stat" v-ind="'participation.limit_up.max_consecutive_days'"><div class="label">最高连板天数</div><div class="value">{{ fmt.num(lu.max_consecutive_days, 0) }}</div></div>
-        <div class="stat" v-ind="'participation.limit_up.first_board_premium'"><div class="label">首板溢价</div><div :class="['value', fmt.dir(lu.first_board_premium)]">{{ fmt.signedPct(lu.first_board_premium) }}</div></div>
-        <div class="stat" v-ind="'participation.limit_up.broken_repair_rate'"><div class="label">回封率</div><div class="value">{{ fmt.ratio(lu.broken_repair_rate) }}</div></div>
-      </div>
-      <p class="note">{{ lu.note }}</p>
-    </div>
-
-    <div class="panel" v-module="'smart_money'" v-if="sm">
-      <h2>聪明钱五因子<small>截面统计 · 模型 {{ sm.model_version || '—' }}</small><DateTag :date="sm.trade_date" :page-date="env.trade_date" /></h2>
-      <div class="grid">
-        <div class="stat" v-for="f in sm.factors" :key="f.key">
-          <div class="label">{{ f.label }}</div>
-          <div :class="['value', fmt.dir(f.net_breadth_pct)]">{{ fmt.signedPct(f.net_breadth_pct) }}</div>
-          <div class="sub">偏多 {{ fmt.ratio(f.pos_share) }} / 偏空 {{ fmt.ratio(f.neg_share) }}</div>
+    <div class="mods">
+      <section id="participation-heat" class="panel mod wide" v-module="'observation'" aria-labelledby="participation-heat-title">
+        <h2 id="participation-heat-title">参与热度与成交<small>参与是在升温还是降温，低参与持续了几天</small><DateTag :date="obs.trade_date" :page-date="env.trade_date" /></h2>
+        <div class="grid">
+          <div class="stat" v-ind="'participation.observation.total_amount_billion'"><div class="label">全市场成交额</div><div class="value">{{ fmt.num(obs.total_amount_billion, 0) }} 亿元</div><div class="sub">{{ fmt.num(obs.count_stocks, 0) }} 只股票 · 与总览同一口径</div></div>
+          <div class="stat" v-ind="'participation.observation.amount_ratio_20d'"><div class="label">成交额 / 前 20 日中位数</div><div class="value">{{ fmt.num(obs.amount_ratio_20d, 2) }} 倍</div></div>
+          <div class="stat" v-ind="'participation.observation.participation_pctile_60d'"><div class="label">成交额分位（60 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_60d, 1) }}</div><div class="sub">0–100，不含当日</div></div>
+          <div class="stat" v-ind="'participation.observation.low_participation_streak'"><div class="label">低参与连续天数</div><div class="value">{{ fmt.num(obs.low_participation_streak, 0) }} 交易日</div></div>
         </div>
-      </div>
-      <p class="note">{{ sm.note }}；样本 {{ fmt.num(sm.sample_rows, 0) }} 只（入池 {{ fmt.num(sm.pool_rows, 0) }} 只）。共振评分与风险分不提供。</p>
-    </div>
+        <p class="placeholder">待接入：参与热度与成交的 60 日序列（participation · history：heat、turnover、low_participation_days）。接入后画双轴热度折线加成交额柱。</p>
+      </section>
 
-    <div class="panel" v-module="'style'" v-if="styleData">
-      <h2>风格相对强度<small>阵营历史序列，非当前风格选择建议</small><DateTag :date="styleCamps[0]?.source_date" :page-date="env.trade_date" /></h2>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th class="left">阵营</th><th class="left">代表指数</th><th>当日强度分</th><th>z 分（20 日）</th></tr></thead>
-          <tbody>
-            <tr v-for="c in styleCamps" :key="c.key">
-              <td class="left">{{ c.label }}</td>
-              <td class="left muted">{{ c.index_name }} {{ c.index_code }}</td>
-              <td>{{ fmt.num(c.strength_score, 1) }}</td>
-              <td :class="fmt.dir(c.z_score)">{{ fmt.signed(c.z_score, 3) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <EChart v-if="styleCamps.some((c) => c.strength_series?.length)" :option="styleOption" height="260px" />
-      <p class="note">{{ styleData.definition }}；按固定阵营顺序展示，不按强度排序，不提供 leader/signal 结论。</p>
-    </div>
-
-    <div class="panel" v-module="'bottom'" v-if="bc">
-      <h2>底部条件观察<small>样本 {{ fmt.num(bc.history_obs, 0) }} 个交易日</small></h2>
-      <div class="grid">
-        <div class="stat" v-for="c in bc.conditions" :key="c.key">
-          <div class="label">{{ c.label }}</div>
-          <div class="value">{{ fmt.num(c.value, 1) }} <span class="muted">/ 阈值 {{ fmt.num(c.threshold, 1) }}</span></div>
-          <div class="sub">状态：{{ COND[c.condition] || c.condition || '—' }}</div>
+      <section id="participation-pressure" class="panel mod" v-module="'observation'" aria-labelledby="participation-pressure-title">
+        <h2 id="participation-pressure-title">卖压相对强度<small>抛售压力在高位还是低位，最近是增强还是缓和</small></h2>
+        <div class="grid one">
+          <div class="stat" v-ind="'participation.observation.active_sell_ratio'"><div class="label">主动卖出占比</div><div class="value">{{ fmt.ratio(obs.active_sell_ratio) }}</div></div>
+          <div class="stat" v-ind="'participation.observation.sell_pressure_change_1d'"><div class="label">卖压缓和程度（1 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_1d, 3) }}</div></div>
+          <div class="stat" v-ind="'participation.observation.sell_pressure_change_3d'"><div class="label">近 3 日卖压趋势（斜率，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
         </div>
-      </div>
-      <p class="note">{{ bc.note }}；下一状态预测与准备度总分不提供。</p>
-    </div>
+        <p class="placeholder">待接入：卖压强度的历史序列（participation · history：selling_pressure_pct、pressure_state；卖出占比历史 selling_share_reference_pct 待补）。接入后画折线并按高、中、低分段着色。</p>
+      </section>
 
-    <div class="panel" v-module="'derivatives'">
-      <h2>衍生品标准分历史（近 60 个交易日）<small>标准分为 60 日标准分，0 为均值；无数据不画成 0</small></h2>
-      <div class="seg" style="margin-bottom:10px">
-        <button v-for="m in DH_METRICS" :key="m.key" :class="{ on: dhMetric === m.key }" @click="dhMetric = m.key">{{ m.label }}</button>
-      </div>
-      <div class="table-wrap">
-        <table class="deriv-heat">
-          <thead><tr><th class="left">品种</th><th v-for="d in dhDates" :key="d">{{ d.slice(5) }}</th></tr></thead>
-          <tbody>
-            <tr v-for="ins in dhInstruments" :key="ins">
-              <td class="left">{{ INST_LABEL[ins] || ins }}</td>
-              <td v-for="d in dhDates" :key="d" :class="dhCellClass(ins, d)" :title="dhCellTitle(ins, d)">{{ dhCellText(ins, d) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="note">颜色只表示偏离方向和幅度，不代表好坏；灰色「无数据」为上游标注的缺口，悬停可看原因。STAR50 基差为代理值，不显示。</p>
+      <section id="participation-erp" class="panel mod" v-module="'erp'" aria-labelledby="participation-erp-title">
+        <h2 id="participation-erp-title">股债收益差<small>股票相对债券的收益补偿处在历史什么位置<span v-if="openText('erp')">{{ openText('erp') }}</span></small></h2>
+        <div class="grid one">
+          <div class="stat" v-ind="'participation.erp.erp_value_pct'"><div class="label">股债收益差</div><div class="value">{{ pctPoint(erp.erp_value_pct) }}</div><div class="sub">盈利收益率 {{ fmt.ratio(erp.earnings_yield, 2) }} · 10 年期国债 {{ pctPoint(erp.yield_10y) }}</div></div>
+          <div class="stat" v-ind="'participation.erp.erp_change_5d_pct'"><div class="label">5 日变化</div><div class="value">{{ pp(erp.erp_change_5d_pct) }}</div></div>
+          <div class="stat" v-ind="'participation.erp.erp_change_20d_pct'"><div class="label">20 日变化</div><div class="value">{{ pp(erp.erp_change_20d_pct) }}</div></div>
+        </div>
+        <div class="band" aria-label="股债收益差历史位置">
+          <div class="band-row" v-for="b in bandRows" :key="b.key" :id="`${b.key}-band`">
+            <span class="band-label">{{ b.label }}</span>
+            <div class="track" aria-hidden="true">
+              <i v-if="b.pos != null" class="dot" :style="{ left: b.pos + '%' }" />
+            </div>
+            <b class="band-value" v-ind="`participation.erp.${b.key}`">{{ pctl(b.value) }}</b>
+          </div>
+          <p class="note">历史位置为近各窗口内的分位（0 最低，100 最高），只描述历史相对水平。</p>
+        </div>
+        <p class="placeholder">待接入：股债收益差的逐日序列（public-market-compensation · history-position：compensation_pct）。接入后在此画折线。</p>
+      </section>
 
-      <h2>股指衍生品原始指标</h2>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>品种</th><th>基差</th><th>基差 z(60日)</th><th>多空持仓比</th><th>PCR</th><th>PCR z(60日)</th><th>持仓/成交 z(60日)</th><th>数据日</th><th class="left">缺失说明</th></tr></thead>
-          <tbody>
-            <tr v-for="r in deriv" :key="r.instrument">
-              <td>{{ r.instrument }}</td>
-              <td>{{ fmt.num(r.basis_value, 3) }}</td>
-              <td>{{ fmt.num(r.basis_zscore_60d) }}</td>
-              <td>{{ fmt.num(r.position_ratio, 3) }}</td>
-              <td>{{ fmt.num(r.pcr_value, 3) }}</td>
-              <td>{{ fmt.num(r.pcr_zscore_60d) }}</td>
-              <td>{{ fmt.num(r.oi_volume_crowding_zscore_60d) }}</td>
-              <td>{{ r.basis_source_date || r.position_source_date || '—' }}</td>
-              <td class="left muted">{{ r.missing_reason || '—' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="note">z 分为相对近 60 个交易日的标准化位置，仅描述历史相对水平。</p>
+      <section id="participation-derivatives" class="panel mod wide" v-module="'derivatives'" aria-labelledby="participation-derivatives-title">
+        <h2 id="participation-derivatives-title">衍生品标准分矩阵<small>哪个品种偏离常态；颜色只表示偏离方向和幅度，不代表好坏</small></h2>
+        <div class="table-wrap">
+          <table class="heat" aria-describedby="participation-derivatives-note">
+            <thead><tr><th class="left">品种</th><th v-for="c in MATRIX_COLS" :key="c.key">{{ c.label }}</th></tr></thead>
+            <tbody>
+              <tr v-for="row in matrix" :key="row.instrument">
+                <td class="left">{{ row.label }}</td>
+                <td v-for="cell in row.cells" :key="cell.key" :class="{ na: cell.value == null }" :style="{ background: zTone(cell.value) }" :title="cell.value == null ? (row.missing_reason || '上游未提供该值') : ''">{{ zText(cell.value) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p v-if="!matrix.length" class="placeholder">当日衍生品标准分暂缺（数据待更新）。</p>
+        <ul v-if="matrixGaps.length" class="gaps">
+          <li v-for="g in matrixGaps" :key="g.instrument">{{ g.label }}：{{ g.missing_reason }}</li>
+        </ul>
+        <p id="participation-derivatives-note" class="note">标准分为 60 日标准分，0 为均值；缺值显示「数据待更新」，不按 0 处理。蓝色为偏低，橙色为偏高。</p>
+
+        <h3 class="sub-title">近 60 个交易日标准分</h3>
+        <div class="seg" style="margin-bottom:10px">
+          <button v-for="m in DH_METRICS" :key="m.key" :class="{ on: dhMetric === m.key }" @click="dhMetric = m.key">{{ m.label }}</button>
+        </div>
+        <div class="table-wrap">
+          <table class="deriv-heat">
+            <thead><tr><th class="left">品种</th><th v-for="d in dhDates" :key="d">{{ d.slice(5) }}</th></tr></thead>
+            <tbody>
+              <tr v-for="ins in dhInstruments" :key="ins">
+                <td class="left">{{ INST_LABEL[ins] || ins }}</td>
+                <td v-for="d in dhDates" :key="d" :class="dhCellClass(ins, d)" :title="dhCellTitle(ins, d)">{{ dhCellText(ins, d) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">STAR50 基差为代理值，不显示。</p>
+      </section>
+
+      <section id="participation-style" class="panel mod wide" v-module="'style'" aria-labelledby="participation-style-title">
+        <h2 id="participation-style-title">风格强弱<small>成长、红利、大盘三类风格谁强谁弱，近期怎么变<DateTag v-if="styleCamps[0]?.source_date" :date="styleCamps[0]?.source_date" :page-date="env.trade_date" /></small></h2>
+        <template v-if="styleCamps.length">
+          <div class="grid">
+            <div class="stat" v-for="c in styleCamps" :key="c.key">
+              <div class="label">{{ c.label }}<span v-if="c.index_name" class="muted"> · {{ c.index_name }}</span></div>
+              <div class="value">{{ fmt.num(c.strength_score, 1) }}</div>
+              <div class="sub">z 分（20 日） {{ fmt.signed(c.z_score, 3) }}</div>
+            </div>
+          </div>
+          <EChart v-if="styleCamps.some((c) => c.strength_series?.length)" :option="styleOption" height="240px" />
+        </template>
+        <p v-else class="placeholder">当日风格强弱序列暂缺（style-rotation · history 不可用）。</p>
+        <p class="note">{{ styleData?.definition || '强度分为阵营指数相对强度的历史评分（0–100）' }}；横轴为观测序号，当前为近 20 个观测；按固定阵营顺序展示，不按强度排序，不提供 leader/signal 结论。</p>
+      </section>
     </div>
   </PageFrame>
 </template>
@@ -147,37 +108,67 @@ import DateTag from '../components/DateTag.vue'
 import { fmt } from '../api'
 import { openText, useModule } from '../useModule'
 
-const COND = { met: '已达标', near: '接近', unmet: '未达标' }
 const tradeDate = ref('')
 const { env, loading, load } = useModule('participation', () => ({ trade_date: tradeDate.value }))
-const obs = computed(() => env.value.data?.participation_observation || null)
+const obs = computed(() => env.value.data?.participation_observation || {})
 const erp = computed(() => env.value.data?.erp || {})
-const val = computed(() => env.value.data?.valuation || {})
-const lu = computed(() => env.value.data?.limit_up_structure || {})
 const deriv = computed(() => env.value.data?.derivatives || [])
 const dhRows = computed(() => env.value.data?.derivatives_history || [])
+const styleData = computed(() => env.value.data?.style_strength || null)
+const styleCamps = computed(() => styleData.value?.camps || [])
+
+// 上游 *_pct 字段已是百分数；分位为 0–100 的数值，缺失多因历史样本不足
+const num = (v) => {
+  if (v == null || v === '') return null
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
+const pctPoint = (v) => (num(v) == null ? '—' : `${num(v).toFixed(2)}%`)
+const pp = (v) => (num(v) == null ? '—' : `${num(v) > 0 ? '+' : ''}${num(v).toFixed(2)} pp`)
+const pctl = (v) => (num(v) == null ? '数据待更新' :`${num(v).toFixed(1)}%`)
+
+const bandRows = computed(() => [
+  { key: 'erp_percentile_252d', label: '近 252 日', value: erp.value.erp_percentile_252d },
+  { key: 'erp_percentile_3y', label: '近 3 年', value: erp.value.erp_percentile_3y },
+  { key: 'erp_percentile_5y', label: '近 5 年', value: erp.value.erp_percentile_5y },
+].map((b) => ({ ...b, pos: num(b.value) == null ? null : Math.min(Math.max(num(b.value), 0), 100) })))
+
+// 标准分矩阵：当日各品种的 60 日标准分；颜色用蓝橙，不用涨跌色（标准分不代表涨跌）
+const MATRIX_COLS = [
+  { key: 'basis_zscore_60d', label: '基差标准分' },
+  { key: 'pcr_zscore_60d', label: '认沽认购比标准分' },
+  { key: 'oi_volume_crowding_zscore_60d', label: '成交持仓比标准分' },
+]
+const INST_LABEL = { HS300: '沪深300', CSI500: '中证500', SSE50: '上证50', CSI1000: '中证1000', STAR50: '科创50' }
+const matrix = computed(() => deriv.value.map((r) => ({
+  instrument: r.instrument,
+  label: INST_LABEL[r.instrument] || r.instrument || '—',
+  missing_reason: r.missing_reason || null,
+  cells: MATRIX_COLS.map((c) => ({ key: c.key, value: num(r[c.key]) })),
+})))
+const matrixGaps = computed(() => matrix.value.filter((row) => row.missing_reason))
+const zText = (v) => (v == null ? '数据待更新' :`${v > 0 ? '+' : ''}${v.toFixed(2)}`)
+const zTone = (v) => {
+  if (v == null) return ''
+  const a = (Math.min(Math.abs(v) / 3, 1) * 0.5).toFixed(2)
+  return v >= 0 ? `hsl(28 85% 50% / ${a})` : `hsl(214 70% 48% / ${a})`
+}
+
+// 近 60 日标准分历史（已上线，保留）
 const DH_METRICS = [
   { key: 'basis_zscore_60d', label: '基差标准分' },
   { key: 'pcr_zscore_60d', label: '认沽认购比标准分' },
   { key: 'oi_volume_ratio_zscore_60d', label: '成交持仓比标准分' },
 ]
-const INST_LABEL = { HS300: '沪深300', CSI500: '中证500', SSE50: '上证50', CSI1000: '中证1000', STAR50: '科创50' }
 const dhMetric = ref('basis_zscore_60d')
 const dhDates = computed(() => [...new Set(dhRows.value.map((r) => r.trade_date))].sort())
 const dhInstruments = computed(() => ['HS300', 'SSE50', 'CSI500', 'CSI1000', 'STAR50'].filter((i) => dhRows.value.some((r) => r.instrument === i)))
 const dhCell = (ins, d) => dhRows.value.find((r) => r.instrument === ins && r.trade_date === d) || null
-const dhValue = (ins, d) => {
-  const r = dhCell(ins, d)
-  const v = r ? r[dhMetric.value] : null
-  return v == null || Number.isNaN(Number(v)) ? null : Number(v)
-}
-const dhCellText = (ins, d) => { const v = dhValue(ins, d); return v == null ? '无数据' : (v > 0 ? '+' : '') + v.toFixed(2) }
+const dhValue = (ins, d) => num(dhCell(ins, d)?.[dhMetric.value])
+const dhCellText = (ins, d) => zText(dhValue(ins, d))
 const dhCellTitle = (ins, d) => { const r = dhCell(ins, d); return r?.missing_reason ? `原因：${r.missing_reason}` : '' }
 const dhCellClass = (ins, d) => (dhValue(ins, d) == null ? 'muted' : '')
-const sm = computed(() => env.value.data?.smart_money_factors || null)
-const styleData = computed(() => env.value.data?.style_strength || null)
-const styleCamps = computed(() => styleData.value?.camps || [])
-const bc = computed(() => env.value.data?.bottom_conditions || null)
+
 const styleOption = computed(() => {
   const first = styleCamps.value.find((c) => c.strength_series?.length)
   const n = first ? first.strength_series.length : 0
@@ -185,16 +176,34 @@ const styleOption = computed(() => {
     tooltip: { trigger: 'axis' },
     legend: { data: styleCamps.value.map((c) => c.label) },
     grid: { left: 44, right: 16, top: 34, bottom: 26 },
-    xAxis: { type: 'category', data: Array.from({ length: n }, (_, i) => `T-${n - 1 - i}`) },
+    xAxis: { type: 'category', data: Array.from({ length: n }, (_, i) => `#${i + 1}`) },
     yAxis: { type: 'value', scale: true },
     series: styleCamps.value
       .filter((c) => c.strength_series?.length)
       .map((c) => ({ name: c.label, type: 'line', data: c.strength_series, showSymbol: false })),
   }
 })
-// 上游 *_pct 字段已是百分数；分位为 0~1 小数，缺失多因历史样本不足
-const pctPoint = (v) => (v == null ? '—' : `${Number(v).toFixed(2)}%`)
-const pp = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${Number(v).toFixed(2)} pp`)
-// 上游分位为 0–100 的数值 (如 51.19), 不是 0–1 小数
-const pctl = (v) => (v == null ? '历史样本不足' : `${Number(v).toFixed(1)}%`)
 </script>
+
+<style scoped>
+.mods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.mod { margin-bottom: 0; min-width: 0; }
+.mod.wide { grid-column: 1 / -1; }
+.mod h2 small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.mod h2 small .date-tag { margin-left: 8px; }
+.grid.one { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.sub-title { font-size: 14px; font-weight: 600; margin: 20px 0 8px; }
+.placeholder { border: 1px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: 13px; line-height: 1.6; padding: 12px 14px; margin: 12px 0 0; }
+.band { margin-top: 12px; display: grid; gap: 8px; }
+.band-row { display: grid; grid-template-columns: 72px minmax(0, 1fr) 96px; align-items: center; gap: 8px; font-size: 13px; }
+.band-label { color: var(--muted); }
+.track { position: relative; height: 8px; border-radius: 4px; background: linear-gradient(90deg, hsl(214 40% 88%), hsl(28 50% 88%)); }
+.dot { position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel); transform: translate(-50%, -50%); }
+.band-value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.gaps { font-size: 12px; color: var(--muted); padding-left: 18px; margin: 8px 0 0; }
+table.heat { table-layout: fixed; }
+table.heat th, table.heat td { text-align: center; font-variant-numeric: tabular-nums; padding: 8px 6px; }
+table.heat th { white-space: normal; line-height: 1.3; font-size: 12px; }
+table.heat td.na { color: var(--muted); background: transparent; }
+@media (max-width: 900px) { .mods { grid-template-columns: minmax(0, 1fr); } }
+</style>
