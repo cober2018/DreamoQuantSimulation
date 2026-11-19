@@ -43,9 +43,9 @@ OPEN5_PUBLIC = {**OPEN5_FIELDS, "over_response_ratio": "over_response_ratio"}
 CALENDAR_PUBLIC = {**CALENDAR_FIELDS, "event_id": "event_ref", "previous_value": "previous_value",
                    "actual_value": "actual_value", "consensus_value": "consensus_value",
                    "consensus_source": "consensus_source"}
-# ZS-104：AI 周报整理的事件由投研平台在合同里打标识；字段名待投研平台确定后填入。
-# 为空时不向上游请求该字段（避免上游拒绝未知字段），对外 ai_curated 恒为 None，页面不显示标签
-CALENDAR_AI_FIELD = ""
+# ZS-104：AI 周报整理的事件由投研平台在合同里打标识（布尔，展示时须标明「AI 整理」）。
+# 上游拒绝未公开字段：必须在投研平台发布 ai_curated 之后再部署本值；置空即回到不请求、不显示
+CALENDAR_AI_FIELD = "ai_curated"
 # short-feedback 以百分数给出（如 seal_rate_pct=38.78），本平台沿用比例口径（0.3878）；待投研平台确认是否改给原始值
 SHORT_MAP = {"seal_rate": ("seal_rate_pct", 0.01), "consecutive_board_count": ("consecutive_count", 1),
              "max_consecutive_days": ("maximum_boards", 1), "first_board_premium": ("first_board_return_pct", 1),
@@ -70,7 +70,7 @@ REQUEST_FIELDS = {
     DERIVATIVES: [("oi_volume_ratio_zscore_60d" if f == "oi_volume_crowding_zscore_60d" else f) for f in DERIVATIVE_FIELDS],
     STYLE: ["key", "name", "index_name", "index_code", "strength", "z_score", "strength_series", "missing_reason", "date",
             "available"],
-    FACTS: ["industry_code", "industry_name", "idx_type", "sector_return", "sector_return_5d", "sector_return_20d",
+    FACTS: ["industry_code", "industry_name", "idx_type", "level", "sector_return", "sector_return_5d", "sector_return_20d",
             "sector_return_60d", "amount", "turnover_rate_1d", "up_num", "down_num", "member_count", "up_stock_ratio",
             "above_ma20_ratio", "new_high_20d_ratio", "di", "market_amount_share", "amount_ratio_ma20", "rs_ratio",
             "rs_momentum", "net_flow_1d", "net_flow_5d", "net_flow_20d", "coverage_ratio", "is_fallback"],
@@ -313,7 +313,8 @@ async def industries(up: Upstream, trade_date: Optional[str], idx_type: str) -> 
     if not res.rows:
         return envelope("industries", ids, up.data_mode, status="empty", trade_date=trade_date,
                         latest_available_date=_latest(res))
-    items = [_rename(r, INDUSTRY_FIELDS, INDUSTRY_RENAME) for r in res.rows]
+    # level：东财一级/二级/三级 = 1/2/3，概念、地域板块为 null；ZS-116 发版前的历史分区全是 null
+    items = [_rename(r, [*INDUSTRY_FIELDS, "level"], INDUSTRY_RENAME) for r in res.rows]
     items.sort(key=lambda x: (x["sector_return"] is None, -(x["sector_return"] or 0)))
     data = {"idx_type": idx_type, "idx_types": list(IDX_TYPES), "items": items, "units": FIELD_UNITS,
             "rrg_reference": 100}
