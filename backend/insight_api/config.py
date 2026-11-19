@@ -49,6 +49,12 @@ class Settings:
     # 全站试用：截止日（北京时间当天结束）之前，非管理员用户的生效等级至少为 trial_role；不写库
     trial_role: str = ""
     trial_until: float = 0.0
+    email_verify: bool = False
+    smtp_host: str = ""
+    smtp_port: int = 465
+    smtp_user: str = ""
+    smtp_password: str = ""
+    mail_from: str = ""
 
 
 _CN = timezone(timedelta(hours=8))
@@ -92,7 +98,15 @@ def load_settings() -> Settings:
         payment_enabled=os.getenv("INSIGHT_PAYMENT_ENABLED", "") == "1",
         trial_role=os.getenv("INSIGHT_TRIAL_ROLE", "").strip().lower(),
         trial_until=_trial_until(os.getenv("INSIGHT_TRIAL_UNTIL", "").strip()),
+        email_verify=os.getenv("INSIGHT_EMAIL_VERIFY", "") == "1",
+        smtp_host=os.getenv("INSIGHT_SMTP_HOST", "").strip(),
+        smtp_port=int(os.getenv("INSIGHT_SMTP_PORT", "465") or 465),
+        smtp_user=os.getenv("INSIGHT_SMTP_USER", "").strip(),
+        smtp_password=os.getenv("INSIGHT_SMTP_PASSWORD", ""),
+        mail_from=os.getenv("INSIGHT_MAIL_FROM", "").strip(),
     )
+    if settings.email_verify and not (settings.smtp_host and settings.smtp_user and settings.smtp_password and settings.mail_from):
+        raise ConfigError("INSIGHT_EMAIL_VERIFY=1 时必须设置 INSIGHT_SMTP_HOST / USER / PASSWORD 和 INSIGHT_MAIL_FROM")
     if bool(settings.trial_role) != bool(settings.trial_until):
         raise ConfigError("INSIGHT_TRIAL_ROLE 与 INSIGHT_TRIAL_UNTIL 必须同时设置或同时不设")
     if settings.trial_role in {"admin", "free"}:

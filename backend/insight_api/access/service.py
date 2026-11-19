@@ -1,7 +1,9 @@
 """账号/角色/邀请码/会话业务逻辑 (不依赖 FastAPI)。"""
 from __future__ import annotations
 
+import hmac
 import re
+import secrets
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -15,6 +17,8 @@ LOGIN_FAIL_LIMIT, LOGIN_WINDOW = 5, 15 * 60
 REDEEM_FAIL_LIMIT, REDEEM_FREEZE = 5, 30 * 60
 REDEEM_USER_PER_HOUR, REDEEM_IP_PER_HOUR = 10, 30
 GENERIC_LOGIN_ERROR = "用户名或密码错误"
+EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+CODE_TTL, CODE_GAP, CODE_MAX_ATTEMPTS = 600, 60, 5
 
 
 class AccessError(Exception):
@@ -46,8 +50,11 @@ class Principal:
 
 class AccessService:
     def __init__(self, store: Store, jwt_secrets: List[str], *, registration: str = "open",
-                 payment_enabled: bool = False, trial_role: str = "", trial_until: float = 0.0):
+                 payment_enabled: bool = False, trial_role: str = "", trial_until: float = 0.0,
+                 mailer=None, email_verify: bool = False):
         self.store = store
+        self.mailer = mailer
+        self.email_verify = email_verify
         self.payment_enabled = payment_enabled
         self.trial_role = trial_role
         self.trial_until = trial_until
@@ -114,12 +121,55 @@ class AccessService:
 
     # ------------------------------------------------------------------ 注册/登录
     def _create_user(self, username: str, password: str, base_role: str = "free", must_change: bool = False,
-                     terms: bool = True) -> int:
+                     terms: bool = True, email: Optional[str] = None) -> int:
         return self.store.x(
-            "INSERT INTO users(username,password_hash,base_role,must_change_password,terms_accepted_at,created_at)"
-            " VALUES(?,?,?,?,?,?)",
+            "INSERT INTO users(username,password_hash,base_role,must_change_password,terms_accepted_at,created_at,email)"
+            " VALUES(?,?,?,?,?,?,?)",
             (username.lower(), security.hash_password(password), base_role, int(must_change),
-             time.time() if terms else None, time.time()))
+             time.time() if terms else None, time.time(), email))
+
+    @staticmethod
+    def _code_hash(email: str, code: str) -> str:
+        return sha256(f"{email}|{code}")
+
+    def send_register_code(self, email: str, ip: str) -> Dict[str, Any]:
+        if not self.email_verify or self.mailer is None:
+            raise AccessError(404, "当前未开启邮箱验证")
+        email = (email or "").strip().lower()
+        if len(email) > 254 or not EMAIL_RE.match(email):
+            raise AccessError(422, "邮箱格式不正确")
+        if self.store.q1("SELECT 1 FROM users WHERE email=?", (email,)):
+            raise AccessError(409, "该邮箱已注册")
+        now = time.time()
+        row = self.store.q1("SELECT sent_at FROM email_codes WHERE email=?", (email,))
+        if row and now - row["sent_at"] < CODE_GAP:
+            raise AccessError(429, "验证码发送过于频繁，请稍后再试", {"Retry-After": str(int(CODE_GAP - (now - row["sent_at"])) + 1)})
+        code = f"{secrets.randbelow(1000000):06d}"
+        self.store.x(
+            "INSERT OR REPLACE INTO email_codes(email,code_hash,expires_at,attempts,sent_at) VALUES(?,?,?,?,?)",
+            (email, self._code_hash(email, code), now + CODE_TTL, 0, now))
+        try:
+            self.mailer.send(email, "知数星耀 注册验证码",
+                             f"您的注册验证码是 {code}，{CODE_TTL // 60} 分钟内有效。如非本人操作，请忽略本邮件。")
+        except Exception as e:
+            self.store.x("DELETE FROM email_codes WHERE email=?", (email,))
+            raise AccessError(502, "验证码邮件发送失败，请稍后再试") from e
+        self.store.audit(email, "register_code_sent", ip=ip)
+        return {"sent": True, "expires_in": CODE_TTL}
+
+    def _check_email_code(self, email: str, code: str) -> None:
+        row = self.store.q1("SELECT code_hash,expires_at,attempts FROM email_codes WHERE email=?", (email,))
+        if not row:
+            raise AccessError(422, "请先获取邮箱验证码")
+        if time.time() > row["expires_at"]:
+            self.store.x("DELETE FROM email_codes WHERE email=?", (email,))
+            raise AccessError(422, "验证码已过期，请重新获取")
+        if row["attempts"] >= CODE_MAX_ATTEMPTS:
+            raise AccessError(429, "验证码错误次数过多，请重新获取")
+        if not hmac.compare_digest(row["code_hash"], self._code_hash(email, (code or "").strip())):
+            self.store.x("UPDATE email_codes SET attempts=attempts+1 WHERE email=?", (email,))
+            raise AccessError(422, "验证码错误")
+        self.store.x("DELETE FROM email_codes WHERE email=?", (email,))
 
     def bootstrap_admin(self, username: str, password: str) -> bool:
         if self.store.q1("SELECT 1 FROM users WHERE base_role='admin' LIMIT 1"):
@@ -131,9 +181,18 @@ class AccessService:
         self.store.audit("system", "bootstrap_admin", username)
         return True
 
-    def register(self, username: str, password: str, accept_terms: bool, invite_code: Optional[str], ip: str) -> Dict[str, Any]:
+    def register(self, username: str, password: str, accept_terms: bool, invite_code: Optional[str], ip: str,
+                 email: Optional[str] = None, email_code: Optional[str] = None) -> Dict[str, Any]:
         if not accept_terms:
             raise AccessError(422, "请先阅读并同意用户协议与隐私政策")
+        email = (email or "").strip().lower() or None
+        if self.email_verify:
+            if not email or not EMAIL_RE.match(email) or len(email) > 254:
+                raise AccessError(422, "请填写正确的邮箱")
+            if not email_code:
+                raise AccessError(422, "请填写邮箱验证码")
+        if email and self.store.q1("SELECT 1 FROM users WHERE email=?", (email,)):
+            raise AccessError(409, "该邮箱已注册")
         if not USERNAME_RE.match(username or ""):
             raise AccessError(422, "用户名为 3-32 位字母、数字或 _ . @ -")
         err = security.password_policy_error(password, username)
@@ -143,7 +202,9 @@ class AccessService:
             raise AccessError(422, "当前仅支持邀请码注册")
         if self.store.q1("SELECT 1 FROM users WHERE username=?", (username.lower(),)):
             raise AccessError(409, "用户名已被使用")
-        uid = self._create_user(username, password)
+        if self.email_verify:
+            self._check_email_code(email, email_code)
+        uid = self._create_user(username, password, email=email)
         self.store.audit(username, "register", ip=ip)
         out: Dict[str, Any] = {"user_id": uid}
         if invite_code:

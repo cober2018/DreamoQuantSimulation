@@ -23,6 +23,12 @@ class RegisterIn(BaseModel):
     password: str
     accept_terms: bool = False
     invite_code: Optional[str] = None
+    email: Optional[str] = None
+    email_code: Optional[str] = None
+
+
+class RegisterCodeIn(BaseModel):
+    email: str
 
 
 class LoginIn(BaseModel):
@@ -160,7 +166,20 @@ def build_router(access: AccessService, gate: Gate, settings, policies=None, sco
         if not ok:
             raise HTTPException(429, "注册过于频繁", headers={"Retry-After": str(wait)})
         try:
-            return access.register(body.username, body.password, body.accept_terms, body.invite_code, ip)
+            return access.register(body.username, body.password, body.accept_terms, body.invite_code, ip,
+                                   email=body.email, email_code=body.email_code)
+        except AccessError as e:
+            raise _err(e)
+
+    @r.post("/auth/register/code")
+    def register_code(body: RegisterCodeIn, request: Request):
+        check_origin(request)
+        ip = client_ip(request)
+        ok, wait = gate.limiter.hit(f"regcode:{ip}", 10, 3600)
+        if not ok:
+            raise HTTPException(429, "验证码请求过于频繁", headers={"Retry-After": str(wait)})
+        try:
+            return access.send_register_code(body.email, ip)
         except AccessError as e:
             raise _err(e)
 
