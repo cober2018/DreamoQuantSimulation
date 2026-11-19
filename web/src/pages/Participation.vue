@@ -175,10 +175,10 @@ watch(() => env.value.trade_date, loadHist)
 onMounted(loadHist)
 const heatOption = computed(() => {
   const rows = partHist.value?.rows || []
-  return { grid: { left: 44, right: 44, top: 30, bottom: 24 }, legend: { top: 0 }, tooltip: { trigger: 'axis' },
+  return { grid: { left: 44, right: 16, top: 30, bottom: 24 }, tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: rows.map((r) => r.date) },
-    yAxis: [{ type: 'value', name: '亿元' }, { type: 'value', name: '热度', min: 0, max: 100 }],
-    series: [{ name: '市场总成交额', type: 'bar', data: rows.map((r) => r.turnover) }, { name: '参与热度', type: 'line', yAxisIndex: 1, data: rows.map((r) => r.heat) }] }
+    yAxis: { type: 'value', name: '亿元' },
+    series: [{ name: '市场总成交额', type: 'bar', data: rows.map((r) => r.turnover) }] }
 })
 const pressOption = computed(() => {
   const rows = partHist.value?.rows || []
