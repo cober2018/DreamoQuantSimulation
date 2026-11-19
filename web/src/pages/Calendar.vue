@@ -40,7 +40,7 @@ import PageFrame from '../components/PageFrame.vue'
 import { useModule } from '../useModule'
 
 // 未登记的状态（含 unknown）显示「—」，不把上游原值的英文露给用户
-const PUB = { published: '已公布', scheduled: '待公布', upcoming: '待公布', revised: '已修正', delayed: '延期' }
+const PUB = { published: '已公布', scheduled: '待公布', upcoming: '待公布', revised: '已修正', delayed: '延期', not_applicable: '不适用' }
 const tradeDate = ref('')
 const { env, loading, load } = useModule('calendar', () => ({ trade_date: tradeDate.value }))
 const win = computed(() => env.value.data?.window || {})

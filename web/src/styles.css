@@ -1,22 +1,27 @@
+@import "./styles/tokens.css";
+
+/* 颜色和字体来自 C 设计系统 tokens（src/styles/tokens.css 由 design-system 生成，勿手改） */
 :root {
-  --bg: #f6f7f9;
-  --panel: #ffffff;
-  --text: #1c2330;
-  --muted: #6b7484;
-  --line: #e3e6eb;
-  --accent: #2f5d9b;
-  --rise: #d0342c;
-  --fall: #1a8f4c;
-  --warn-bg: #fff6e0;
-  --warn-text: #8a5a00;
-  --err-bg: #fdecec;
-  --err-text: #a12a22;
-  --info-bg: #eaf1fb;
-  --radius: 8px;
-  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --bg: var(--c-bg);
+  --panel: var(--c-surface);
+  --text: var(--c-ink);
+  --muted: var(--c-ink-3);
+  --line: var(--c-line);
+  --accent: var(--c-accent);
+  --rise: var(--c-up);
+  --fall: var(--c-down);
+  --warn-bg: var(--c-warn-soft, #fff3dc);
+  --warn-text: var(--c-warn);
+  --err-bg: #fbe9e7;
+  --err-text: var(--c-danger);
+  --info-bg: var(--c-surface-2);
+  --radius: var(--r-2);
+  --mono: var(--font-mono);
+  font-family: var(--font-sans);
   color: var(--text);
   background: var(--bg);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
 }
 
 * { box-sizing: border-box; }
@@ -28,17 +33,17 @@ a { color: var(--accent); text-decoration: none; }
   width: 200px; flex-shrink: 0; background: #17202e; color: #cfd6e2; padding: 20px 0;
   position: sticky; top: 0; height: 100vh;
 }
-.brand { padding: 0 20px 18px; font-weight: 600; color: #fff; font-size: 16px; }
+.sidebar .brand { padding: 0 20px 18px; font-weight: 600; color: #fff; font-size: 16px; }
 /* 侧栏是深色底：只放图形，且用反白版（深蓝改白、金色保留） */
 .trial-badge { margin: 0 20px 8px; padding: 4px 8px; border-radius: 4px; background: rgba(212, 167, 44, 0.18); color: #f0c75e; font-size: 12px; }
-.brand-mark { display: block; width: 36px; height: 36px; margin-bottom: 8px; }
-.brand small { display: block; font-weight: 400; color: #8a95a8; font-size: 12px; margin-top: 4px; }
+.sidebar .brand-mark { display: block; width: 36px; height: 36px; margin-bottom: 8px; }
+.sidebar .brand small { display: block; font-weight: 400; color: #8a95a8; font-size: 12px; margin-top: 4px; }
 .sidebar a { display: block; padding: 10px 20px; color: #cfd6e2; font-size: 14px; }
 .sidebar a.router-link-active { background: #24314a; color: #fff; border-left: 3px solid #6c9be0; padding-left: 17px; }
 .main { flex: 1; min-width: 0; padding: 24px 28px 40px; }
 
 .page-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
-.page-head h1 { font-size: 20px; margin: 0; margin-right: auto; }
+.page-head h1 { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 600; margin: 0; margin-right: auto; }
 .page-head .question { width: 100%; color: var(--muted); font-size: 13px; margin-top: -6px; }
 
 .badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--info-bg); color: var(--accent); }
@@ -51,7 +56,7 @@ a { color: var(--accent); text-decoration: none; }
 .banner.error { background: var(--err-bg); color: var(--err-text); display: flex; align-items: center; gap: 12px; }
 
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
-.panel h2 { font-size: 15px; margin: 0 0 12px; }
+.panel h2 { font-family: var(--font-display); font-size: var(--fs-md); font-weight: 600; margin: 0 0 12px; }
 .panel h2 small { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 8px; }
 
 .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
@@ -100,7 +105,7 @@ button.btn { border: 1px solid var(--line); background: #fff; border-radius: 6px
   .sidebar .lock { float: none; margin-left: 4px; }
   .page-head input[type="date"], .page-head input[type="text"] { flex: 1 1 140px; min-width: 0; }
   .sidebar { width: 100%; height: auto; position: static; display: flex; overflow-x: auto; padding: 8px 0; }
-  .brand { display: none; }
+  .sidebar .brand { display: none; }
   .sidebar a { white-space: nowrap; padding: 8px 14px; }
   .main { padding: 16px; }
 }
