@@ -4,7 +4,7 @@
       <div class="seg">
         <button v-for="t in IDX_TYPES" :key="t" :class="{ on: idxType === t }" @click="idxType = t">{{ t }}</button>
       </div>
-      <input type="date" v-model="tradeDate" aria-label="交易日" />
+      <input type="date" v-model="tradeDate" :min="idxType === '行业板块' ? '2026-06-01' : undefined" aria-label="交易日" />
     </template>
 
     <div class="panel" v-module="'structure'">
