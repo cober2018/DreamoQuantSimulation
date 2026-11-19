@@ -6,6 +6,11 @@
     <div class="panel">
       <h2>事件列表<small>窗口 {{ win.start_date || '—' }} 至 {{ win.end_date || '—' }}</small></h2>
       <div v-if="!events.length" class="empty-state">窗口内暂无已登记事件。</div>
+      <div class="panel-sub">
+        <h3 style="font-size:14px;margin:10px 0 6px">限售股解禁</h3>
+        <div v-if="!unlocks.length" class="muted" style="font-size:13px">限售股解禁数据待接入（中台上线后显示解禁日、股票数、参考市值和前五只个股）。</div>
+        <ShareUnlockCard v-for="u in unlocks" :key="u.event_id || u.event_date" :item="u" />
+      </div>
       <div v-for="(list, day) in grouped" :key="day" style="margin-bottom:14px">
         <h3 style="font-size:14px;margin:10px 0 6px">{{ day }}</h3>
         <div class="table-wrap">
@@ -38,6 +43,7 @@
 import { computed, ref } from 'vue'
 import PageFrame from '../components/PageFrame.vue'
 import { useModule } from '../useModule'
+import ShareUnlockCard from '../components/ShareUnlockCard.vue'
 
 // 未登记的状态（含 unknown）显示「—」，不把上游原值的英文露给用户
 const PUB = { published: '已公布', scheduled: '待公布', upcoming: '待公布', revised: '已修正', delayed: '延期', not_applicable: '不适用' }
@@ -46,7 +52,8 @@ const { env, loading, load } = useModule('calendar', () => ({ trade_date: tradeD
 const win = computed(() => env.value.data?.window || {})
 const hasAi = computed(() => (env.value.data?.events || []).some((e) => e.ai_curated === true))
 const events = computed(() => env.value.data?.events || [])
-const grouped = computed(() => events.value.reduce((acc, e) => {
+const unlocks = computed(() => events.value.filter((e) => e.category === 'share_unlock'))
+const grouped = computed(() => events.value.filter((e) => e.category !== 'share_unlock').reduce((acc, e) => {
   (acc[e.event_date || '日期未定'] ||= []).push(e)
   return acc
 }, {}))
