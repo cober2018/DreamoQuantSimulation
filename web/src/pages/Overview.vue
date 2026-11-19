@@ -82,6 +82,16 @@ import { can, session } from '../auth'
 import { PAGES } from '../pageCatalog'
 
 const more = PAGES.filter((p) => p.key !== 'overview')
+const idxSpark = (code) => (idxHistory.value?.rows || []).filter((r) => r.index_code === code).map((r) => r.close)
+const turnoverOption = computed(() => {
+  const rows = turnoverHist.value?.rows || []
+  return { grid: { left: 40, right: 10, top: 10, bottom: 24 }, xAxis: { type: 'category', data: rows.map((r) => r.date) },
+    yAxis: { type: 'value', name: '亿元' }, tooltip: { trigger: 'axis' },
+    series: [{ type: 'bar', data: rows.map((r) => (r.turnover == null ? null : r.turnover)), itemStyle: { color: '#2f5d9b' } }] }
+})
+
+const tradeDate = ref('')
+const { env, loading, load } = useModule('overview', () => ({ trade_date: tradeDate.value }))
 const idxOverview = ref(null)
 const idxHistory = ref(null)
 const poolCounts = ref(null)
@@ -93,16 +103,6 @@ async function loadExtras() {
 }
 watch(tradeDate, loadExtras)
 onMounted(loadExtras)
-const idxSpark = (code) => (idxHistory.value?.rows || []).filter((r) => r.index_code === code).map((r) => r.close)
-const turnoverOption = computed(() => {
-  const rows = turnoverHist.value?.rows || []
-  return { grid: { left: 40, right: 10, top: 10, bottom: 24 }, xAxis: { type: 'category', data: rows.map((r) => r.date) },
-    yAxis: { type: 'value', name: '亿元' }, tooltip: { trigger: 'axis' },
-    series: [{ type: 'bar', data: rows.map((r) => (r.turnover == null ? null : r.turnover)), itemStyle: { color: '#2f5d9b' } }] }
-})
-
-const tradeDate = ref('')
-const { env, loading, load } = useModule('overview', () => ({ trade_date: tradeDate.value }))
 const d = computed(() => env.value.data || {})
 // 两市成交额与参与度页同源（participation_observation.total_amount_billion，精确到亿元）
 const partData = ref(null)
