@@ -5,7 +5,7 @@
     <div class="panel" v-module="'observation'" v-if="obs">
       <h2>市场参与与卖压<small>原始统计</small><DateTag :date="obs.trade_date" :page-date="env.trade_date" /></h2>
       <div class="grid">
-        <div class="stat"><div class="label">全市场成交额</div><div class="value">{{ fmt.num(obs.total_amount_billion, 0) }} 亿元</div><div class="sub">{{ fmt.num(obs.count_stocks, 0) }} 只股票</div></div>
+        <div class="stat"><div class="label">全市场成交额</div><div class="value">{{ obs.total_amount_billion == null ? '—' : (obs.total_amount_billion / 10000).toFixed(2) }} 万亿元</div><div class="sub">{{ fmt.num(obs.count_stocks, 0) }} 只股票 · 与总览同一口径</div></div>
         <div class="stat" v-ind="'participation.observation.amount_ratio_20d'"><div class="label">成交额 / 前 20 日中位数</div><div class="value">{{ fmt.num(obs.amount_ratio_20d, 2) }} 倍</div></div>
         <div class="stat" v-ind="'participation.observation.participation_pctile_60d'"><div class="label">成交额分位（60 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_60d, 1) }}</div><div class="sub">0–100，不含当日</div></div>
         <div class="stat" v-ind="'participation.observation.participation_pctile_250d'"><div class="label">成交额分位（250 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_250d, 1) }}</div></div>

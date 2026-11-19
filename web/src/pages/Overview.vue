@@ -12,7 +12,7 @@
         <div class="label">上涨占比</div><div class="value">{{ fmt.ratio(d.up_ratio) }}</div>
         <div class="sub">上涨 ÷（上涨 + 下跌）</div>
       </div>
-      <div class="stat" v-ind="'overview.market.turnover_yi'"><div class="label">两市成交额</div><div class="value">{{ fmt.num(d.turnover_yi, 0) }}</div><div class="sub">亿元</div></div>
+      <div class="stat" v-ind="'overview.market.turnover_yi'"><div class="label">两市成交额</div><div class="value">{{ d.turnover_yi == null ? '—' : (d.turnover_yi / 10000).toFixed(2) }} 万亿元</div><div class="sub">与参与度页同一口径</div></div>
     </div>
     <div class="panel" style="margin-top:16px" v-if="d.up_count != null">
       <h2>涨跌家数分布</h2>

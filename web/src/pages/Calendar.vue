@@ -14,15 +14,15 @@
             <thead><tr><th class="left">时间</th><th class="left">国家/地区</th><th class="left">事件</th><th class="left">周期 · 单位</th><th>前值</th><th>市场预期*</th><th>公布值</th><th class="left">状态</th><th>来源重要性</th></tr></thead>
             <tbody>
               <tr v-for="e in list" :key="e.event_id">
-                <td class="left">{{ e.event_time || '待定' }}</td>
-                <td class="left">{{ e.country || '—' }}</td>
-                <td class="left wrap"><strong>{{ e.title || '—' }}</strong> <span v-if="e.ai_curated === true" class="badge ai">AI 整理</span> <span class="muted" v-if="e.indicator_code && e.indicator_code !== 'UNKNOWN'">{{ e.event_type_label }} {{ e.indicator_code }}</span><span class="muted" v-else-if="e.event_type_label">{{ e.event_type_label }}</span></td>
-                <td class="left">{{ [e.period, e.unit].filter(Boolean).join(' · ') || '—' }}</td>
-                <td>{{ e.previous_value || '—' }}</td>
-                <td>{{ e.consensus_value || '—' }}</td>
-                <td><strong>{{ e.actual_value || '未公布' }}</strong></td>
-                <td class="left">{{ PUB[e.publication_status] || '—' }}</td>
-                <td>{{ e.source_importance != null ? '★'.repeat(Number(e.source_importance)) || '—' : '—' }}</td>
+                <td data-label="时间" class="left">{{ e.event_time || '待定' }}</td>
+                <td data-label="地区" class="left">{{ e.country || '—' }}</td>
+                <td data-label="事件" class="left wrap"><strong>{{ e.title || '—' }}</strong> <span v-if="e.ai_curated === true" class="badge ai">AI 整理</span> <span class="muted" v-if="e.indicator_code && e.indicator_code !== 'UNKNOWN'">{{ e.event_type_label }} {{ e.indicator_code }}</span><span class="muted" v-else-if="e.event_type_label">{{ e.event_type_label }}</span></td>
+                <td data-label="周期 · 单位" class="left">{{ [e.period, e.unit].filter(Boolean).join(' · ') || '—' }}</td>
+                <td data-label="前值">{{ e.previous_value || '—' }}</td>
+                <td data-label="市场预期">{{ e.consensus_value || '—' }}</td>
+                <td data-label="公布值"><strong>{{ e.actual_value || '未公布' }}</strong></td>
+                <td data-label="状态" class="left">{{ PUB[e.publication_status] || '—' }}</td>
+                <td data-label="来源重要性">{{ e.source_importance != null ? '★'.repeat(Number(e.source_importance)) || '—' : '—' }}</td>
               </tr>
             </tbody>
           </table>
