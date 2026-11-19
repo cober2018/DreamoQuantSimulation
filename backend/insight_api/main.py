@@ -33,6 +33,13 @@ DATE_PATTERN = r"^\d{4}-\d{2}-\d{2}$"
 IdxType = Literal["行业板块", "概念板块", "地域板块"]
 
 
+def _build_mailer(settings):
+    if not settings.email_verify:
+        return None
+    from .access.mailer import SmtpMailer
+    return SmtpMailer(settings.smtp_host, settings.smtp_port, settings.smtp_user, settings.smtp_password, settings.mail_from)
+
+
 def create_app() -> FastAPI:
     settings = load_settings()
     validate_registry()
@@ -60,7 +67,8 @@ def create_app() -> FastAPI:
         os.makedirs(os.path.dirname(settings.db_path) or ".", exist_ok=True)
         access = AccessService(Store(settings.db_path), secrets_list, registration=settings.registration,
                                payment_enabled=settings.payment_enabled, trial_role=settings.trial_role,
-                               trial_until=settings.trial_until)
+                               trial_until=settings.trial_until, email_verify=settings.email_verify,
+                               mailer=_build_mailer(settings))
         if settings.trial_role and not access.store.q1("SELECT 1 FROM roles WHERE name=?", (settings.trial_role,)):
             raise ConfigError(f"INSIGHT_TRIAL_ROLE 不存在: {settings.trial_role}")
         if settings.bootstrap_admin_user and settings.bootstrap_admin_password:
@@ -138,7 +146,8 @@ def create_app() -> FastAPI:
     @app.get("/api/v1/meta/trial")
     async def trial():
         # 介绍页未登录可读；只给截止时间，不含其他配置
-        return {"until": access.trial_until if access and access.trial_active() else None}
+        return {"until": access.trial_until if access and access.trial_active() else None,
+                "email_verify": bool(access and access.email_verify)}
 
     @app.get("/api/v1/meta/content-scope")
     async def content_scope():

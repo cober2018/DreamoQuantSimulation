@@ -66,6 +66,8 @@ CREATE TABLE IF NOT EXISTS audit_log(
   id INTEGER PRIMARY KEY AUTOINCREMENT, at REAL NOT NULL, actor TEXT, action TEXT NOT NULL, target TEXT,
   detail TEXT, ip TEXT);
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS email_codes(email TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at REAL NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0, sent_at REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS plans(
   id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, role TEXT NOT NULL, duration_days INTEGER NOT NULL,
   price_cents INTEGER NOT NULL, listed INTEGER NOT NULL DEFAULT 0, sort INTEGER NOT NULL DEFAULT 0, note TEXT,
@@ -105,6 +107,10 @@ class Store:
         self._conn.execute("PRAGMA foreign_keys=ON")
         with self._lock:
             self._conn.executescript(SCHEMA)
+            cols = [r["name"] for r in self._conn.execute("PRAGMA table_info(users)")]
+            if "email" not in cols:
+                self._conn.execute("ALTER TABLE users ADD COLUMN email TEXT")
+            self._conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_users_email ON users(email) WHERE email IS NOT NULL")
         self._seed()
 
     # ---- 基础 ----

@@ -80,8 +80,10 @@ export async function login(username, password) {
   return res
 }
 
-export const register = (username, password, accept_terms, invite_code) =>
-  postJson('/api/v1/auth/register', { username, password, accept_terms, invite_code: invite_code || null })
+export const register = (username, password, accept_terms, invite_code, email, email_code) =>
+  postJson('/api/v1/auth/register', { username, password, accept_terms, invite_code: invite_code || null, email: email || null, email_code: email_code || null })
+
+export const sendRegisterCode = (email) => postJson('/api/v1/auth/register/code', { email })
 
 export async function logout() {
   await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'same-origin' })

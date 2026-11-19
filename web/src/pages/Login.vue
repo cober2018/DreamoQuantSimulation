@@ -8,6 +8,15 @@
         <label>用户名<input v-model.trim="username" autocomplete="username" required minlength="3" maxlength="32" /></label>
         <label>密码<input v-model="password" type="password" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required /></label>
         <template v-if="mode === 'register'">
+          <template v-if="emailVerify">
+            <label>邮箱<input v-model.trim="email" type="email" autocomplete="email" required /></label>
+            <label>邮箱验证码
+              <span class="code-row">
+                <input v-model.trim="emailCode" inputmode="numeric" maxlength="6" required />
+                <button type="button" class="btn" :disabled="cooldown > 0 || busy" @click="sendCode">{{ cooldown > 0 ? `${cooldown} 秒后重发` : '获取验证码' }}</button>
+              </span>
+            </label>
+          </template>
           <label>邀请码（选填）<input v-model.trim="invite" placeholder="XXXX-XXXX-XXXX" /></label>
           <label class="check">
             <input type="checkbox" v-model="terms" />
@@ -28,9 +37,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { login, register } from '../auth'
+import { login, register, sendRegisterCode } from '../auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -41,13 +50,35 @@ const invite = ref('')
 const terms = ref(false)
 const error = ref('')
 const busy = ref(false)
+const email = ref('')
+const emailCode = ref('')
+const emailVerify = ref(false)
+const cooldown = ref(0)
+let timer = null
+
+onMounted(async () => {
+  try {
+    const r = await fetch('/api/v1/meta/trial')
+    if (r.ok) emailVerify.value = !!(await r.json()).email_verify
+  } catch { /* 网络失败时不显示验证码栏，注册按后端规则处理 */ }
+})
+onBeforeUnmount(() => clearInterval(timer))
+
+async function sendCode() {
+  error.value = ''
+  const r = await sendRegisterCode(email.value)
+  if (!r.ok) { error.value = r.data.detail || '验证码发送失败'; return }
+  cooldown.value = 60
+  clearInterval(timer)
+  timer = setInterval(() => { cooldown.value = Math.max(0, cooldown.value - 1); if (!cooldown.value) clearInterval(timer) }, 1000)
+}
 
 async function submit() {
   error.value = ''
   busy.value = true
   try {
     if (mode.value === 'register') {
-      const r = await register(username.value, password.value, terms.value, invite.value)
+      const r = await register(username.value, password.value, terms.value, invite.value, email.value, emailCode.value)
       if (!r.ok) { error.value = r.data.detail || '注册失败'; return }
     }
     const r = await login(username.value, password.value)
@@ -58,6 +89,11 @@ async function submit() {
   }
 }
 </script>
+
+<style scoped>
+.code-row { display: flex; gap: 8px; }
+.code-row input { flex: 1; }
+</style>
 
 <style scoped>
 .auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
