@@ -1,0 +1,117 @@
+/* 知数星耀 · 方向 B「研报纸本」设计 token
+   亮色 = 暖白纸 + 墨黑字 + 唯一强调色「墨蓝」；暗色 = 深墨底。
+   强调色不用牛血红：A 股红色已表示上涨，再用红做强调会和涨跌混淆。 */
+
+/* 衬线字体 'ZS Serif'（Noto Serif SC 子集，600 / 900 两档）不在这里用 @font-face 声明，
+   而是首屏画完后由 src/lib/fonts.js 用 FontFace 加载：中文等宽，换字体几乎不引起布局偏移，
+   首屏也不用等 120 KB 字体。加载前回落到系统宋体（Songti SC / 思源宋体）。 */
+
+:root {
+  /* ---------- 颜色：亮色（纸本） ---------- */
+  --paper: hsl(40 33% 96%);          /* 页面纸色 */
+  --paper-2: hsl(40 28% 93%);        /* 次级纸面：表头、边栏 */
+  --paper-3: hsl(38 22% 89%);        /* 悬停、骨架 */
+  --sheet: hsl(40 40% 98.5%);        /* 抬起的纸片 */
+  --ink: hsl(30 12% 10%);            /* 正文墨色 */
+  --ink-2: hsl(30 8% 30%);           /* 次级文字 */
+  --ink-3: hsl(30 6% 40%);           /* 注释（对纸色 ≥ 4.5:1） */
+  --rule: hsl(35 14% 78%);           /* 细线 */
+  --rule-strong: hsl(30 12% 18%);    /* 粗线 / 报头双线 */
+  --accent: hsl(214 58% 30%);        /* 墨蓝 */
+  --accent-2: hsl(214 50% 42%);
+  --accent-wash: hsl(214 45% 92%);
+  --on-accent: hsl(40 33% 97%);
+  --up: hsl(3 52% 42%);              /* A 股上涨：降饱和朱红 */
+  --up-wash: hsl(5 50% 92%);
+  --down: hsl(158 38% 28%);          /* A 股下跌：降饱和墨绿 */
+  --down-wash: hsl(150 25% 90%);
+  --warn: hsl(32 70% 34%);
+  --focus: hsl(214 80% 45%);
+  --mark: hsl(46 90% 72% / .55);     /* 荧光笔划线 */
+
+  /* ---------- 字体 ---------- */
+  --font-serif: 'ZS Serif', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC',
+    'Noto Sans CJK SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* 字号阶梯：1.2 比例，取整到偶数像素附近 */
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-base: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+  --fs-3xl: 36px;
+  --fs-4xl: 48px;
+  --fs-5xl: 64px;
+  --lh-tight: 1.2;
+  --lh-snug: 1.45;
+  --lh-body: 1.7;
+
+  /* ---------- 间距：4px 基数 ---------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+
+  /* ---------- 圆角：纸本以直角为主 ---------- */
+  --r-0: 0;
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-pill: 999px;
+
+  /* ---------- 阴影：纸张叠放感，极轻 ---------- */
+  --shadow-1: 0 1px 0 hsl(30 20% 20% / .06);
+  --shadow-2: 0 1px 2px hsl(30 20% 20% / .06), 0 8px 24px -12px hsl(30 20% 20% / .18);
+  --shadow-3: 0 2px 4px hsl(30 20% 20% / .06), 0 24px 48px -24px hsl(30 20% 20% / .28);
+
+  /* ---------- 动效 ---------- */
+  --dur-1: 150ms;
+  --dur-2: 200ms;
+  --dur-3: 250ms;
+  --dur-draw: 600ms;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+
+  --measure: 40em;
+  --shell: 1280px;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --paper: hsl(222 24% 9%);
+  --paper-2: hsl(222 20% 12%);
+  --paper-3: hsl(222 16% 17%);
+  --sheet: hsl(222 22% 11%);
+  --ink: hsl(40 22% 89%);
+  --ink-2: hsl(40 10% 74%);
+  --ink-3: hsl(40 7% 64%);
+  --rule: hsl(222 12% 24%);
+  --rule-strong: hsl(40 15% 80%);
+  --accent: hsl(212 62% 72%);
+  --accent-2: hsl(212 55% 62%);
+  --accent-wash: hsl(214 35% 20%);
+  --on-accent: hsl(222 30% 10%);
+  --up: hsl(4 62% 66%);
+  --up-wash: hsl(4 35% 20%);
+  --down: hsl(152 36% 56%);
+  --down-wash: hsl(152 25% 17%);
+  --warn: hsl(36 70% 64%);
+  --focus: hsl(212 90% 70%);
+  --mark: hsl(212 60% 60% / .2);
+  --shadow-1: 0 1px 0 hsl(0 0% 0% / .3);
+  --shadow-2: 0 1px 2px hsl(0 0% 0% / .3), 0 8px 24px -12px hsl(0 0% 0% / .6);
+  --shadow-3: 0 2px 4px hsl(0 0% 0% / .3), 0 24px 48px -24px hsl(0 0% 0% / .7);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-1: 0ms; --dur-2: 0ms; --dur-3: 0ms; --dur-draw: 0ms; }
+}
