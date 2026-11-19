@@ -8,8 +8,12 @@
       <div v-if="!events.length" class="empty-state">窗口内暂无已登记事件。</div>
       <div class="panel-sub">
         <h3 style="font-size:14px;margin:10px 0 6px">限售股解禁</h3>
-        <div v-if="!unlocks.length" class="muted" style="font-size:13px">限售股解禁数据待接入（中台上线后显示解禁日、股票数、参考市值和前五只个股）。</div>
-        <ShareUnlockCard v-for="u in unlocks" :key="u.event_id || u.event_date" :item="u" />
+        <div v-if="unlocks === null" class="muted" style="font-size:13px">限售股解禁数据暂缺，稍后再试。</div>
+        <div v-else-if="!unlocks.length" class="muted" style="font-size:13px">所选窗口内暂无限售股解禁。</div>
+        <template v-else>
+          <p class="note">{{ env.data?.share_unlock_label }}</p>
+          <ShareUnlockCard v-for="u in unlocks" :key="u.event_date + u.display_title" :item="u" />
+        </template>
       </div>
       <div v-for="(list, day) in grouped" :key="day" style="margin-bottom:14px">
         <h3 style="font-size:14px;margin:10px 0 6px">{{ day }}</h3>
@@ -52,7 +56,7 @@ const { env, loading, load } = useModule('calendar', () => ({ trade_date: tradeD
 const win = computed(() => env.value.data?.window || {})
 const hasAi = computed(() => (env.value.data?.events || []).some((e) => e.ai_curated === true))
 const events = computed(() => env.value.data?.events || [])
-const unlocks = computed(() => events.value.filter((e) => e.category === 'share_unlock'))
+const unlocks = computed(() => env.value.data?.share_unlock ?? null)
 const grouped = computed(() => events.value.filter((e) => e.category !== 'share_unlock').reduce((acc, e) => {
   (acc[e.event_date || '日期未定'] ||= []).push(e)
   return acc
