@@ -5,14 +5,14 @@
     <div class="panel" v-module="'observation'" v-if="obs">
       <h2>市场参与与卖压<small>原始统计</small><DateTag :date="obs.trade_date" :page-date="env.trade_date" /></h2>
       <div class="grid">
-        <div class="stat"><div class="label">全市场成交额</div><div class="value">{{ fmt.num(obs.total_amount_billion, 0) }} 亿元</div><div class="sub">{{ fmt.num(obs.count_stocks, 0) }} 只股票</div></div>
+        <div class="stat"><div class="label">全市场成交额</div><div class="value">{{ fmt.num(obs.total_amount_billion, 0) }} 亿元</div><div class="sub">{{ fmt.num(obs.count_stocks, 0) }} 只股票 · 与总览同一口径</div></div>
         <div class="stat" v-ind="'participation.observation.amount_ratio_20d'"><div class="label">成交额 / 前 20 日中位数</div><div class="value">{{ fmt.num(obs.amount_ratio_20d, 2) }} 倍</div></div>
         <div class="stat" v-ind="'participation.observation.participation_pctile_60d'"><div class="label">成交额分位（60 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_60d, 1) }}</div><div class="sub">0–100，不含当日</div></div>
         <div class="stat" v-ind="'participation.observation.participation_pctile_250d'"><div class="label">成交额分位（250 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_250d, 1) }}</div></div>
         <div class="stat" v-ind="'participation.observation.low_participation_streak'"><div class="label">低参与连续天数</div><div class="value">{{ fmt.num(obs.low_participation_streak, 0) }}</div></div>
         <div class="stat" v-ind="'participation.observation.active_sell_ratio'"><div class="label">主动卖出占比</div><div class="value">{{ fmt.ratio(obs.active_sell_ratio) }}</div></div>
         <div class="stat" v-ind="'participation.observation.sell_pressure_change_1d'"><div class="label">卖压缓和程度（1 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_1d, 3) }}</div></div>
-        <div class="stat" v-ind="'participation.observation.sell_pressure_change_3d'"><div class="label">卖压缓和程度（3 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
+        <div class="stat" v-ind="'participation.observation.sell_pressure_change_3d'"><div class="label">近 3 日卖压趋势（斜率，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
         <div class="stat"><div class="label">委托失衡</div><div class="value">{{ fmt.signed(obs.order_imbalance, 3) }}</div><div class="sub">1 日变化 {{ fmt.signed(obs.order_imbalance_delta_1d, 3) }}</div></div>
       </div>
       <p class="note">分位为相对此前历史窗口的位置，只描述历史相对水平，不是概率或参与人数比例。</p>

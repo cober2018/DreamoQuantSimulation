@@ -124,3 +124,15 @@ a.btn { display: inline-block; border: 1px solid var(--line); background: #fff; 
 .lock-card a { margin-left: 6px; }
 .sub-h { font-size: 13px; margin: 14px 0 8px; color: var(--muted); font-weight: 500; }
 .empty-state p { margin: 0 0 12px; }
+
+/* 手机与平板（含侧栏占宽的 768）：日历每条事件改成卡片，字段逐行显示，标题占满整行 */
+@media (max-width: 1100px) {
+  .calendar-table colgroup, .calendar-table thead { display: none; }
+  .calendar-table, .calendar-table tbody, .calendar-table tr, .calendar-table td { display: block; width: 100%; }
+  .calendar-table tr { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; margin-bottom: 8px; background: var(--panel); }
+  .calendar-table td { border: 0; padding: 3px 0; text-align: left; white-space: normal; word-break: break-word; }
+  .calendar-table td::before { content: attr(data-label); color: var(--muted); font-size: 12px; margin-right: 8px; }
+  .calendar-table td.wrap { min-width: 0; }
+  .calendar-table td[data-label="事件"] { font-size: 14px; }
+  .calendar-table td[data-label="事件"]::before { content: none; }
+}

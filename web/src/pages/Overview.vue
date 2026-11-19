@@ -12,7 +12,7 @@
         <div class="label">上涨占比</div><div class="value">{{ fmt.ratio(d.up_ratio) }}</div>
         <div class="sub">上涨 ÷（上涨 + 下跌）</div>
       </div>
-      <div class="stat" v-ind="'overview.market.turnover_yi'"><div class="label">两市成交额</div><div class="value">{{ fmt.num(d.turnover_yi, 0) }}</div><div class="sub">亿元</div></div>
+      <div class="stat" v-ind="'overview.market.turnover_yi'"><div class="label">两市成交额</div><div class="value">{{ turnoverBillion == null ? '—' : fmt.num(turnoverBillion, 0) }} 亿元</div><div class="sub">与参与度页同一口径</div></div>
     </div>
     <div class="panel" style="margin-top:16px" v-if="d.up_count != null">
       <h2>涨跌家数分布</h2>
@@ -31,10 +31,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
-import { fmt } from '../api'
+import { fmt, getModule } from '../api'
 import { useModule } from '../useModule'
 import { can, session } from '../auth'
 import { PAGES } from '../pageCatalog'
@@ -44,6 +44,17 @@ const more = PAGES.filter((p) => p.key !== 'overview')
 const tradeDate = ref('')
 const { env, loading, load } = useModule('overview', () => ({ trade_date: tradeDate.value }))
 const d = computed(() => env.value.data || {})
+// 两市成交额与参与度页同源（participation_observation.total_amount_billion，精确到亿元）
+const partData = ref(null)
+async function loadTurnover() {
+  // 只取参与度的观察字段，不改动本页的模块权限状态
+  if (!can('page.participation')) { partData.value = null; return }
+  const r = await getModule('participation', { trade_date: tradeDate.value })
+  partData.value = r?.data || null
+}
+watch(tradeDate, loadTurnover)
+onMounted(loadTurnover)
+const turnoverBillion = computed(() => partData.value?.participation_observation?.total_amount_billion ?? null)
 const breadthOption = computed(() => ({
   grid: { left: 10, right: 10, top: 10, bottom: 10 },
   xAxis: { type: 'value', show: false, max: (d.value.up_count || 0) + (d.value.down_count || 0) },
