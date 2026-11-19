@@ -1,0 +1,97 @@
+---
+// 公开站页头：产品 / 价格 / 文档 / 博客 / 登录（ZS-115 §二）。窄屏收成一个展开菜单。
+import BrandMark from './BrandMark.astro';
+import { APP_LINKS } from '../site.config.mjs';
+const LINKS = [
+  { key: 'product', label: '产品', to: '/' },
+  { key: 'pricing', label: '价格', to: '/pricing/' },
+  { key: 'docs', label: '文档', to: '/docs/' },
+  { key: 'blog', label: '博客', to: '/blog/' },
+];
+const here = Astro.url.pathname;
+const current = (to: string) => (to === '/' ? here === '/' : here.startsWith(to));
+---
+<header class="sh">
+  <div class="wrap row">
+    <a href="/" class="brand" aria-label="知数星耀 首页"><BrandMark size={28} /><span class="display">知数星耀</span></a>
+    <nav id="site-nav" class="nav" aria-label="主导航">
+      {LINKS.map((l) => <a id={`nav-${l.key}`} href={l.to} class="nl" aria-current={current(l.to) ? 'page' : undefined}>{l.label}</a>)}
+      <a href={APP_LINKS.login} class="nl only-m">登录</a>
+    </nav>
+    <div class="acts">
+      <button id="theme-toggle" class="tt" type="button" aria-pressed="false" title="切换主题">
+        <span class="sr-only">暗色主题</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+          <circle cx="8" cy="8" r="3.2" class="sun" />
+          <g class="rays"><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" /></g>
+          <path class="moon" d="M12.5 10.2A5.2 5.2 0 0 1 5.8 3.5 5.2 5.2 0 1 0 12.5 10.2Z" />
+        </svg>
+      </button>
+      <a id="nav-login" class="btn sm login" href={APP_LINKS.login}>登录</a>
+      <button id="nav-toggle" class="menu" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">展开菜单</span>
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 6h12M3 12h12" /></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  const root = document.documentElement;
+  const tt = document.getElementById('theme-toggle')!;
+  const sync = () => tt.setAttribute('aria-pressed', String(root.dataset.theme === 'dark'));
+  sync();
+  tt.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    const apply = () => {
+      root.dataset.theme = next;
+      try { localStorage.setItem('zx-theme', next); } catch { /* 隐私模式下不记偏好 */ }
+      sync();
+    };
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if ((document as any).startViewTransition && !reduce) (document as any).startViewTransition(apply);
+    else apply();
+  });
+  const btn = document.getElementById('nav-toggle')!;
+  const nav = document.getElementById('site-nav')!;
+  btn.addEventListener('click', () => {
+    const open = btn.getAttribute('aria-expanded') !== 'true';
+    btn.setAttribute('aria-expanded', String(open));
+    nav.classList.toggle('open', open);
+    btn.querySelector('.sr-only')!.textContent = open ? '收起菜单' : '展开菜单';
+    btn.querySelector('path')!.setAttribute('d', open ? 'M4 4l10 10M14 4L4 14' : 'M3 6h12M3 12h12');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && nav.classList.contains('open')) { btn.click(); btn.focus(); }
+  });
+</script>
+
+<style>
+  .sh { position: relative; z-index: var(--z-header); border-bottom: 1px solid var(--c-line); background: var(--c-bg); }
+  .row { display: flex; align-items: center; gap: var(--s-6); height: 72px; }
+  .brand { display: inline-flex; align-items: center; gap: var(--s-2); font-size: 18px; }
+  .nav { display: flex; gap: var(--s-1); margin-left: var(--s-2); }
+  .nl { position: relative; display: inline-flex; align-items: center; height: 36px; padding: 0 var(--s-3); border-radius: var(--r-2); font-size: var(--fs-sm); color: var(--c-ink-2); transition: color var(--dur-2), background-color var(--dur-2); }
+  .nl:hover { color: var(--c-ink); background: var(--c-surface-hover); }
+  .nl[aria-current='page'] { color: var(--c-ink); }
+  .nl[aria-current='page']::after { content: ''; position: absolute; left: var(--s-3); right: var(--s-3); bottom: 4px; height: 1px; background: var(--c-accent); }
+  .only-m { display: none; }
+  .acts { margin-left: auto; display: flex; align-items: center; gap: var(--s-2); }
+  .tt, .menu { width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--r-2); color: var(--c-ink-2); border: 1px solid var(--c-line); }
+  .tt:hover { color: var(--c-ink); border-color: var(--c-line-strong); background: var(--c-surface-hover); }
+  .tt svg, .menu svg { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
+  .moon { display: none; }
+  :global([data-theme='dark']) .moon { display: block; }
+  :global([data-theme='dark']) .sun, :global([data-theme='dark']) .rays { display: none; }
+  .menu { display: none; }
+  @media (max-width: 899px) {
+    .row { height: 56px; gap: var(--s-3); }
+    .menu { display: grid; }
+    .login { display: none; }
+    .nav { display: none; position: absolute; left: var(--s-4); right: var(--s-4); top: 60px; margin: 0; flex-direction: column; padding: var(--s-2); border: 1px solid var(--c-line-strong); border-radius: var(--r-3); background: var(--c-surface); box-shadow: var(--shadow-2); }
+    .nav.open { display: flex; }
+    .nl { height: 44px; font-size: var(--fs-md); }
+    .nl[aria-current='page']::after { left: 0; right: auto; top: 12px; bottom: 12px; width: 2px; height: auto; }
+    .only-m { display: inline-flex; border-top: 1px solid var(--c-line); border-radius: 0; margin-top: var(--s-1); }
+  }
+</style>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dk.dreamotech.cn/sitemap-index.xml

@@ -1,0 +1,23 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../../layouts/Base.astro';
+import BlogList from '../../../components/BlogList.astro';
+import { getCollection } from 'astro:content';
+import { isVisible, byDateDesc, tags, TAG_INDEX_MIN } from '../../../lib/blog';
+export const getStaticPaths = (async () => {
+  const all = (await getCollection('blog', isVisible)).sort(byDateDesc);
+  return tags
+    .map((t) => ({ t, posts: all.filter((e) => e.data.tags.includes(t.id)) }))
+    .filter((x) => x.posts.length)
+    .map(({ t, posts }) => ({ params: { tag: t.id }, props: { label: t.label, posts } }));
+}) satisfies GetStaticPaths;
+const { label, posts } = Astro.props;
+---
+<!-- 文章数少于 TAG_INDEX_MIN 的标签页不进索引，也不进 sitemap -->
+<Base title={`标签：${label} · 博客`} description={`知数星耀博客中带「${label}」标签的文章。`} noindex={posts.length < TAG_INDEX_MIN}>
+  <div class="wrap page">
+    <p class="eyebrow"><a href="/blog/">博客</a> · 标签</p>
+    <h1 class="page-title">{label}</h1>
+    <BlogList posts={posts} />
+  </div>
+</Base>

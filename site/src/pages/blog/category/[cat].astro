@@ -1,0 +1,23 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../../layouts/Base.astro';
+import BlogList from '../../../components/BlogList.astro';
+import { getCollection } from 'astro:content';
+import { isVisible, byDateDesc, categories } from '../../../lib/blog';
+// 只为有文章的分类出页
+export const getStaticPaths = (async () => {
+  const all = (await getCollection('blog', isVisible)).sort(byDateDesc);
+  return categories
+    .map((c) => ({ c, posts: all.filter((e) => e.data.category === c.id) }))
+    .filter((x) => x.posts.length)
+    .map(({ c, posts }) => ({ params: { cat: c.id }, props: { label: c.label, posts } }));
+}) satisfies GetStaticPaths;
+const { label, posts } = Astro.props;
+---
+<Base title={`${label} · 博客`} description={`知数星耀博客「${label}」分类下的文章。`} crumbs={[{ name: '博客', path: '/blog/' }, { name: label, path: Astro.url.pathname }]}>
+  <div class="wrap page">
+    <p class="eyebrow"><a href="/blog/">博客</a> · 分类</p>
+    <h1 class="page-title">{label}</h1>
+    <BlogList posts={posts} />
+  </div>
+</Base>

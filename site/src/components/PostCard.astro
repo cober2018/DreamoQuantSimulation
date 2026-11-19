@@ -1,0 +1,21 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { categoryLabel } from '../lib/blog';
+import { formatDateZh, isoDate } from '../lib/date';
+const { entry, headingLevel = 'h2' } = Astro.props as { entry: CollectionEntry<'blog'>; headingLevel?: 'h2' | 'h3' };
+const H = headingLevel;
+const d = entry.data;
+---
+<article class="pc">
+  <p class="meta"><a href={`/blog/category/${d.category}/`}>{categoryLabel(d.category)}</a><time datetime={isoDate(d.pubDate)}>{formatDateZh(d.pubDate)}</time>{d.draft && <span class="badge sample">草稿</span>}</p>
+  <H class="t"><a href={`/blog/${entry.id}/`}>{d.title}</a></H>
+  <p class="desc">{d.description}</p>
+</article>
+<style>
+  .pc { padding: var(--s-5) 0; border-bottom: 1px solid var(--c-line); }
+  .meta { display: flex; gap: var(--s-3); align-items: center; font-size: var(--fs-xs); color: var(--c-ink-3); }
+  .meta a { color: var(--c-accent-ink); font-weight: 600; }
+  .t { margin-top: var(--s-2); font-size: var(--fs-lg); font-weight: 600; line-height: var(--lh-snug); }
+  .t a:hover { text-decoration: underline; }
+  .desc { margin-top: var(--s-2); color: var(--c-ink-2); max-width: 46em; }
+</style>

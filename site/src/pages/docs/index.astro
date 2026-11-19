@@ -1,0 +1,36 @@
+---
+// 文档首页：按分组列出全部页面和一句话导语
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { groups, docOrder, docHref } from '../../lib/docs';
+const all = (await getCollection('docs')).sort(docOrder);
+---
+<Base title="文档" description="知数星耀使用文档：开始使用、每日要点怎么读、六个明细页的口径、MCP 接入、字段口径表。">
+  <div class="wrap page">
+    <p class="eyebrow">文档</p>
+    <h1 class="page-title display">知数星耀使用文档</h1>
+    <p class="page-lede">从这里开始了解数据怎么读、口径是什么，以及怎样让你自己的大模型通过 MCP 读取数据。</p>
+    <div class="grid">
+      {groups.map((g) => (
+        <section class="g" aria-labelledby={`g-${g.id}`}>
+          <h2 id={`g-${g.id}`}>{g.label}</h2>
+          <ul>
+            {all.filter((x) => x.data.group === g.id).map((x) => (
+              <li><a href={docHref(x)}>{x.data.title}</a>{x.data.status === 'stub' && <span class="stub">待补</span>}<p>{x.data.lede}</p></li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  </div>
+</Base>
+<style>
+  .grid { margin-top: var(--s-7); display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--s-5); }
+  .g { padding: var(--s-5); border: 1px solid var(--c-line); border-radius: var(--r-3); background: var(--c-surface); }
+  h2 { font-size: var(--fs-md); font-weight: 600; margin-bottom: var(--s-3); }
+  li { padding: var(--s-2) 0; border-top: 1px solid var(--c-line); }
+  li a { color: var(--c-ink); font-weight: 500; text-decoration: underline; text-decoration-color: var(--c-line-strong); text-underline-offset: 3px; }
+  li a:hover { text-decoration-color: var(--c-accent); }
+  li p { margin-top: 2px; font-size: var(--fs-sm); color: var(--c-ink-3); }
+  .stub { margin-left: var(--s-2); font-size: var(--fs-2xs); color: var(--c-ink-3); border: 1px dashed var(--c-line-strong); border-radius: var(--r-pill); padding: 0 6px; }
+</style>

@@ -1,0 +1,19 @@
+{
+  "name": "zhishu-site",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "tokens": "node ../design-system/build.mjs",
+    "predev": "npm run tokens",
+    "prebuild": "npm run tokens",
+    "dev": "astro dev --port 5392",
+    "build": "astro build",
+    "preview": "astro preview --port 4392",
+    "fonts": "python3 scripts/subset-fonts.py"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "3.7.5",
+    "astro": "7.4.12"
+  }
+}

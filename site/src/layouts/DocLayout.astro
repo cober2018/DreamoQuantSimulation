@@ -1,0 +1,179 @@
+---
+// 文档页模板（ZS-115 §三）：左栏分组导航、面包屑、标题、一句话导语、本页目录、上一篇 / 下一篇、最后更新、代码复制按钮、客户端页签
+import Base from './Base.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { groups, groupLabel, docOrder, docHref } from '../lib/docs';
+import { formatDateZh, isoDate } from '../lib/date';
+
+interface Props {
+  entry: CollectionEntry<'docs'>;
+  headings: { depth: number; slug: string; text: string }[];
+}
+const { entry, headings } = Astro.props;
+const d = entry.data;
+const all = (await getCollection('docs')).sort(docOrder);
+const i = all.findIndex((x) => x.id === entry.id);
+const prev = all[i - 1];
+const next = all[i + 1];
+const toc = headings.filter((h) => h.depth === 2);
+const here = docHref(entry);
+const crumbs = [
+  { name: '文档', path: '/docs/' },
+  { name: groupLabel(d.group), path: docHref(all.find((x) => x.data.group === d.group)!) },
+  { name: d.title, path: here },
+];
+---
+<Base title={`${d.title} · 文档`} description={d.lede} crumbs={crumbs} jsonLd={[{ '@type': 'TechArticle', headline: d.title, description: d.lede, dateModified: isoDate(d.updated), inLanguage: 'zh-CN', publisher: { '@id': 'https://dk.dreamotech.cn/#org' } }]}>
+  <div class="wrap docs">
+    <aside class="side">
+      <details class="side-d" open>
+        <summary>文档目录</summary>
+        <nav aria-label="文档">
+          {groups.map((g) => (
+            <div class="grp">
+              <p class="gl">{g.label}</p>
+              <ul>
+                {all.filter((x) => x.data.group === g.id).map((x) => (
+                  <li><a href={docHref(x)} aria-current={x.id === entry.id ? 'page' : undefined}>{x.data.title}{x.data.status === 'stub' && <span class="stub">待补</span>}</a></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      </details>
+      <script is:inline>
+        // 窄屏默认收起文档目录（在首帧前执行，不产生布局跳动）
+        if (matchMedia('(max-width: 899px)').matches) document.currentScript.previousElementSibling.open = false;
+      </script>
+    </aside>
+
+    <article class="main">
+      <nav class="crumb" aria-label="面包屑">
+        <ol>{crumbs.map((c, k) => <li>{k < crumbs.length - 1 ? <a href={c.path}>{c.name}</a> : <span aria-current="page">{c.name}</span>}</li>)}</ol>
+      </nav>
+      <h1 class="page-title">{d.title}</h1>
+      <p class="page-lede">{d.lede}</p>
+      {d.status === 'stub' && <p class="stub-note">这一页还在整理，下面只有简要说明。</p>}
+      <div class="prose doc-body"><slot /></div>
+      <p class="upd">最后更新：<time datetime={isoDate(d.updated)}>{formatDateZh(d.updated)}</time></p>
+      <nav class="pn" aria-label="上一篇和下一篇">
+        {prev ? <a class="pv" href={docHref(prev)}><span>上一篇</span>{prev.data.title}</a> : <span />}
+        {next && <a class="nx" href={docHref(next)}><span>下一篇</span>{next.data.title}</a>}
+      </nav>
+    </article>
+
+    {toc.length > 1 && (
+      <nav class="toc" aria-label="本页目录">
+        <p>本页目录</p>
+        <ol>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+      </nav>
+    )}
+  </div>
+</Base>
+
+<script>
+  // 代码块复制按钮
+  document.querySelectorAll<HTMLPreElement>('.doc-body pre').forEach((pre) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'copy';
+    b.textContent = '复制';
+    b.setAttribute('aria-label', '复制代码');
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(pre.querySelector('code')?.textContent ?? pre.textContent ?? '');
+        b.textContent = '已复制';
+      } catch {
+        b.textContent = '复制失败';
+      }
+      setTimeout(() => (b.textContent = '复制'), 1600);
+    });
+    pre.append(b);
+  });
+
+  // 客户端页签：正文里 <div data-tabs> 下每个 <section> 以 h3 开头；没有脚本时按顺序全部展开
+  document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((box, n) => {
+    const panels = [...box.querySelectorAll<HTMLElement>(':scope > section')];
+    const list = document.createElement('div');
+    list.setAttribute('role', 'tablist');
+    list.className = 'tablist';
+    const tabs = panels.map((p, k) => {
+      const h = p.querySelector('h3')!;
+      const t = document.createElement('button');
+      t.type = 'button';
+      t.id = `tab-${n}-${k}`;
+      t.setAttribute('role', 'tab');
+      t.setAttribute('aria-controls', (p.id = `panel-${n}-${k}`));
+      t.textContent = h.textContent;
+      h.classList.add('sr-only');
+      p.setAttribute('role', 'tabpanel');
+      p.setAttribute('aria-labelledby', t.id);
+      p.tabIndex = 0;
+      list.append(t);
+      return t;
+    });
+    const select = (k: number, focus = false) => {
+      tabs.forEach((t, j) => {
+        t.setAttribute('aria-selected', String(j === k));
+        t.tabIndex = j === k ? 0 : -1;
+        panels[j].hidden = j !== k;
+      });
+      if (focus) tabs[k].focus();
+    };
+    tabs.forEach((t, k) => {
+      t.addEventListener('click', () => select(k));
+      t.addEventListener('keydown', (e) => {
+        const m = { ArrowRight: 1, ArrowLeft: -1 } as Record<string, number>;
+        if (e.key in m) { e.preventDefault(); select((k + m[e.key] + tabs.length) % tabs.length, true); }
+        if (e.key === 'Home') { e.preventDefault(); select(0, true); }
+        if (e.key === 'End') { e.preventDefault(); select(tabs.length - 1, true); }
+      });
+    });
+    box.prepend(list);
+    box.classList.add('ready');
+    select(0);
+  });
+</script>
+
+<style>
+  .docs { display: grid; grid-template-columns: 220px minmax(0, 1fr) 180px; gap: var(--s-7); padding-top: var(--s-6); padding-bottom: var(--s-8); }
+  .side-d { position: sticky; top: var(--s-5); }
+  .side-d summary { display: none; }
+  .grp { margin-bottom: var(--s-5); }
+  .gl { font-size: var(--fs-xs); letter-spacing: var(--tr-wide); color: var(--c-ink-3); margin-bottom: var(--s-2); }
+  .grp a { display: flex; align-items: center; gap: var(--s-2); min-height: 32px; padding: 0 var(--s-2); border-left: 1px solid var(--c-line); color: var(--c-ink-2); font-size: var(--fs-sm); }
+  .grp a:hover { color: var(--c-ink); }
+  .grp a[aria-current='page'] { color: var(--c-ink); border-left: 2px solid var(--c-accent); font-weight: 600; }
+  .stub { font-size: var(--fs-2xs); color: var(--c-ink-3); border: 1px dashed var(--c-line-strong); border-radius: var(--r-pill); padding: 0 6px; font-weight: 400; }
+  .crumb ol { display: flex; flex-wrap: wrap; gap: var(--s-2); font-size: var(--fs-xs); color: var(--c-ink-3); margin-bottom: var(--s-4); }
+  .crumb li + li::before { content: '/'; margin-right: var(--s-2); color: var(--c-line-strong); }
+  .crumb a { color: var(--c-ink-2); }
+  .crumb a:hover { text-decoration: underline; }
+  .main .page-title { font-size: clamp(28px, 3vw, 40px); font-weight: 600; }
+  .stub-note { margin-top: var(--s-4); padding: var(--s-2) var(--s-3); border: 1px dashed var(--c-line-strong); border-radius: var(--r-2); color: var(--c-ink-2); font-size: var(--fs-sm); display: inline-block; }
+  .doc-body { margin-top: var(--s-6); }
+  .upd { margin-top: var(--s-7); font-size: var(--fs-xs); color: var(--c-ink-3); }
+  .pn { margin-top: var(--s-4); display: flex; justify-content: space-between; gap: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--c-line); }
+  .pn a { display: flex; flex-direction: column; gap: 2px; padding: var(--s-3) var(--s-4); border: 1px solid var(--c-line); border-radius: var(--r-2); color: var(--c-ink); font-weight: 500; max-width: 48%; }
+  .pn a:hover { border-color: var(--c-line-strong); background: var(--c-surface-hover); }
+  .pn span { font-size: var(--fs-xs); color: var(--c-ink-3); font-weight: 400; }
+  .nx { margin-left: auto; text-align: right; }
+  .toc { position: sticky; top: var(--s-5); align-self: start; font-size: var(--fs-sm); }
+  .toc p { color: var(--c-ink-3); font-size: var(--fs-xs); margin-bottom: var(--s-2); }
+  .toc ol { display: grid; gap: var(--s-1); border-left: 1px solid var(--c-line); padding-left: var(--s-3); }
+  .toc a { display: inline-block; min-height: 24px; color: var(--c-ink-2); }
+  .toc a:hover { color: var(--c-ink); }
+  .doc-body :global(.copy) { position: absolute; top: var(--s-2); right: var(--s-2); height: 28px; padding: 0 var(--s-2); border: 1px solid var(--c-line-strong); border-radius: var(--r-1); background: var(--c-surface); font-size: var(--fs-xs); color: var(--c-ink-2); }
+  .doc-body :global(.copy:hover) { color: var(--c-ink); }
+  .doc-body :global(.tablist) { display: flex; flex-wrap: wrap; gap: var(--s-1); border-bottom: 1px solid var(--c-line); margin-bottom: var(--s-4); }
+  .doc-body :global([role='tab']) { height: 40px; padding: 0 var(--s-3); font-size: var(--fs-sm); color: var(--c-ink-2); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .doc-body :global([role='tab'][aria-selected='true']) { color: var(--c-ink); border-bottom-color: var(--c-accent); font-weight: 600; }
+  .doc-body :global([data-tabs]:not(.ready) > section) { margin-bottom: var(--s-6); }
+  @media (max-width: 1179px) { .docs { grid-template-columns: 200px minmax(0, 1fr); } .toc { display: none; } }
+  @media (max-width: 899px) {
+    .docs { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); padding-top: var(--s-4); }
+    .side-d { position: static; border: 1px solid var(--c-line); border-radius: var(--r-2); padding: 0 var(--s-3); }
+    .side-d summary { display: list-item; cursor: pointer; padding: var(--s-3) 0; font-weight: 500; }
+    .side-d[open] nav { padding-bottom: var(--s-3); }
+  }
+</style>

@@ -1,0 +1,26 @@
+---
+// 文章列表（首页、分页、分类、标签共用）
+import type { CollectionEntry } from 'astro:content';
+import PostCard from './PostCard.astro';
+interface Props { posts: CollectionEntry<'blog'>[]; page?: number; pages?: number; empty?: string }
+const { posts, page = 1, pages = 1, empty = '首批文章正在撰写。' } = Astro.props;
+const href = (n: number) => (n === 1 ? '/blog/' : `/blog/page/${n}/`);
+---
+{posts.length ? (
+  <div class="list">{posts.map((e) => <PostCard entry={e} />)}</div>
+) : (
+  <p class="empty">{empty}</p>
+)}
+{pages > 1 && (
+  <nav class="pg" aria-label="分页">
+    {page > 1 && <a href={href(page - 1)} rel="prev">上一页</a>}
+    <span>第 {page} / {pages} 页</span>
+    {page < pages && <a href={href(page + 1)} rel="next">下一页</a>}
+  </nav>
+)}
+<style>
+  .list { margin-top: var(--s-5); border-top: 1px solid var(--c-line); max-width: 860px; }
+  .empty { margin-top: var(--s-6); padding: var(--s-6); border: 1px dashed var(--c-line-strong); border-radius: var(--r-3); color: var(--c-ink-2); max-width: 860px; }
+  .pg { margin-top: var(--s-6); display: flex; gap: var(--s-4); align-items: center; color: var(--c-ink-3); font-size: var(--fs-sm); }
+  .pg a { color: var(--c-accent-ink); text-decoration: underline; }
+</style>

@@ -1,0 +1,44 @@
+---
+// 公开站页脚：关注主理人（只列可公开的卡片）、隐私、协议、ICP、版权、免责声明
+import BrandMark from './BrandMark.astro';
+import PlatformMark from './PlatformMark.astro';
+import { SOCIAL } from '../lib/social';
+import { SITE, APP_LINKS } from '../site.config.mjs';
+---
+<footer class="ft">
+  <div class="wrap">
+    <div class="top">
+      <a href="/" class="brand" aria-label="知数星耀 首页"><BrandMark size={24} /><span class="display">知数星耀</span></a>
+      {SOCIAL.length > 0 && (
+        <div class="follow">
+          <a id="ft-follow" href="/follow/" class="cap">关注主理人 →</a>
+          <ul class="chips">
+            {SOCIAL.map((s) => <li><a href={`/follow/#${s.platform}`} class="chip"><PlatformMark platform={s.platform} size="sm" />{s.platformName}</a></li>)}
+          </ul>
+        </div>
+      )}
+    </div>
+    <p class="disc">{SITE.disclaimer}</p>
+    <p class="links">
+      <a href={APP_LINKS.privacy}>隐私政策</a>
+      <a href={APP_LINKS.terms}>用户协议</a>
+      <a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">{SITE.icp}<span class="sr-only">（在新窗口打开）</span></a>
+      <span>© {SITE.brand}</span>
+    </p>
+  </div>
+</footer>
+<style>
+  .ft { border-top: 1px solid var(--c-line); background: var(--c-bg-deep); padding: var(--s-6) 0 var(--s-5); font-size: var(--fs-xs); color: var(--c-ink-3); }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; padding-bottom: var(--s-4); border-bottom: 1px solid var(--c-line); }
+  .brand { display: inline-flex; align-items: center; gap: var(--s-2); font-size: 16px; color: var(--c-ink); }
+  .follow { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+  .cap { color: var(--c-ink-2); font-weight: 500; display: inline-flex; align-items: center; min-height: 28px; }
+  .cap:hover { color: var(--c-ink); }
+  .chips { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 var(--s-2) 0 4px; border: 1px solid var(--c-line); border-radius: var(--r-pill); color: var(--c-ink-2); }
+  .chip:hover { border-color: var(--c-line-strong); color: var(--c-ink); }
+  .disc { margin-top: var(--s-4); line-height: 1.8; max-width: 880px; }
+  .links { margin-top: var(--s-3); display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); }
+  .links a { color: var(--c-ink-2); display: inline-flex; align-items: center; min-height: 24px; }
+  .links a:hover { color: var(--c-ink); text-decoration: underline; }
+</style>

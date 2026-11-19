@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>%ZX_TITLE%</title>
+    <meta name="description" content="%ZX_DESC%" />
+    <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#080e1b" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/brand/zhishu-favicon.png" />
+    <link rel="preload" href="/fonts/zx-serif.woff2" as="font" type="font/woff2" crossorigin />
+    <script>
+      // 先于首帧决定主题，避免闪烁：URL ?theme= > 本地偏好 > 系统设置
+      (function () {
+        var q = new URLSearchParams(location.search).get('theme')
+        var t = q === 'light' || q === 'dark' ? q : null
+        try { t = t || localStorage.getItem('zx-theme') } catch (e) {}
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.dataset.theme = t
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

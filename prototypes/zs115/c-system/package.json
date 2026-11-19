@@ -1,0 +1,25 @@
+{
+  "name": "zs115-c-system",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "tokens": "node ../../../design-system/build.mjs",
+    "predev": "npm run tokens",
+    "prebuild": "npm run tokens",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "fonts": "python3 scripts/subset-fonts.py"
+  },
+  "dependencies": {
+    "echarts": "^6.1.0",
+    "vue": "^3.5.45",
+    "vue-router": "^5.5.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.11",
+    "sass": "^1.108.2",
+    "vite": "^8.3.8"
+  }
+}

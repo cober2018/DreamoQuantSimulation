@@ -1,0 +1,17 @@
+---
+// 作者卡片：一律用长版全文（ZS-115 §十），不写真实姓名
+import type { CollectionEntry } from 'astro:content';
+import { bioParagraphs } from '../lib/blog';
+const { author } = Astro.props as { author: CollectionEntry<'authors'> };
+---
+<aside class="ac" aria-label="作者">
+  <p class="who"><a href={`/blog/author/${author.id}/`}>{author.data.name}</a></p>
+  {bioParagraphs(author.data.bio).map((p) => <p class="bio">{p}</p>)}
+</aside>
+<style>
+  .ac { margin-top: var(--s-7); padding: var(--s-5); border: 1px solid var(--c-line); border-radius: var(--r-3); background: var(--c-surface); }
+  .who { font-weight: 600; font-size: var(--fs-md); margin-bottom: var(--s-2); }
+  .who a:hover { text-decoration: underline; }
+  .bio { color: var(--c-ink-2); line-height: var(--lh-loose); }
+  .bio + .bio { margin-top: var(--s-2); }
+</style>

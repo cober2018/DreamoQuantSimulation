@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import BlogList from '../../components/BlogList.astro';
+import { getCollection, getEntry } from 'astro:content';
+import { isVisible, byDateDesc, PAGE_SIZE, categories, bioShort } from '../../lib/blog';
+const all = (await getCollection('blog', isVisible)).sort(byDateDesc);
+const author = (await getEntry('authors', 'zhishutalk'))!;
+const pages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+// 只列有文章的分类，避免链到不存在的分类页
+const cats = categories.filter((c) => all.some((e) => e.data.category === c.id));
+---
+<Base title="博客" description="市场数据方法论：指标口径怎么读、统计方法、怎样用 MCP 让你自己的大模型读数据。">
+  <div class="wrap page">
+    <p class="eyebrow">博客</p>
+    <h1 class="page-title display">市场数据方法论</h1>
+    <p class="page-lede">一个指标是怎么算的、口径有哪些局限；怎样判断「今天和常态哪里不一样」；怎样让你自己的大模型通过 MCP 读数据。</p>
+    <p class="by">作者 <a href={`/blog/author/${author.id}/`}>{author.data.name}</a>：{bioShort(author.data.bio)}</p>
+    {cats.length > 0 && <nav class="cats" aria-label="分类">{cats.map((c) => <a href={`/blog/category/${c.id}/`}>{c.label}</a>)}</nav>}
+    <BlogList posts={all.slice(0, PAGE_SIZE)} page={1} pages={pages} />
+    <p class="rss"><a href="/blog/rss.xml">RSS 订阅</a></p>
+  </div>
+</Base>
+<style>
+  .by { margin-top: var(--s-4); font-size: var(--fs-sm); color: var(--c-ink-3); max-width: 46em; }
+  .by a { color: var(--c-ink-2); text-decoration: underline; }
+  .cats { margin-top: var(--s-5); display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .cats a { display: inline-flex; align-items: center; height: 32px; padding: 0 var(--s-3); border: 1px solid var(--c-line); border-radius: var(--r-pill); font-size: var(--fs-sm); color: var(--c-ink-2); }
+  .cats a:hover { border-color: var(--c-line-strong); color: var(--c-ink); }
+  .rss { margin-top: var(--s-6); font-size: var(--fs-sm); }
+  .rss a { color: var(--c-ink-2); text-decoration: underline; }
+</style>
