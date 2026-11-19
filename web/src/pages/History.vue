@@ -22,6 +22,7 @@
           <div class="sub">分母 {{ fmt.num(open5.close_ready_count, 0) }}</div></div>
       </div>
       <p v-if="open5Partial" class="note">覆盖不全，仅供参考。</p>
+      <EChart v-if="open5Hist?.rows?.length" :option="open5Option" height="200px" />
       <p class="note">数据不完整的股票不计入分子，也不计入占比分母；覆盖率反映数据完整程度，不代表市场表现。</p>
     </section>
 
@@ -58,7 +59,8 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { loadSupplement } from '../supplement'
 import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import DateTag from '../components/DateTag.vue'
@@ -148,3 +150,4 @@ watch(day, loadLeaders, { immediate: true })
 .leader-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 4px; }
 .leader-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
+

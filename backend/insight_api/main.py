@@ -248,6 +248,19 @@ def create_app() -> FastAPI:
         p = entitled(request, "page.history", trade_date)
         return await load_history(up(request), p, trade_date, idx_type, period)
 
+    @app.get("/api/v1/supplement/{name}")
+    async def supplement(request: Request, name: str = Path(..., pattern=r"^[a-z0-9_]{1,40}$"),
+                         trade_date: Optional[str] = TradeDate):
+        from . import supplement as sup
+        if name not in sup.SUPPLEMENT:
+            raise HTTPException(404, "没有这个补充数据")
+        spec = sup.SUPPLEMENT[name]
+        p = entitled(request, spec["perm"], trade_date)
+        got = await sup.load(up(request), name, trade_date)
+        out = {"status": "ok" if got["rows"] is not None else "upstream_error", "name": name,
+               "trade_date": trade_date, "reason": got["reason"], "rows": got["rows"] or []}
+        return gate.stamp(out, p)
+
     @app.get("/api/v1/calendar")
     async def calendar(
         request: Request,

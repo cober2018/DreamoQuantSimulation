@@ -19,6 +19,46 @@
         <h2>涨跌家数分布<small>今天涨多跌少还是相反，分布在哪些区间</small></h2>
         <EChart :option="breadthOption" height="90px" />
       </section>
+      <section class="panel mod" v-if="idxOverview?.rows?.length">
+        <h2>主要指数一览<small>今天各主要指数怎么样，离一年高点多远，估值在什么位置</small></h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th class="left">指数</th><th>收盘（点）</th><th>当日涨跌</th><th>20 日涨跌</th><th>距一年高点回撤</th><th>估值位置（252 日）</th><th class="left">60 日走势</th></tr></thead>
+            <tbody>
+              <tr v-for="r in idxOverview.rows" :key="r.index_code">
+                <td class="left">{{ r.index_name || r.index_code }} <span class="muted">{{ r.index_code }}</span></td>
+                <td>{{ fmt.num(r.close, 2) }}</td>
+                <td :class="fmt.dir(r.return_1d_pct)">{{ r.return_1d_pct == null ? '数据待更新' : fmt.signedPct(r.return_1d_pct) }}</td>
+                <td :class="fmt.dir(r.return_20d_pct)">{{ r.return_20d_pct == null ? '数据待更新' : fmt.signedPct(r.return_20d_pct) }}</td>
+                <td>{{ r.drawdown_pct == null ? '数据待更新' : fmt.signedPct(r.drawdown_pct) }}</td>
+                <td>{{ r.valuation_position_252d_pct == null ? '数据待更新' : fmt.num(r.valuation_position_252d_pct, 1) + '%' }}</td>
+                <td class="left"><span class="muted">{{ idxSpark(r.index_code).length ? idxSpark(r.index_code).length + ' 日' : '数据待更新' }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">涨跌、回撤和估值位置是历史表现与相对位置的统计，不代表未来收益或上涨概率。</p>
+      </section>
+      <section class="panel mod" v-if="poolCounts?.rows?.length">
+        <h2>涨跌停与炸板<small>极端涨跌个股有多少</small></h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th class="left">统计口径</th><th>个股数</th><th>窗口（交易日）</th><th class="left">最新可用日</th></tr></thead>
+            <tbody>
+              <tr v-for="r in poolCounts.rows" :key="(r.pool || '') + (r.window_days || '')">
+                <td class="left">{{ r.reason || '—' }}</td>
+                <td>{{ r.count == null ? '数据待更新' : fmt.num(r.count, 0) }}</td>
+                <td>{{ r.window_days == null ? '—' : r.window_days }}</td>
+                <td class="left">{{ r.latest_date || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="panel mod" v-if="turnoverHist?.rows?.length">
+        <h2>两市成交额 60 日<small>今天的成交在近期算高还是低</small></h2>
+        <EChart :option="turnoverOption" height="200px" />
+      </section>
     </div>
     <div class="panel" style="margin-top:16px">
       <h2>更多数据</h2>
@@ -38,10 +78,29 @@ import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import { fmt, getModule } from '../api'
 import { useModule } from '../useModule'
+import { loadSupplement } from '../supplement'
 import { can, session } from '../auth'
 import { PAGES } from '../pageCatalog'
 
 const more = PAGES.filter((p) => p.key !== 'overview')
+const idxOverview = ref(null)
+const idxHistory = ref(null)
+const poolCounts = ref(null)
+const turnoverHist = ref(null)
+async function loadExtras() {
+  const td = tradeDate.value || undefined
+  ;[idxOverview.value, idxHistory.value, poolCounts.value, turnoverHist.value] = await Promise.all([
+    loadSupplement('index_overview', td), loadSupplement('index_history', td), loadSupplement('pool_counts', td), loadSupplement('participation_history', td)])
+}
+watch(tradeDate, loadExtras)
+onMounted(loadExtras)
+const idxSpark = (code) => (idxHistory.value?.rows || []).filter((r) => r.index_code === code).map((r) => r.close)
+const turnoverOption = computed(() => {
+  const rows = turnoverHist.value?.rows || []
+  return { grid: { left: 40, right: 10, top: 10, bottom: 24 }, xAxis: { type: 'category', data: rows.map((r) => r.date) },
+    yAxis: { type: 'value', name: '亿元' }, tooltip: { trigger: 'axis' },
+    series: [{ type: 'bar', data: rows.map((r) => (r.turnover == null ? null : r.turnover)), itemStyle: { color: '#2f5d9b' } }] }
+})
 
 const tradeDate = ref('')
 const { env, loading, load } = useModule('overview', () => ({ trade_date: tradeDate.value }))
