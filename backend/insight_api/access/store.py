@@ -91,6 +91,16 @@ CREATE TABLE IF NOT EXISTS upstream_route_log(
   latency_ms INTEGER);
 CREATE INDEX IF NOT EXISTS ix_route_log_at ON upstream_route_log(at);
 CREATE INDEX IF NOT EXISTS ix_route_log_user ON upstream_route_log(user_id, at);
+CREATE TABLE IF NOT EXISTS mcp_tokens(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, token_hash TEXT UNIQUE NOT NULL,
+  prefix TEXT NOT NULL, name TEXT NOT NULL DEFAULT '', token_version INTEGER NOT NULL, created_at REAL NOT NULL,
+  expires_at REAL, last_used_at REAL, revoked_at REAL);
+CREATE INDEX IF NOT EXISTS ix_mcp_tokens_user ON mcp_tokens(user_id);
+CREATE TABLE IF NOT EXISTS mcp_call_log(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, at REAL NOT NULL, request_id TEXT NOT NULL, user_id INTEGER NOT NULL,
+  token_prefix TEXT NOT NULL, role_at_request TEXT NOT NULL, tool TEXT NOT NULL, params_hash TEXT NOT NULL,
+  result TEXT NOT NULL, latency_ms INTEGER);
+CREATE INDEX IF NOT EXISTS ix_mcp_call_log_at ON mcp_call_log(at);
 """
 
 

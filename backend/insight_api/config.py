@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -10,6 +11,7 @@ from pathlib import Path
 from .tier_routing import account_keys
 
 PAGES = frozenset({"overview", "participation", "industries", "themes", "history", "calendar"})
+_USERNAME_RE = re.compile(r"^[a-z0-9_.@-]{3,32}$")
 FIXTURE_DIR = Path(__file__).resolve().parent.parent / "fixtures"
 
 
@@ -56,6 +58,9 @@ class Settings:
     smtp_user: str = ""
     smtp_password: str = ""
     mail_from: str = ""
+    # MCP 内部封闭测试：=1 才挂 /mcp 与令牌接口；名单外只有管理员可用
+    mcp_enabled: bool = False
+    mcp_users: frozenset = frozenset()
 
 
 _CN = timezone(timedelta(hours=8))
@@ -106,6 +111,8 @@ def load_settings() -> Settings:
         smtp_user=os.getenv("INSIGHT_SMTP_USER", "").strip(),
         smtp_password=os.getenv("INSIGHT_SMTP_PASSWORD", ""),
         mail_from=os.getenv("INSIGHT_MAIL_FROM", "").strip(),
+        mcp_enabled=os.getenv("INSIGHT_MCP_ENABLED", "") == "1",
+        mcp_users=frozenset(x.strip().lower() for x in os.getenv("INSIGHT_MCP_USERS", "").split(",") if x.strip()),
     )
     if settings.email_verify and not (settings.smtp_host and settings.smtp_user and settings.smtp_password and settings.mail_from):
         raise ConfigError("INSIGHT_EMAIL_VERIFY=1 时必须设置 INSIGHT_SMTP_HOST / USER / PASSWORD 和 INSIGHT_MAIL_FROM")
@@ -132,6 +139,11 @@ def load_settings() -> Settings:
     unknown_pages = settings.public_pages - PAGES
     if unknown_pages:
         raise ConfigError(f"INSIGHT_PUBLIC_PAGES 含未知页面: {', '.join(sorted(unknown_pages))}")
+    if settings.mcp_enabled and settings.auth_mode != "required":
+        raise ConfigError("INSIGHT_MCP_ENABLED 需要 INSIGHT_AUTH_MODE=required（令牌要落到具体用户）")
+    bad_users = sorted(u for u in settings.mcp_users if not _USERNAME_RE.match(u))
+    if bad_users:
+        raise ConfigError(f"INSIGHT_MCP_USERS 含非法用户名: {', '.join(bad_users)}")
     if settings.data_mode == "live" and not settings.upstream_api_key:
         raise ConfigError("live 模式必须配置 INSIGHT_UPSTREAM_API_KEY")
     return settings
