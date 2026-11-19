@@ -93,11 +93,64 @@
         <p class="note">{{ styleData?.definition || '强度分为阵营指数相对强度的历史评分（0–100）' }}；横轴为观测序号，当前为近 20 个观测；按固定阵营顺序展示，不按强度排序，不提供 leader/signal 结论。</p>
       </section>
     </div>
+    <div class="panel" v-if="partHist?.rows?.length" v-module="'observation'">
+      <h2>参与热度与成交<small>近 60 个交易日 · 原始统计</small></h2>
+      <EChart :option="heatOption" height="260px" />
+    </div>
+    <div class="panel" v-if="partHist?.rows?.length" v-module="'observation'">
+      <h2>卖压相对强度<small>近 60 个交易日 · 数值越高压力越强</small></h2>
+      <EChart :option="pressOption" height="220px" />
+    </div>
+    <div class="panel" v-if="compHist?.rows?.length" v-module="'erp'">
+      <h2>股权风险补偿（逐日）<small>盈利收益率 − 10 年期国债收益率</small></h2>
+      <EChart :option="compOption" height="220px" />
+    </div>
+    <div class="panel" v-if="valHasData" v-module="'valuation'">
+      <h2>估值端统计<small>原始统计</small></h2>
+      <div class="grid">
+        <div class="stat"><div class="label">全市场市盈率中位数</div><div class="value">{{ fmt.num(val.current_pe_median) }}</div></div>
+        <div class="stat"><div class="label">近 90 日市盈率中位数</div><div class="value">{{ fmt.num(val.hist_90d_pe_median) }}</div></div>
+        <div class="stat"><div class="label">破净股占比</div><div class="value">{{ val.break_ratio_pct == null ? '数据待更新' : fmt.num(val.break_ratio_pct, 2) + '%' }}</div></div>
+        <div class="stat"><div class="label">折价比例</div><div class="value">{{ val.discount_pct == null ? '数据待更新' : fmt.num(val.discount_pct, 2) + '%' }}</div></div>
+      </div>
+    </div>
+    <div class="panel" v-if="bc" v-module="'bottom'">
+      <h2>底部条件观察<small>原始统计 · 样本 {{ fmt.num(bc.history_obs, 0) }} 个交易日</small></h2>
+      <div class="grid">
+        <div class="stat" v-for="c in bc.conditions" :key="c.key">
+          <div class="label">{{ c.label }}</div>
+          <div class="value">{{ fmt.num(c.value, 1) }} <span class="muted">/ 阈值 {{ fmt.num(c.threshold, 1) }}</span></div>
+        </div>
+      </div>
+      <p class="note">{{ bc.note }}</p>
+    </div>
+    <div class="panel" v-if="deriv.length" v-module="'derivatives'">
+      <h2>股指衍生品原始指标<small>原始值与标准分，缺失显示「数据待更新」</small></h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="left">品种</th><th>基差</th><th>基差标准分（60 日）</th><th>持仓比</th><th>认沽认购比</th><th>认沽认购比标准分（60 日）</th><th>成交持仓比标准分（60 日）</th><th class="left">数据日</th></tr></thead>
+          <tbody>
+            <tr v-for="r in deriv" :key="r.instrument">
+              <td class="left">{{ INST_LABEL[r.instrument] || r.instrument }}</td>
+              <td>{{ r.basis_value == null ? '数据待更新' : fmt.num(r.basis_value, 3) }}</td>
+              <td>{{ r.basis_zscore_60d == null ? '数据待更新' : fmt.num(r.basis_zscore_60d, 2) }}</td>
+              <td>{{ r.position_ratio == null ? '数据待更新' : fmt.num(r.position_ratio, 3) }}</td>
+              <td>{{ r.pcr_value == null ? '数据待更新' : fmt.num(r.pcr_value, 3) }}</td>
+              <td>{{ r.pcr_zscore_60d == null ? '数据待更新' : fmt.num(r.pcr_zscore_60d, 2) }}</td>
+              <td>{{ r.oi_volume_crowding_zscore_60d == null ? '数据待更新' : fmt.num(r.oi_volume_crowding_zscore_60d, 2) }}</td>
+              <td class="left">{{ r.basis_source_date || r.position_source_date || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">z 分为相对近 60 个交易日的标准化位置，仅描述历史相对水平。</p>
+    </div>
   </PageFrame>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { loadSupplement } from '../supplement'
 import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import DateTag from '../components/DateTag.vue'
@@ -109,6 +162,36 @@ const { env, loading, load } = useModule('participation', () => ({ trade_date: t
 const obs = computed(() => env.value.data?.participation_observation || {})
 const erp = computed(() => env.value.data?.erp || {})
 const deriv = computed(() => env.value.data?.derivatives || [])
+const val = computed(() => env.value.data?.valuation || {})
+const valHasData = computed(() => Object.values(val.value).some((v) => v != null))
+const bc = computed(() => env.value.data?.bottom_conditions || null)
+const partHist = ref(null)
+const compHist = ref(null)
+async function loadHist() {
+  const td = env.value.trade_date || undefined
+  ;[partHist.value, compHist.value] = await Promise.all([loadSupplement('participation_history', td), loadSupplement('compensation_history', td)])
+}
+watch(() => env.value.trade_date, loadHist)
+onMounted(loadHist)
+const heatOption = computed(() => {
+  const rows = partHist.value?.rows || []
+  return { grid: { left: 44, right: 44, top: 30, bottom: 24 }, legend: { top: 0 }, tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: rows.map((r) => r.date) },
+    yAxis: [{ type: 'value', name: '亿元' }, { type: 'value', name: '热度', min: 0, max: 100 }],
+    series: [{ name: '市场总成交额', type: 'bar', data: rows.map((r) => r.turnover) }, { name: '参与热度', type: 'line', yAxisIndex: 1, data: rows.map((r) => r.heat) }] }
+})
+const pressOption = computed(() => {
+  const rows = partHist.value?.rows || []
+  return { grid: { left: 44, right: 16, top: 16, bottom: 24 }, tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: rows.map((r) => r.date) }, yAxis: { type: 'value', min: 0, max: 100, name: '卖压相对强度' },
+    series: [{ name: '卖压相对强度', type: 'line', data: rows.map((r) => r.selling_pressure_pct) }] }
+})
+const compOption = computed(() => {
+  const rows = compHist.value?.rows || []
+  return { grid: { left: 44, right: 16, top: 16, bottom: 24 }, tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: rows.map((r) => r.date) }, yAxis: { type: 'value', name: '%' },
+    series: [{ name: '股权风险补偿', type: 'line', data: rows.map((r) => r.compensation_pct) }] }
+})
 const dhRows = computed(() => env.value.data?.derivatives_history || [])
 const styleData = computed(() => env.value.data?.style_strength || null)
 const styleCamps = computed(() => styleData.value?.camps || [])
