@@ -1,71 +1,42 @@
 <template>
-  <PageFrame title="题材与涨跌结构" question="当日涨停、炸板、跌停如何分布？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
+  <PageFrame title="题材与涨跌结构" question="当日涨停、跌停、炸板如何分布，连板和题材集中在哪里？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools><input type="date" v-model="tradeDate" aria-label="交易日" /></template>
 
-    <div class="panel" v-module="'structure'" v-if="st">
-      <h2>涨跌停结构<small>来自股票池统计</small></h2>
-      <div class="grid">
-        <div class="stat" v-ind="'themes.structure.limit_up_count'"><div class="label">涨停</div><div class="value">{{ fmt.num(st.limit_up_count, 0) }}</div></div>
-        <div class="stat" v-ind="'themes.structure.broken_board_count'"><div class="label">炸板</div><div class="value">{{ fmt.num(st.broken_board_count, 0) }}</div></div>
-        <div class="stat" v-ind="'themes.structure.limit_down_count'"><div class="label">跌停</div><div class="value">{{ fmt.num(st.limit_down_count, 0) }}</div></div>
-        <div class="stat" v-ind="'themes.structure.broken_board_rate'">
-          <div class="label">炸板率</div><div class="value">{{ fmt.ratio(st.broken_board_rate?.value) }}</div>
-          <div class="sub">{{ st.broken_board_rate?.numerator }} / {{ st.broken_board_rate?.denominator }}，{{ st.broken_board_rate?.definition }}</div>
+    <div class="modules">
+      <section id="themes-limit-structure" class="panel mod wide" v-module="'structure'" aria-labelledby="themes-limit-structure-title">
+        <h2 id="themes-limit-structure-title">涨停结构<small>涨停、跌停、炸板、封板率、最高连板，附前一日对比与近 10 日走势</small></h2>
+        <div v-if="kpis.length" class="kpi-grid">
+          <div v-for="k in kpis" :key="k.key" :id="`themes-kpi-${k.key}`" class="stat kpi" v-ind="k.ind">
+            <div class="label">{{ k.label }}</div>
+            <div class="value">{{ k.text }}</div>
+            <div class="sub">{{ k.delta }}</div>
+            <div v-if="k.spark" role="img" :aria-label="`${k.label}近 10 日走势，当日${k.text}`">
+              <EChart :option="k.spark" height="44px" />
+            </div>
+            <p v-else class="placeholder">待接入：近 10 日历史（pool-structure · history）</p>
+          </div>
         </div>
-        <div class="stat" v-ind="'themes.structure.limit_up_down_ratio'">
-          <div class="label">涨停 / 跌停</div><div class="value">{{ fmt.num(st.limit_up_down_ratio?.value, 2) }}</div>
-          <div class="sub">{{ st.limit_up_down_ratio?.numerator }} / {{ st.limit_up_down_ratio?.denominator }}</div>
-        </div>
-      </div>
-      <h3 class="sub-h">连板梯队</h3>
-      <div class="grid">
-        <div class="stat" v-for="t in tiers" :key="t.tier"><div class="label">{{ t.tier }}</div><div class="value">{{ t.count }}</div></div>
-      </div>
-    </div>
+        <p v-else class="placeholder">待接入：股票池结构（pool-structure · current）当日缺失。</p>
+      </section>
 
-    <div class="panel" v-module="'pools'" v-if="pools">
-      <h2>股票池当日计数<small>仅计数，不含名单</small></h2>
-      <div class="grid">
-        <div class="stat" v-ind="'themes.pools.high_recognition'" v-if="pools.high_recognition">
-          <div class="label">高标认知池</div><div class="value">{{ fmt.num(pools.high_recognition.count, 0) }}</div>
-          <div class="sub"><DateTag :date="pools.high_recognition.latest_date" :page-date="env.trade_date" /></div>
-        </div>
-        <div class="stat" v-ind="'themes.pools.momentum_extreme'" v-for="(w, k) in pools.momentum_extreme || {}" :key="k">
-          <div class="label">动量极端池（{{ w.window_days }} 日窗）</div><div class="value">{{ fmt.num(w.count, 0) }}</div>
-          <div class="sub">{{ w.reason || '' }}</div>
-        </div>
-      </div>
-      <p class="note">计数为当日进入各池的个股数；池内个股名单与入选规则不提供。</p>
-    </div>
+      <section id="themes-board-ladder" class="panel mod" v-module="'structure'" aria-labelledby="themes-board-ladder-title">
+        <h2 id="themes-board-ladder-title">连板梯队<small>1 板到最高板各有多少家，只计数</small></h2>
+        <EChart v-if="tiers.length" :option="ladderOption" height="240px" />
+        <p v-else class="placeholder">当日没有连板梯队数据（theme-limit-stats · ladder）。</p>
+      </section>
 
-    <div class="panel" v-module="'history'" v-if="history.length">
-      <h2>涨停、炸板、跌停的近期变化<small>{{ history.length }} 个交易日</small></h2>
-      <EChart :option="historyOption" height="300px" />
-    </div>
+      <section id="themes-theme-limit-up" class="panel mod" v-module="'themes'" aria-labelledby="themes-theme-limit-up-title">
+        <h2 id="themes-theme-limit-up-title">题材涨停数<small>涨停只数前 15 的题材</small></h2>
+        <EChart v-if="topThemes.length" :option="themeOption" :height="themeHeight" />
+        <p v-else class="placeholder">当日没有进入题材榜的行业。</p>
+        <p class="note">{{ rule }}</p>
+      </section>
 
-    <div class="panel" v-module="'themes'">
-      <h2>题材榜<small>{{ rule }}；当日样本 {{ env.data?.limit_up_sample_size ?? '—' }} 只涨停</small></h2>
-      <div class="table-wrap" v-if="themes.length">
-        <table>
-          <thead>
-            <tr><th class="left">题材</th><th>涨停</th><th>炸板</th><th>最高板</th><th>平均涨幅</th>
-              <th v-for="b in buckets" :key="b">{{ b }}</th></tr>
-          </thead>
-          <tbody>
-            <tr v-for="t in themes" :key="t.industry">
-              <td class="left">{{ t.industry }}</td>
-              <td>{{ t.up_count }}</td>
-              <td>{{ t.broken_count }}</td>
-              <td>{{ t.highest_tier || '—' }}</td>
-              <td :class="fmt.dir(t.avg_return_pct)">{{ fmt.signedPct(t.avg_return_pct) }}</td>
-              <td v-for="b in buckets" :key="b">{{ t.seal_time_buckets?.[b] || 0 }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p v-else class="muted">当日没有进入题材榜的行业。</p>
-      <div v-if="env.data?.detail_locked" class="lock-card" style="margin-top:12px">封板时间分布属于下钻明细，需要 {{ session.user?.perm_min_role?.['data.detail'] || '更高等级' }}。<router-link v-if="payOn()" to="/plans">查看会员套餐</router-link></div>
-      <p class="note">封板时间为首次封板所在时间段的涨停只数；不展示个股名单、强度分与阶段判断。</p>
+      <section id="themes-seal-time" class="panel mod" v-module="'themes'" aria-labelledby="themes-seal-time-title">
+        <h2 id="themes-seal-time-title">封板时间分布<small>涨停首次封板所在时段的只数</small></h2>
+        <div v-if="env.data?.detail_locked" class="lock-card">封板时间分布属于下钻明细，需要 {{ session.user?.perm_min_role?.['data.detail'] || '更高等级' }}。<router-link v-if="payOn()" to="/plans">查看会员套餐</router-link></div>
+        <p v-else class="placeholder">待接入：全市场按时段的涨停只数（theme-limit-stats · seal-time）。现有 seal_time_buckets 只给时段名称；题材行里的时段计数会把同一只股票计入多个题材，不能加总成分布。</p>
+      </section>
     </div>
   </PageFrame>
 </template>
@@ -76,29 +47,115 @@ import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import { fmt } from '../api'
 import { useModule } from '../useModule'
-import DateTag from '../components/DateTag.vue'
 import { payOn, session } from '../auth'
 
 const tradeDate = ref('')
 const { env, loading, load } = useModule('themes', () => ({ trade_date: tradeDate.value }))
 const st = computed(() => env.value.data?.structure || null)
-const pools = computed(() => env.value.data?.pools || null)
 const tiers = computed(() => env.value.data?.board_tiers || [])
 const themes = computed(() => env.value.data?.themes || [])
-const buckets = computed(() => env.value.data?.seal_time_buckets || [])
-const history = computed(() => env.value.data?.history || [])
 const rule = computed(() => env.value.data?.theme_member_rule || '')
 
-const historyOption = computed(() => ({
+// 历史按交易日升序；前一日取当前交易日的前一条，缺当日记录时不做对比
+const hist = computed(() => [...(env.value.data?.history || [])].sort((a, b) => a.trade_date.localeCompare(b.trade_date)))
+const recent = computed(() => hist.value.slice(-10))
+const prevDay = computed(() => {
+  const i = hist.value.findIndex((h) => h.trade_date === env.value.trade_date)
+  return i > 0 ? hist.value[i - 1] : null
+})
+
+// 连板高度：「3板」→3，「首板」→1；无法解析返回 null
+const tierHeight = (label) => {
+  const s = String(label ?? '')
+  const m = s.match(/\d+/)
+  if (m) return Number(m[0])
+  return /首/.test(s) ? 1 : null
+}
+// 封板率 = 涨停 ÷（涨停 + 炸板），与炸板率互补
+const sealRate = (limitUp, broken) => {
+  if (limitUp == null || broken == null) return null
+  const den = limitUp + broken
+  return den > 0 ? limitUp / den : null
+}
+const maxBoard = computed(() => {
+  const hs = tiers.value.filter((t) => t.count > 0).map((t) => tierHeight(t.tier)).filter((n) => n != null)
+  return hs.length ? Math.max(...hs) : null
+})
+
+const sparkOption = (data) => ({
+  grid: { left: 2, right: 2, top: 4, bottom: 2 },
+  xAxis: { type: 'category', show: false, boundaryGap: false, data: recent.value.map((h) => h.trade_date) },
+  yAxis: { type: 'value', show: false, scale: true },
+  series: [{ type: 'line', data, symbol: 'none', connectNulls: true, lineStyle: { width: 1.5, color: '#d0342c' } }],
+})
+
+const kpis = computed(() => {
+  const s = st.value
+  if (!s) return []
+  const p = prevDay.value
+  const hs = recent.value
+  const defs = [
+    { key: 'limit-up', label: '涨停', ind: 'themes.structure.limit_up_count', kind: 'count',
+      cur: s.limit_up_count, prev: p?.limit_up_count, series: hs.map((h) => h.limit_up_count) },
+    { key: 'limit-down', label: '跌停', ind: 'themes.structure.limit_down_count', kind: 'count',
+      cur: s.limit_down_count, prev: p?.limit_down_count, series: hs.map((h) => h.limit_down_count) },
+    { key: 'broken', label: '炸板', ind: 'themes.structure.broken_board_count', kind: 'count',
+      cur: s.broken_board_count, prev: p?.broken_board_count, series: hs.map((h) => h.broken_board_count) },
+    { key: 'seal-rate', label: '封板率', ind: 'themes.structure.broken_board_rate', kind: 'rate',
+      cur: sealRate(s.limit_up_count, s.broken_board_count), prev: sealRate(p?.limit_up_count, p?.broken_board_count),
+      series: hs.map((h) => sealRate(h.limit_up_count, h.broken_board_count)) },
+    { key: 'max-board', label: '最高连板', ind: 'themes.structure.ladder', kind: 'board',
+      cur: maxBoard.value, prev: tierHeight(p?.max_ladder), series: hs.map((h) => tierHeight(h.max_ladder)) },
+  ]
+  return defs.map((k) => {
+    const text = k.cur == null ? '—' : k.kind === 'rate' ? fmt.ratio(k.cur) : k.kind === 'board' ? `${k.cur} 板` : fmt.num(k.cur, 0)
+    let delta = '较前一日：—'
+    if (k.cur != null && k.prev != null) {
+      const d = k.kind === 'rate' ? (k.cur - k.prev) * 100 : k.cur - k.prev
+      const unit = k.kind === 'rate' ? ' 个百分点' : k.kind === 'board' ? ' 板' : ''
+      delta = `较前一日 ${d > 0 ? '+' : ''}${fmt.num(d, k.kind === 'rate' ? 1 : 0)}${unit}`
+    }
+    const valid = k.series.filter((v) => v != null).length >= 2
+    return { ...k, text, delta, spark: valid ? sparkOption(k.series) : null }
+  })
+})
+
+const ladderOption = computed(() => ({
+  grid: { left: 40, right: 12, top: 16, bottom: 28 },
   tooltip: { trigger: 'axis' },
-  legend: { data: ['涨停', '炸板', '跌停'] },
-  grid: { left: 40, right: 20, top: 36, bottom: 28 },
-  xAxis: { type: 'category', data: history.value.map((h) => h.trade_date.slice(5)) },
-  yAxis: { type: 'value' },
-  series: [
-    { name: '涨停', type: 'bar', data: history.value.map((h) => h.limit_up_count), itemStyle: { color: '#d0342c' } },
-    { name: '炸板', type: 'bar', data: history.value.map((h) => h.broken_board_count), itemStyle: { color: '#e8a33d' } },
-    { name: '跌停', type: 'bar', data: history.value.map((h) => h.limit_down_count), itemStyle: { color: '#1a8f4c' } },
-  ],
+  xAxis: { type: 'category', data: tiers.value.map((t) => t.tier) },
+  yAxis: { type: 'value', minInterval: 1 },
+  series: [{ name: '家数', type: 'bar', data: tiers.value.map((t) => t.count), barMaxWidth: 36, itemStyle: { color: '#d0342c' } }],
+}))
+
+// 涨停只数为空的题材不入图，避免画成 0
+const topThemes = computed(() => themes.value
+  .filter((t) => t.up_count != null)
+  .sort((a, b) => b.up_count - a.up_count)
+  .slice(0, 15))
+const themeHeight = computed(() => `${Math.max(topThemes.value.length, 1) * 28 + 40}px`)
+const themeOption = computed(() => ({
+  grid: { left: 8, right: 16, top: 8, bottom: 8, containLabel: true },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: { type: 'shadow' },
+    formatter: (ps) => {
+      const t = topThemes.value[ps[0].dataIndex]
+      return `${t.industry}<br/>涨停 ${t.up_count} 只<br/>最高板 ${t.highest_tier ?? '暂无'}`
+    },
+  },
+  xAxis: { type: 'value', minInterval: 1 },
+  yAxis: { type: 'category', inverse: true, data: topThemes.value.map((t) => t.industry) },
+  series: [{ name: '涨停只数', type: 'bar', barMaxWidth: 18, data: topThemes.value.map((t) => t.up_count), itemStyle: { color: '#d0342c' } }],
 }))
 </script>
+
+<style scoped>
+.modules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.mod.wide { grid-column: 1 / -1; }
+.mod h2 small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.kpi-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.kpi .value { font-size: 20px; }
+.placeholder { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+@media (max-width: 900px) { .modules { grid-template-columns: minmax(0, 1fr); } }
+</style>
