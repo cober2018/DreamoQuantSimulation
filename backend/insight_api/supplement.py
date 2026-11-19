@@ -5,10 +5,13 @@ history 视图按 sessions 取序列；index_history 对每个指数分别取一
 """
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional
 
 from .projection import pick
 from .upstream import FetchResult, Upstream, UpstreamError
+
+log = logging.getLogger(__name__)
 
 INDEX_CODES = ["000001.SH", "399001.SZ", "399006.SZ", "000688.SH", "000300.SH", "000905.SH", "000852.SH", "000985.SH"]
 
@@ -63,7 +66,9 @@ async def load(up: Upstream, name: str, trade_date: Optional[str]) -> Dict[str, 
                   "fields": ",".join(spec["fields"]), **spec["params"], **extra}
         try:
             res: FetchResult = await up.fetch(spec["service"], params)
-        except UpstreamError:
+        except UpstreamError as e:
+            # 原因只写日志，不返回给页面（错误文本含内部服务名）
+            log.warning("supplement %s upstream error: %s params=%s", name, e, sorted(params.keys()))
             if spec.get("per_index"):
                 continue
             return {"rows": None, "reason": "暂不可用"}
