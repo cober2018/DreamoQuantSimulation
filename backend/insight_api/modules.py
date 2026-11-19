@@ -610,3 +610,11 @@ async def calendar(up: Upstream, trade_date: Optional[str], days: int = 14) -> D
         status = "empty"
     return envelope("calendar", ids, up.data_mode, trade_date=row.get("trade_date"), status=status,
                     sources=sources, gaps=gaps + issue_gaps("CNT-034", res.issues), data=data)
+
+# 限售股解禁（public-share-unlock / calendar）：日历卡片字段，合同见 ZS-117-中台字段样例.md
+SHARE_UNLOCK_CALENDAR_FIELDS = [
+    "event_date", "display_title", "stock_count", "holder_count", "total_float_shares",
+    "total_float_value_ref", "ref_close_date", "top_stocks", "publication_status",
+    "publication_status_label", "source",
+]
+

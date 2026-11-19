@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from .content_scope import gap
@@ -30,6 +31,7 @@ STYLE = ("public-market-style-rotation", "current")
 FACTS = ("public-industry-review", "facts")
 SERIES = ("public-industry-review", "series")
 CALENDAR = ("public-forward-risk-events", "calendar-facts")
+SHARE_UNLOCK = ("public-share-unlock", "calendar")
 THEMES = ("public-theme-limit-stats", "themes")
 LADDER = ("public-theme-limit-stats", "ladder")
 SEAL = ("public-theme-limit-stats", "seal-time")
@@ -521,6 +523,7 @@ async def calendar(up: Upstream, trade_date: Optional[str], days: int = 14) -> D
         return envelope("calendar", ids, up.data_mode, status="empty", trade_date=trade_date,
                         latest_available_date=_latest(res))
     events = [{**pick(e, CALENDAR_PUBLIC), "ai_curated": _ai_flag(e)} for e in res.rows if isinstance(e, dict)]
+    unlock_rows, unlock_gap = await _share_unlock_calendar(up)
     events.sort(key=lambda e: (str(e.get("event_date") or ""), str(e.get("event_time") or "")))
     data = {
         "window": {"start_date": c.get("window_start"), "end_date": c.get("window_end"),
@@ -529,10 +532,29 @@ async def calendar(up: Upstream, trade_date: Optional[str], days: int = 14) -> D
         "view_days": days,
         "events": events,
         "consensus_label": "第三方发布的市场预期，非本平台预测",
+        "share_unlock": unlock_rows,
+        "share_unlock_label": "限售股解禁按参考价估算参考市值，不代表解禁日实际市值，不构成判断",
         "ai_curated_label": "标有「AI 整理」的事件由模型从公开资讯中整理，可能有遗漏或错误，请以官方发布为准",
     }
     status = status_from([], res.issues)
     if status == "ok" and not events:
         status = "empty"
+    gaps = issue_gaps("CNT-034", res.issues) + ([unlock_gap] if unlock_gap else [])
     return envelope("calendar", ids, up.data_mode, trade_date=td, status=status,
-                    sources=[_source(CALENDAR[0], res)], gaps=issue_gaps("CNT-034", res.issues), data=data)
+                    sources=[_source(CALENDAR[0], res)], gaps=gaps, data=data)
+
+
+async def _share_unlock_calendar(up: Upstream):
+    """限售股解禁日历：窗口为上海时间今天 −7 至 +30。失败时返回 None 并记缺口，不影响宏观日历。"""
+    from .modules import SHARE_UNLOCK_CALENDAR_FIELDS
+    today = datetime.now(timezone(timedelta(hours=8))).date()
+    try:
+        res = await up.fetch(SHARE_UNLOCK[0], {
+            "view": SHARE_UNLOCK[1], "from": (today - timedelta(days=7)).isoformat(),
+            "to": (today + timedelta(days=30)).isoformat(), "limit": "100", "offset": "0",
+            "fields": ",".join(SHARE_UNLOCK_CALENDAR_FIELDS)})
+    except UpstreamError:
+        return None, gap("CNT-034", "限售股解禁日历暂不可用")
+    rows = [pick(r, SHARE_UNLOCK_CALENDAR_FIELDS) for r in res.rows if isinstance(r, dict)]
+    rows.sort(key=lambda r: str(r.get("event_date") or ""))
+    return rows, None
