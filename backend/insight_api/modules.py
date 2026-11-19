@@ -69,6 +69,12 @@ DERIVATIVE_FIELDS = [
     "pcr_zscore_60d", "oi_volume_crowding_zscore_60d", "basis_source_date",
     "pcr_source_date", "position_source_date", "missing_reason",
 ]
+# 衍生品标准分历史（public-market-derivatives / raw-stats-history，sessions 为 20 或 60）
+DERIVATIVE_HISTORY_FIELDS = [
+    "trade_date", "instrument", "basis_value", "basis_zscore_60d", "position_ratio", "pcr_value",
+    "pcr_zscore_60d", "oi_volume_ratio_zscore_60d", "basis_source_date", "pcr_source_date",
+    "position_source_date", "missing_reason",
+]
 CALENDAR_FIELDS = {
     "event_id": "event_id", "event_date": "event_date", "event_time": "event_time",
     "country": "country", "event_type_label": "event_type_label", "title": "title",
