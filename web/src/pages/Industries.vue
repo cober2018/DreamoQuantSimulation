@@ -4,61 +4,39 @@
       <div class="seg">
         <button v-for="t in IDX_TYPES" :key="t" :class="{ on: idxType === t }" @click="idxType = t">{{ t }}</button>
       </div>
-      <input type="text" v-model="keyword" placeholder="搜索名称或代码" />
+      <input type="text" v-model="keyword" placeholder="搜索名称或代码" aria-label="搜索行业名称或代码" />
       <input type="date" v-model="tradeDate" :min="FLOOR" aria-label="交易日" />
     </template>
 
-    <div class="two-col">
-      <div class="panel">
-        <h2>板块数据<small>{{ rows.length }} / {{ items.length }} 个，点击列头排序，点击行查看近期序列</small></h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="left">板块</th>
-                <th v-for="c in visibleCols" :key="c.key" class="sortable" @click="sortBy(c.key)">
-                  {{ c.label }}{{ sortKey === c.key ? (sortDesc ? ' ↓' : ' ↑') : '' }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in pageRows" :key="r.sector_code" :class="['clickable', { selected: r.sector_code === selected }]"
-                  @click="selected = r.sector_code">
-                <td class="left">{{ r.sector_name }} <span class="muted">{{ r.sector_code }}</span></td>
-                <td v-for="c in visibleCols" :key="c.key" :class="pendingCell(c.key, r) ? 'muted' : c.signed ? fmt.dir(r[c.key]) : ''">{{ pendingCell(c.key, r) ? '数据待更新' : c.f(r[c.key]) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="toolbar" style="margin-top:10px" v-if="pages > 1">
-          <button class="btn" :disabled="page === 1" @click="page--">上一页</button>
-          <span class="muted">第 {{ page }} / {{ pages }} 页</span>
-          <button class="btn" :disabled="page === pages" @click="page++">下一页</button>
-        </div>
-        <p class="note">行业数据从 2026-09-18 起提供。涨跌幅为小数口径换算的百分比；资金净流入单位为亿元。扩散度、成交额占比等指标的精确公式以数据中台定义为准。</p>
-      </div>
+    <p class="note floor-note">行业数据从 {{ FLOOR }} 起提供。</p>
 
-      <div class="panel" v-module="'rrg'">
-        <h2>相对强度—动量（RRG 原始坐标）</h2>
-        <EChart :option="rrgOption" height="420px" />
-        <p class="note">横轴为相对强度（RS-Ratio），纵轴为相对动量（RS-Momentum），参考线为 100。图形仅呈现历史相对位置。</p>
-        <p v-if="inWindow" class="note">该日期的 RS 指标窗口跨到 2026-09-18 之前，数据待更新，图中留空。</p>
-      </div>
+    <div class="pair">
+      <IndustryRrg v-module="'rrg'" id="industries-rrg" :items="items" :day="day" :end-date="day" :in-window="inWindow"
+                   :rrg-ref="rrgRef" :can-detail="canDetail" :lock-text="lockText" />
+      <IndustryTreemap id="industries-treemap" :items="items" :day="day" />
     </div>
 
-    <div class="panel" v-if="selected">
-      <h2>{{ series.data?.sector_name || items.find((r) => r.sector_code === selected)?.sector_name || selected }} 近期序列
+    <div class="pair">
+      <IndustryFlowBars id="industries-flow" :items="items" />
+      <IndustryDiffusion id="industries-diffusion" :items="items" />
+    </div>
+
+    <IndustryTable id="industries-table-module" :items="items" :keyword="keyword" :day="day" :end-date="day"
+                   :can-detail="canDetail" :lock-text="lockText" :selected="selected" @select="selected = $event" />
+
+    <section v-if="selected" class="panel" aria-labelledby="industries-detail-title">
+      <h2 id="industries-detail-title">{{ series.data?.sector_name || items.find((r) => r.sector_code === selected)?.sector_name || selected }} 近期序列
         <small v-if="canDetail">{{ series.data?.points?.length || 0 }} / {{ series.data?.requested_days || 5 }} 个交易日
           <span v-if="series.status === 'partial'">（不足，未插值）</span></small></h2>
-      <div v-if="!canDetail" class="lock-card">近期序列属于下钻明细，需要 {{ session.user?.perm_min_role?.['data.detail'] || '更高等级' }}。<router-link v-if="payOn()" to="/plans">查看会员套餐</router-link></div>
+      <div v-if="!canDetail" class="lock-card">近期序列属于下钻明细，需要 {{ lockText }}。<router-link v-if="payOn()" to="/plans">查看会员套餐</router-link></div>
       <div v-else-if="seriesLoading" class="empty-state">加载中…</div>
       <div v-else-if="series.status && !['ok', 'partial', 'empty'].includes(series.status)" class="empty-state">序列暂时无法加载，请稍后重试。</div>
       <div v-else-if="!series.data?.points?.length" class="empty-state">没有可用序列。</div>
-      <div v-else class="two-col">
+      <div v-else class="pair">
         <EChart :option="seriesOption" height="280px" />
         <EChart :option="trailOption" height="280px" />
       </div>
-          </div>
+    </section>
   </PageFrame>
 </template>
 
@@ -66,83 +44,36 @@
 import { computed, ref, watch } from 'vue'
 import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
-import { fmt, getModule } from '../api'
+import IndustryRrg from '../components/industries/IndustryRrg.vue'
+import IndustryTreemap from '../components/industries/IndustryTreemap.vue'
+import IndustryFlowBars from '../components/industries/IndustryFlowBars.vue'
+import IndustryDiffusion from '../components/industries/IndustryDiffusion.vue'
+import IndustryTable from '../components/industries/IndustryTable.vue'
+import { getModule } from '../api'
 import { useModule } from '../useModule'
-import { INDUSTRY_FLOOR, isPending, rollingMask } from '../lib/industryPending.js'
+import { INDUSTRY_FLOOR, rollingMask } from '../lib/industryPending.js'
 import { can, payOn, session } from '../auth'
 
 const canDetail = computed(() => can('data.detail'))
+const lockText = computed(() => session.user?.perm_min_role?.['data.detail'] || '更高等级')
 
 const IDX_TYPES = ['行业板块', '概念板块', '地域板块']
-const COLS = [
-  { key: 'sector_return', label: '涨跌幅', f: (v) => fmt.pct(v), signed: true },
-  { key: 'sector_return_5d', label: '5日', f: (v) => fmt.pct(v), signed: true },
-  { key: 'sector_return_20d', label: '20日', f: (v) => fmt.pct(v), signed: true },
-  { key: 'amount', label: '成交额', f: (v) => fmt.num(v, 1) },
-  { key: 'turnover_rate', label: '换手率%', f: (v) => fmt.num(v) },
-  { key: 'up_stock_ratio', label: '上涨成分占比', f: (v) => fmt.ratio(v) },
-  { key: 'above_ma20_ratio', label: '站上MA20占比', f: (v) => fmt.ratio(v) },
-  { key: 'di', label: '扩散度', f: (v) => fmt.num(v, 3) },
-  { key: 'amount_ratio_ma20', label: '量比MA20', f: (v) => fmt.num(v) },
-  { key: 'net_flow_1d', label: '净流入1日', f: (v) => fmt.num(v), signed: true },
-  { key: 'net_flow_5d', label: '净流入5日', f: (v) => fmt.num(v), signed: true },
-]
-const PAGE_SIZE = 50
-// 行业数据从 2026-09-18 起提供（中台复核）。成交额为空或在下限之前、窗口跨到下限之前的 5 日、20 日、RS 指标显示「数据待更新」
 const FLOOR = INDUSTRY_FLOOR
-const dayOf = () => env.value.trade_date || ''
-const visibleCols = computed(() => COLS)
-const pendingCell = (k, r) => isPending(k, r, dayOf())
-const maskedCol = (k) => pendingCell(k, {})
-const rsMasked = (d) => rollingMask(d).rs
-const inWindow = computed(() => rsMasked(dayOf()))
-const valueOf = (r, k) => (pendingCell(k, r) ? null : r[k])
 
 const idxType = ref('行业板块')
 const tradeDate = ref('')
 const keyword = ref('')
-const sortKey = ref('sector_return')
-const sortDesc = ref(true)
-const page = ref(1)
 const selected = ref('')
 
 const { env, loading, load } = useModule('industries', () => ({ idx_type: idxType.value, trade_date: tradeDate.value }))
 const items = computed(() => env.value.data?.items || [])
-const rows = computed(() => {
-  const kw = keyword.value.trim()
-  const list = kw ? items.value.filter((r) => r.sector_name?.includes(kw) || r.sector_code?.includes(kw)) : [...items.value]
-  const k = sortKey.value
-  return list.sort((a, b) => {
-    const av = valueOf(a, k)
-    const bv = valueOf(b, k)
-    if (av == null) return 1
-    if (bv == null) return -1
-    return sortDesc.value ? bv - av : av - bv
-  })
-})
-const pages = computed(() => Math.max(1, Math.ceil(rows.value.length / PAGE_SIZE)))
-const pageRows = computed(() => rows.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
-watch([idxType, keyword, tradeDate], () => { page.value = 1; selected.value = '' })
+const day = computed(() => env.value.trade_date || '')
+const rrgRef = computed(() => Number(env.value.data?.rrg_reference) || 100)
+// RS 指标窗口跨到下限之前时，RRG 整体待更新
+const inWindow = computed(() => rollingMask(day.value).rs)
+watch([idxType, keyword, tradeDate], () => { selected.value = '' })
 
-function sortBy(k) {
-  if (sortKey.value === k) sortDesc.value = !sortDesc.value
-  else { sortKey.value = k; sortDesc.value = true }
-}
-
-const rrgOption = computed(() => ({
-  tooltip: { formatter: (p) => `${p.data[2]}<br/>RS ${p.data[0]}<br/>Mom ${p.data[1]}` },
-  grid: { left: 50, right: 30, top: 40, bottom: 40 },
-  xAxis: { type: 'value', scale: true, name: 'RS-Ratio', nameLocation: 'middle', nameGap: 26 },
-  yAxis: { type: 'value', scale: true, name: 'RS-Momentum' },
-  series: [{
-    type: 'scatter', symbolSize: 9, itemStyle: { color: '#2f5d9b', opacity: 0.75 },
-    data: inWindow.value ? [] : rows.value.filter((r) => r.rs_ratio != null && r.rs_momentum != null)
-      .map((r) => [r.rs_ratio, r.rs_momentum, r.sector_name]),
-    markLine: { silent: true, symbol: 'none', lineStyle: { color: '#9aa3b2', type: 'dashed' },
-      data: [{ xAxis: 100 }, { yAxis: 100 }] },
-  }],
-}))
-
+// 近期序列（点击行后的下钻明细）
 const series = ref({})
 const seriesLoading = ref(false)
 watch(selected, async (code) => {
@@ -171,8 +102,15 @@ const trailOption = computed(() => ({
   yAxis: { type: 'value', scale: true },
   series: [{
     type: 'line', symbolSize: 8, itemStyle: { color: '#2f5d9b' },
-    data: pts.value.filter((p) => p.rs_ratio != null && !rsMasked(p.trade_date)).map((p) => [p.rs_ratio, p.rs_momentum, p.trade_date]),
+    data: pts.value.filter((p) => p.rs_ratio != null && !rollingMask(p.trade_date).rs).map((p) => [p.rs_ratio, p.rs_momentum, p.trade_date]),
     markLine: { silent: true, symbol: 'none', lineStyle: { color: '#9aa3b2', type: 'dashed' }, data: [{ xAxis: 100 }, { yAxis: 100 }] },
   }],
 }))
 </script>
+
+<style scoped>
+.floor-note { margin: -4px 0 14px; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
+.pair > * { min-width: 0; margin-bottom: 0; }
+@media (max-width: 1100px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+</style>
