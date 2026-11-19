@@ -11,7 +11,6 @@
           <div class="stat" v-ind="'participation.observation.participation_pctile_60d'"><div class="label">成交额分位（60 日）</div><div class="value">{{ fmt.num(obs.participation_pctile_60d, 1) }}</div><div class="sub">0–100，不含当日</div></div>
           <div class="stat" v-ind="'participation.observation.low_participation_streak'"><div class="label">低参与连续天数</div><div class="value">{{ fmt.num(obs.low_participation_streak, 0) }} 交易日</div></div>
         </div>
-        <p class="placeholder">待接入：参与热度与成交的 60 日序列（participation · history：heat、turnover、low_participation_days）。接入后画双轴热度折线加成交额柱。</p>
       </section>
 
       <section id="participation-pressure" class="panel mod" v-module="'observation'" aria-labelledby="participation-pressure-title">
@@ -21,7 +20,6 @@
           <div class="stat" v-ind="'participation.observation.sell_pressure_change_1d'"><div class="label">卖压缓和程度（1 日变化，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_1d, 3) }}</div></div>
           <div class="stat" v-ind="'participation.observation.sell_pressure_change_3d'"><div class="label">近 3 日卖压趋势（斜率，正值为缓和）</div><div class="value">{{ fmt.signed(obs.sell_pressure_change_3d, 4) }}</div></div>
         </div>
-        <p class="placeholder">待接入：卖压强度的历史序列（participation · history：selling_pressure_pct、pressure_state；卖出占比历史 selling_share_reference_pct 待补）。接入后画折线并按高、中、低分段着色。</p>
       </section>
 
       <section id="participation-erp" class="panel mod" v-module="'erp'" aria-labelledby="participation-erp-title">
@@ -41,7 +39,6 @@
           </div>
           <p class="note">历史位置为近各窗口内的分位（0 最低，100 最高），只描述历史相对水平。</p>
         </div>
-        <p class="placeholder">待接入：股债收益差的逐日序列（public-market-compensation · history-position：compensation_pct）。接入后在此画折线。</p>
       </section>
 
       <section id="participation-derivatives" class="panel mod wide" v-module="'derivatives'" aria-labelledby="participation-derivatives-title">
@@ -93,7 +90,6 @@
           </div>
           <EChart v-if="styleCamps.some((c) => c.strength_series?.length)" :option="styleOption" height="240px" />
         </template>
-        <p v-else class="placeholder">当日风格强弱序列暂缺（style-rotation · history 不可用）。</p>
         <p class="note">{{ styleData?.definition || '强度分为阵营指数相对强度的历史评分（0–100）' }}；横轴为观测序号，当前为近 20 个观测；按固定阵营顺序展示，不按强度排序，不提供 leader/signal 结论。</p>
       </section>
     </div>

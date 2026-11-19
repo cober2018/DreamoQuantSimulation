@@ -22,7 +22,6 @@
           <div class="sub">分母 {{ fmt.num(open5.close_ready_count, 0) }}</div></div>
       </div>
       <p v-if="open5Partial" class="note">覆盖不全，仅供参考。</p>
-      <p class="placeholder">20 日走势待接入（历史视图 open5-history）。</p>
       <p class="note">数据不完整的股票不计入分子，也不计入占比分母；覆盖率反映数据完整程度，不代表市场表现。</p>
     </section>
 
