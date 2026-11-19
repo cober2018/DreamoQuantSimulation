@@ -23,7 +23,7 @@
         <h2>主要指数一览<small>今天各主要指数怎么样，离一年高点多远，估值在什么位置</small></h2>
         <div class="table-wrap">
           <table>
-            <thead><tr><th class="left">指数</th><th>收盘（点）</th><th>当日涨跌</th><th>20 日涨跌</th><th>距一年高点回撤</th><th>估值位置（252 日）</th><th class="left">60 日走势</th></tr></thead>
+            <thead><tr><th class="left">指数</th><th>收盘（点）</th><th>当日涨跌</th><th>20 日涨跌</th><th>距一年高点回撤</th><th class="left">60 日走势</th></tr></thead>
             <tbody>
               <tr v-for="r in idxOverview.rows" :key="r.index_code">
                 <td class="left">{{ r.index_name || r.index_code }} <span class="muted">{{ r.index_code }}</span></td>
@@ -31,7 +31,6 @@
                 <td :class="fmt.dir(r.return_1d_pct)">{{ r.return_1d_pct == null ? '数据待更新' : fmt.signedPct(r.return_1d_pct) }}</td>
                 <td :class="fmt.dir(r.return_20d_pct)">{{ r.return_20d_pct == null ? '数据待更新' : fmt.signedPct(r.return_20d_pct) }}</td>
                 <td>{{ r.drawdown_pct == null ? '数据待更新' : fmt.signedPct(r.drawdown_pct) }}</td>
-                <td>{{ r.valuation_position_252d_pct == null ? '数据待更新' : fmt.num(r.valuation_position_252d_pct, 1) + '%' }}</td>
                 <td class="left"><span class="muted">{{ idxSpark(r.index_code).length ? idxSpark(r.index_code).length + ' 日' : '数据待更新' }}</span></td>
               </tr>
             </tbody>
