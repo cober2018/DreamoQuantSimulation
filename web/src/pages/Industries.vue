@@ -5,7 +5,7 @@
         <button v-for="t in IDX_TYPES" :key="t" :class="{ on: idxType === t }" @click="idxType = t">{{ t }}</button>
       </div>
       <input type="text" v-model="keyword" placeholder="搜索名称或代码" />
-      <input type="date" v-model="tradeDate" aria-label="交易日" />
+      <input type="date" v-model="tradeDate" :min="FLOOR" aria-label="交易日" />
     </template>
 
     <div class="two-col">
@@ -16,7 +16,7 @@
             <thead>
               <tr>
                 <th class="left">板块</th>
-                <th v-for="c in COLS" :key="c.key" class="sortable" @click="sortBy(c.key)">
+                <th v-for="c in visibleCols" :key="c.key" class="sortable" @click="sortBy(c.key)">
                   {{ c.label }}{{ sortKey === c.key ? (sortDesc ? ' ↓' : ' ↑') : '' }}
                 </th>
               </tr>
@@ -25,7 +25,7 @@
               <tr v-for="r in pageRows" :key="r.sector_code" :class="['clickable', { selected: r.sector_code === selected }]"
                   @click="selected = r.sector_code">
                 <td class="left">{{ r.sector_name }} <span class="muted">{{ r.sector_code }}</span></td>
-                <td v-for="c in COLS" :key="c.key" :class="maskedCol(c.key) ? 'muted' : c.signed ? fmt.dir(r[c.key]) : ''">{{ maskedCol(c.key) ? '数据待更新' : c.f(r[c.key]) }}</td>
+                <td v-for="c in visibleCols" :key="c.key" :class="pendingCell(c.key, r) ? 'muted' : c.signed ? fmt.dir(r[c.key]) : ''">{{ pendingCell(c.key, r) ? '数据待更新' : c.f(r[c.key]) }}</td>
               </tr>
             </tbody>
           </table>
@@ -35,14 +35,14 @@
           <span class="muted">第 {{ page }} / {{ pages }} 页</span>
           <button class="btn" :disabled="page === pages" @click="page++">下一页</button>
         </div>
-        <p class="note">涨跌幅为小数口径换算的百分比；资金净流入单位为亿元。扩散度、成交额占比等指标的精确公式以数据中台定义为准。</p>
+        <p class="note">行业数据从 2026-09-18 起提供。涨跌幅为小数口径换算的百分比；资金净流入单位为亿元。扩散度、成交额占比等指标的精确公式以数据中台定义为准。</p>
       </div>
 
       <div class="panel" v-module="'rrg'">
         <h2>相对强度—动量（RRG 原始坐标）</h2>
         <EChart :option="rrgOption" height="420px" />
         <p class="note">横轴为相对强度（RS-Ratio），纵轴为相对动量（RS-Momentum），参考线为 100。图形仅呈现历史相对位置。</p>
-        <p v-if="inWindow" class="note">该日期处于上游修复窗口内，RS 指标数据待更新，图中留空。</p>
+        <p v-if="inWindow" class="note">该日期的 RS 指标窗口跨到 2026-09-18 之前，数据待更新，图中留空。</p>
       </div>
     </div>
 
@@ -58,8 +58,7 @@
         <EChart :option="seriesOption" height="280px" />
         <EChart :option="trailOption" height="280px" />
       </div>
-      <p v-if="badInSeries" class="note">{{ BAD_RETURN_DAYS.join('、') }} 的涨跌幅数据待更新，图中留空。</p>
-    </div>
+          </div>
   </PageFrame>
 </template>
 
@@ -69,6 +68,7 @@ import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import { fmt, getModule } from '../api'
 import { useModule } from '../useModule'
+import { INDUSTRY_FLOOR, isPending, rollingMask } from '../lib/industryPending.js'
 import { can, payOn, session } from '../auth'
 
 const canDetail = computed(() => can('data.detail'))
@@ -78,6 +78,7 @@ const COLS = [
   { key: 'sector_return', label: '涨跌幅', f: (v) => fmt.pct(v), signed: true },
   { key: 'sector_return_5d', label: '5日', f: (v) => fmt.pct(v), signed: true },
   { key: 'sector_return_20d', label: '20日', f: (v) => fmt.pct(v), signed: true },
+  { key: 'amount', label: '成交额', f: (v) => fmt.num(v, 1) },
   { key: 'turnover_rate', label: '换手率%', f: (v) => fmt.num(v) },
   { key: 'up_stock_ratio', label: '上涨成分占比', f: (v) => fmt.ratio(v) },
   { key: 'above_ma20_ratio', label: '站上MA20占比', f: (v) => fmt.ratio(v) },
@@ -87,15 +88,15 @@ const COLS = [
   { key: 'net_flow_5d', label: '净流入5日', f: (v) => fmt.num(v), signed: true },
 ]
 const PAGE_SIZE = 50
-// 中台 ZS-120：ODS 日期标签错位。当天涨跌幅错的日子，以及之后 20 个交易日内的 5 日、20 日、RS 指标都会受影响，等中台修复并重算后再显示
-const BAD_RETURN_DAYS = ['2025-10-13', '2026-02-13', '2026-05-25', '2026-05-26', '2026-10-27', '2026-10-29', '2026-10-30', '2026-11-10', '2026-11-11']
-const ROLLING_WINDOWS = [['2025-10-13', '2025-11-14'], ['2026-02-13', '2026-03-16'], ['2026-05-25', '2026-06-30'], ['2026-10-27', '2026-12-15']]
-const inWin = (d) => ROLLING_WINDOWS.some(([a, b]) => d >= a && d <= b)
-const isBadDay = computed(() => BAD_RETURN_DAYS.includes(env.value.trade_date))
-const inWindow = computed(() => inWin(env.value.trade_date || ''))
-const maskedCol = (k) => (k === 'sector_return' && isBadDay.value) || ((k === 'sector_return_5d' || k === 'sector_return_20d') && inWindow.value)
-const valueOf = (r, k) => (maskedCol(k) ? null : r[k])
-const badInSeries = computed(() => pts.value.some((p) => BAD_RETURN_DAYS.includes(p.trade_date)))
+// 行业数据从 2026-09-18 起提供（中台复核）。成交额为空或在下限之前、窗口跨到下限之前的 5 日、20 日、RS 指标显示「数据待更新」
+const FLOOR = INDUSTRY_FLOOR
+const dayOf = () => env.value.trade_date || ''
+const visibleCols = computed(() => COLS)
+const pendingCell = (k, r) => isPending(k, r, dayOf())
+const maskedCol = (k) => pendingCell(k, {})
+const rsMasked = (d) => rollingMask(d).rs
+const inWindow = computed(() => rsMasked(dayOf()))
+const valueOf = (r, k) => (pendingCell(k, r) ? null : r[k])
 
 const idxType = ref('行业板块')
 const tradeDate = ref('')
@@ -158,7 +159,7 @@ const seriesOption = computed(() => ({
   xAxis: { type: 'category', data: pts.value.map((p) => p.trade_date) },
   yAxis: [{ type: 'value', name: '%' }, { type: 'value', name: '亿元' }],
   series: [
-    { name: '涨跌幅%', type: 'bar', data: pts.value.map((p) => (p.sector_return == null || BAD_RETURN_DAYS.includes(p.trade_date) ? null : +(p.sector_return * 100).toFixed(2))),
+    { name: '涨跌幅%', type: 'bar', data: pts.value.map((p) => (p.sector_return == null ? null : +(p.sector_return * 100).toFixed(2))),
       itemStyle: { color: (p) => (p.value >= 0 ? '#d0342c' : '#1a8f4c') } },
     { name: '净流入(亿元)', type: 'line', yAxisIndex: 1, data: pts.value.map((p) => p.net_flow_1d), itemStyle: { color: '#2f5d9b' } },
   ],
@@ -170,7 +171,7 @@ const trailOption = computed(() => ({
   yAxis: { type: 'value', scale: true },
   series: [{
     type: 'line', symbolSize: 8, itemStyle: { color: '#2f5d9b' },
-    data: pts.value.filter((p) => p.rs_ratio != null && !inWin(p.trade_date)).map((p) => [p.rs_ratio, p.rs_momentum, p.trade_date]),
+    data: pts.value.filter((p) => p.rs_ratio != null && !rsMasked(p.trade_date)).map((p) => [p.rs_ratio, p.rs_momentum, p.trade_date]),
     markLine: { silent: true, symbol: 'none', lineStyle: { color: '#9aa3b2', type: 'dashed' }, data: [{ xAxis: 100 }, { yAxis: 100 }] },
   }],
 }))
