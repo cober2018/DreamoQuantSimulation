@@ -14,9 +14,23 @@
       </div>
       <div class="stat" v-ind="'overview.market.turnover_yi'"><div class="label">两市成交额</div><div class="value">{{ turnoverBillion == null ? '—' : fmt.num(turnoverBillion, 0) }} 亿元</div><div class="sub">与参与度页同一口径</div></div>
     </div>
-    <div class="panel" style="margin-top:16px" v-if="d.up_count != null">
-      <h2>涨跌家数分布</h2>
-      <EChart :option="breadthOption" height="90px" />
+    <div class="modules">
+      <section class="panel mod">
+        <h2>主要指数一览<small>今天各主要指数怎么样，离一年高点多远，估值在什么位置</small></h2>
+        <p class="placeholder">待接入：指数估值与价格位置（public-market-index-position · overview / history）。上线后显示每个指数的涨跌、离一年高点的距离和 60 日迷你折线。</p>
+      </section>
+      <section class="panel mod" v-if="d.up_count != null">
+        <h2>涨跌家数分布<small>今天涨多跌少还是相反，分布在哪些区间</small></h2>
+        <EChart :option="breadthOption" height="90px" />
+      </section>
+      <section class="panel mod">
+        <h2>两市成交额 60 日<small>今天的成交在近期算高还是低</small></h2>
+        <p class="placeholder">待接入：参与度历史（public-market-participation · history）。</p>
+      </section>
+      <section class="panel mod">
+        <h2>涨跌停与炸板<small>极端涨跌个股有多少，附前一日对比</small></h2>
+        <p class="placeholder">待接入：涨跌停与股票池结构（public-limit-pool-structure · pool-counts）。</p>
+      </section>
     </div>
     <div class="panel" style="margin-top:16px">
       <h2>更多数据</h2>
@@ -68,6 +82,10 @@ const breadthOption = computed(() => ({
 </script>
 
 <style scoped>
+.modules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.mod h2 small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.placeholder { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+@media (max-width: 900px) { .modules { grid-template-columns: minmax(0, 1fr); } }
 .more { display: block; color: var(--text); }
 .more:hover { border-color: var(--accent); }
 .more .badge { margin-left: 6px; }
