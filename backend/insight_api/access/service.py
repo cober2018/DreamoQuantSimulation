@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hmac
+import logging
 import re
 import secrets
 import time
@@ -17,6 +18,7 @@ LOGIN_FAIL_LIMIT, LOGIN_WINDOW = 5, 15 * 60
 REDEEM_FAIL_LIMIT, REDEEM_FREEZE = 5, 30 * 60
 REDEEM_USER_PER_HOUR, REDEEM_IP_PER_HOUR = 10, 30
 GENERIC_LOGIN_ERROR = "用户名或密码错误"
+logger = logging.getLogger(__name__)
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 CODE_TTL, CODE_GAP, CODE_MAX_ATTEMPTS = 600, 60, 5
 
@@ -51,8 +53,9 @@ class Principal:
 class AccessService:
     def __init__(self, store: Store, jwt_secrets: List[str], *, registration: str = "open",
                  payment_enabled: bool = False, trial_role: str = "", trial_until: float = 0.0,
-                 mailer=None, email_verify: bool = False):
+                 mailer=None, email_verify: bool = False, email_daily_cap: int = 300):
         self.store = store
+        self.email_daily_cap = email_daily_cap
         self.mailer = mailer
         self.email_verify = email_verify
         self.payment_enabled = payment_enabled
@@ -144,6 +147,16 @@ class AccessService:
         row = self.store.q1("SELECT sent_at FROM email_codes WHERE email=?", (email,))
         if row and now - row["sent_at"] < CODE_GAP:
             raise AccessError(429, "验证码发送过于频繁，请稍后再试", {"Retry-After": str(int(CODE_GAP - (now - row["sent_at"])) + 1)})
+        # 全站每日发码上限，按北京时间零点重置；计数在数据库里，重启不丢
+        day = time.strftime("%Y-%m-%d", time.gmtime(now + 8 * 3600))
+        with self.store.tx():
+            self.store.x("INSERT OR IGNORE INTO email_send_daily(day,sent) VALUES(?,0)", (day,))
+            self.store.x("UPDATE email_send_daily SET sent=sent+1 WHERE day=?", (day,))
+            count = self.store.q1("SELECT sent FROM email_send_daily WHERE day=?", (day,))["sent"]
+        if count > self.email_daily_cap:
+            self.store.x("UPDATE email_send_daily SET sent=sent-1 WHERE day=?", (day,))
+            logger.warning("email daily cap reached: %s/%s", self.email_daily_cap, day)
+            raise AccessError(429, "今日验证码发送已达上限，请明天再试")
         code = f"{secrets.randbelow(1000000):06d}"
         self.store.x(
             "INSERT OR REPLACE INTO email_codes(email,code_hash,expires_at,attempts,sent_at) VALUES(?,?,?,?,?)",

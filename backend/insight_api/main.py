@@ -68,6 +68,7 @@ def create_app() -> FastAPI:
         access = AccessService(Store(settings.db_path), secrets_list, registration=settings.registration,
                                payment_enabled=settings.payment_enabled, trial_role=settings.trial_role,
                                trial_until=settings.trial_until, email_verify=settings.email_verify,
+                               email_daily_cap=settings.email_daily_cap,
                                mailer=_build_mailer(settings))
         if settings.trial_role and not access.store.q1("SELECT 1 FROM roles WHERE name=?", (settings.trial_role,)):
             raise ConfigError(f"INSIGHT_TRIAL_ROLE 不存在: {settings.trial_role}")
