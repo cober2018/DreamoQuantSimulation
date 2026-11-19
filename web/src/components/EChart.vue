@@ -6,9 +6,11 @@ import * as echarts from 'echarts/core'
 import { BarChart, LineChart, ScatterChart } from 'echarts/charts'
 import { GridComponent, MarkLineComponent, TooltipComponent, LegendComponent, DataZoomComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
+import { registerZxThemes } from '../intro/ds/echarts-theme.js'
 
 echarts.use([BarChart, LineChart, ScatterChart, GridComponent, MarkLineComponent, TooltipComponent,
   LegendComponent, DataZoomComponent, CanvasRenderer])
+registerZxThemes(echarts)
 
 const props = defineProps({ option: Object, height: { type: String, default: '360px' } })
 const el = ref(null)
@@ -16,7 +18,7 @@ let chart
 const resize = () => chart?.resize()
 
 onMounted(() => {
-  chart = echarts.init(el.value)
+  chart = echarts.init(el.value, 'zx-light')
   chart.setOption(props.option || {})
   window.addEventListener('resize', resize)
 })

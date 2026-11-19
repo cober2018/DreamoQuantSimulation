@@ -6,6 +6,10 @@ export default defineConfig(({ mode }) => {
   const token = env.INSIGHT_ACCESS_TOKEN || process.env.INSIGHT_ACCESS_TOKEN || ''
   return {
     plugins: [vue()],
+    define: {
+      __BRIEF_LIVE__: JSON.stringify(process.env.BRIEF_LIVE === 'true'),
+      __SOCIAL_DRAFTS__: JSON.stringify(false),
+    },
     build: { sourcemap: false, minify: 'esbuild' },
     esbuild: mode === 'production' ? { drop: ['console', 'debugger'] } : {},
     server: {

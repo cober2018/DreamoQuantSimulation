@@ -8,7 +8,15 @@ import { moduleAccess } from './useModule'
 
 const PAGE_META = Object.fromEntries(PAGES.map((p) => [p.path, { title: p.title, page: p }]))
 const routes = [
-  { path: '/', component: () => import('./pages/Landing.vue'), meta: { title: '知数星耀', public: true, bare: true } },
+  { path: '/', component: () => import('./intro/pages/Landing.vue'), meta: { title: '知数星耀', public: true, bare: true } },
+  { path: '/follow', component: () => import('./intro/pages/Follow.vue'), meta: { title: '关注知数Talk 主理人', public: true, bare: true } },
+  { path: '/pricing', component: () => import('./intro/pages/Stub.vue'), props: { stubKey: 'pricing', title: '价格与权益', desc: '价格待公布。免费试用期内所有内容开放，正式档位和价格将另行公布。' }, meta: { title: '价格与权益', public: true, bare: true } },
+  { path: '/mp', component: () => import('./intro/pages/Stub.vue'), props: { stubKey: 'mp', title: '小程序', desc: '小程序版本单独排期，暂未开放。' }, meta: { title: '小程序', public: true, bare: true } },
+  { path: '/docs', component: () => import('./intro/pages/Stub.vue'), props: { stubKey: 'docs', title: '文档', desc: '文档即将推出。开始使用、每日要点和 MCP 说明会陆续发布。' }, meta: { title: '文档', public: true, bare: true } },
+  { path: '/blog', component: () => import('./intro/pages/Stub.vue'), props: { stubKey: 'blog', title: '博客', desc: '博客即将推出。首批文章会围绕指标口径和统计方法。' }, meta: { title: '博客', public: true, bare: true } },
+  { path: '/privacy', redirect: '/terms' },
+  { path: '/app', redirect: '/overview' },
+  { path: '/app/states', redirect: '/overview' },
   { path: '/overview', component: () => import('./pages/Overview.vue') },
   { path: '/participation', component: () => import('./pages/Participation.vue') },
   { path: '/industries', component: () => import('./pages/Industries.vue') },
