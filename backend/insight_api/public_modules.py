@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from .content_scope import gap
 from .modules import (
-    CALENDAR_FIELDS, DERIVATIVE_FIELDS, ERP_FIELDS, FIELD_UNITS, IDX_TYPES, INDUSTRY_FIELDS, LIMIT_UP_FIELDS,
+    CALENDAR_FIELDS, DERIVATIVE_FIELDS, DERIVATIVE_HISTORY_FIELDS, ERP_FIELDS, FIELD_UNITS, IDX_TYPES, INDUSTRY_FIELDS, LIMIT_UP_FIELDS,
     OPEN5_FIELDS, PARTICIPATION_OBS_FIELDS, SEAL_BUCKETS, SERIES_FIELDS, SMART_MONEY_FACTOR_KEYS, STYLE_CAMP_FIELDS,
     VALUATION_FIELDS, _bottom_conditions, _ratio, structure_stats,
 )
@@ -25,6 +25,7 @@ VALUATION = ("public-market-compensation", "valuation-breadth")
 SHORT = ("public-market-short-feedback", "current")
 FACTORS = ("public-market-capital-behavior", "factor-breadth")
 DERIVATIVES = ("public-market-derivatives", "raw-stats")
+DERIVATIVES_HISTORY = ("public-market-derivatives", "raw-stats-history")
 STYLE = ("public-market-style-rotation", "current")
 FACTS = ("public-industry-review", "facts")
 SERIES = ("public-industry-review", "series")
@@ -68,6 +69,7 @@ REQUEST_FIELDS = {
     SHORT: [src for src, _ in SHORT_MAP.values()],
     FACTORS: ["factor", "display", "net_breadth", "pos_share", "neg_share"],
     DERIVATIVES: [("oi_volume_ratio_zscore_60d" if f == "oi_volume_crowding_zscore_60d" else f) for f in DERIVATIVE_FIELDS],
+    DERIVATIVES_HISTORY: DERIVATIVE_HISTORY_FIELDS,
     STYLE: ["key", "name", "index_name", "index_code", "strength", "z_score", "strength_series", "missing_reason", "date",
             "available"],
     FACTS: ["industry_code", "industry_name", "idx_type", "level", "sector_return", "sector_return_5d", "sector_return_20d",
@@ -235,6 +237,14 @@ async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, An
     except UpstreamError:
         gaps.append(gap("CNT-010", "derivatives_matrix_json 缺失或无法解析"))
         blocks["derivatives"] = []
+
+    try:
+        dh = await _get(up, DERIVATIVES_HISTORY, td, sessions="60")
+        issues.extend(dh.issues)
+        blocks["derivatives_history"] = [pick(m, DERIVATIVE_HISTORY_FIELDS) for m in dh.rows if isinstance(m, dict)]
+    except UpstreamError:
+        gaps.append(gap("CNT-010", "衍生品标准分历史不可用"))
+        blocks["derivatives_history"] = []
 
     try:
         fac = await _get(up, FACTORS, td)
