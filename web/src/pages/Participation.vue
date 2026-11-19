@@ -98,6 +98,23 @@
     </div>
 
     <div class="panel" v-module="'derivatives'">
+      <h2>衍生品标准分历史（近 60 个交易日）<small>标准分为 60 日标准分，0 为均值；无数据不画成 0</small></h2>
+      <div class="seg" style="margin-bottom:10px">
+        <button v-for="m in DH_METRICS" :key="m.key" :class="{ on: dhMetric === m.key }" @click="dhMetric = m.key">{{ m.label }}</button>
+      </div>
+      <div class="table-wrap">
+        <table class="deriv-heat">
+          <thead><tr><th class="left">品种</th><th v-for="d in dhDates" :key="d">{{ d.slice(5) }}</th></tr></thead>
+          <tbody>
+            <tr v-for="ins in dhInstruments" :key="ins">
+              <td class="left">{{ INST_LABEL[ins] || ins }}</td>
+              <td v-for="d in dhDates" :key="d" :class="dhCellClass(ins, d)" :title="dhCellTitle(ins, d)">{{ dhCellText(ins, d) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">颜色只表示偏离方向和幅度，不代表好坏；灰色「无数据」为上游标注的缺口，悬停可看原因。STAR50 基差为代理值，不显示。</p>
+
       <h2>股指衍生品原始指标</h2>
       <div class="table-wrap">
         <table>
@@ -138,6 +155,25 @@ const erp = computed(() => env.value.data?.erp || {})
 const val = computed(() => env.value.data?.valuation || {})
 const lu = computed(() => env.value.data?.limit_up_structure || {})
 const deriv = computed(() => env.value.data?.derivatives || [])
+const dhRows = computed(() => env.value.data?.derivatives_history || [])
+const DH_METRICS = [
+  { key: 'basis_zscore_60d', label: '基差标准分' },
+  { key: 'pcr_zscore_60d', label: '认沽认购比标准分' },
+  { key: 'oi_volume_ratio_zscore_60d', label: '成交持仓比标准分' },
+]
+const INST_LABEL = { HS300: '沪深300', CSI500: '中证500', SSE50: '上证50', CSI1000: '中证1000', STAR50: '科创50' }
+const dhMetric = ref('basis_zscore_60d')
+const dhDates = computed(() => [...new Set(dhRows.value.map((r) => r.trade_date))].sort())
+const dhInstruments = computed(() => ['HS300', 'SSE50', 'CSI500', 'CSI1000', 'STAR50'].filter((i) => dhRows.value.some((r) => r.instrument === i)))
+const dhCell = (ins, d) => dhRows.value.find((r) => r.instrument === ins && r.trade_date === d) || null
+const dhValue = (ins, d) => {
+  const r = dhCell(ins, d)
+  const v = r ? r[dhMetric.value] : null
+  return v == null || Number.isNaN(Number(v)) ? null : Number(v)
+}
+const dhCellText = (ins, d) => { const v = dhValue(ins, d); return v == null ? '无数据' : (v > 0 ? '+' : '') + v.toFixed(2) }
+const dhCellTitle = (ins, d) => { const r = dhCell(ins, d); return r?.missing_reason ? `原因：${r.missing_reason}` : '' }
+const dhCellClass = (ins, d) => (dhValue(ins, d) == null ? 'muted' : '')
 const sm = computed(() => env.value.data?.smart_money_factors || null)
 const styleData = computed(() => env.value.data?.style_strength || null)
 const styleCamps = computed(() => styleData.value?.camps || [])
