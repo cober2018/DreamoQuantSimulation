@@ -25,7 +25,7 @@
               <tr v-for="r in pageRows" :key="r.sector_code" :class="['clickable', { selected: r.sector_code === selected }]"
                   @click="selected = r.sector_code">
                 <td class="left">{{ r.sector_name }} <span class="muted">{{ r.sector_code }}</span></td>
-                <td v-for="c in visibleCols" :key="c.key" :class="maskedCol(c.key) ? 'muted' : c.signed ? fmt.dir(r[c.key]) : ''">{{ maskedCol(c.key) ? '数据待更新' : c.f(r[c.key]) }}</td>
+                <td v-for="c in visibleCols" :key="c.key" :class="pendingCell(c.key, r) ? 'muted' : c.signed ? fmt.dir(r[c.key]) : ''">{{ pendingCell(c.key, r) ? '数据待更新' : c.f(r[c.key]) }}</td>
               </tr>
             </tbody>
           </table>
@@ -35,14 +35,14 @@
           <span class="muted">第 {{ page }} / {{ pages }} 页</span>
           <button class="btn" :disabled="page === pages" @click="page++">下一页</button>
         </div>
-        <p class="note">行业数据从 2026-06-01 起提供。涨跌幅为小数口径换算的百分比；资金净流入单位为亿元。扩散度、成交额占比等指标的精确公式以数据中台定义为准。</p>
+        <p class="note">行业数据从 2026-09-18 起提供。涨跌幅为小数口径换算的百分比；资金净流入单位为亿元。扩散度、成交额占比等指标的精确公式以数据中台定义为准。</p>
       </div>
 
       <div class="panel" v-module="'rrg'">
         <h2>相对强度—动量（RRG 原始坐标）</h2>
         <EChart :option="rrgOption" height="420px" />
         <p class="note">横轴为相对强度（RS-Ratio），纵轴为相对动量（RS-Momentum），参考线为 100。图形仅呈现历史相对位置。</p>
-        <p v-if="inWindow" class="note">该日期的 RS 指标窗口跨到 2026-06-01 之前，数据待更新，图中留空。</p>
+        <p v-if="inWindow" class="note">该日期的 RS 指标窗口跨到 2026-09-18 之前，数据待更新，图中留空。</p>
       </div>
     </div>
 
@@ -68,6 +68,7 @@ import PageFrame from '../components/PageFrame.vue'
 import EChart from '../components/EChart.vue'
 import { fmt, getModule } from '../api'
 import { useModule } from '../useModule'
+import { INDUSTRY_FLOOR, isPending, rollingMask } from '../lib/industryPending.js'
 import { can, payOn, session } from '../auth'
 
 const canDetail = computed(() => can('data.detail'))
@@ -87,21 +88,15 @@ const COLS = [
   { key: 'net_flow_5d', label: '净流入5日', f: (v) => fmt.num(v), signed: true },
 ]
 const PAGE_SIZE = 50
-// 行业数据从 2026-06-01 起提供（中台已重算核对）。窗口跨到 06-01 之前的 5 日、20 日、RS 指标显示「数据待更新」
-const FLOOR = '2026-06-01'
+// 行业数据从 2026-09-18 起提供（中台复核）。成交额为空或在下限之前、窗口跨到下限之前的 5 日、20 日、RS 指标显示「数据待更新」
+const FLOOR = INDUSTRY_FLOOR
 const dayOf = () => env.value.trade_date || ''
-const showAmount = computed(() => dayOf() >= FLOOR)
-const visibleCols = computed(() => COLS.filter((c) => c.key !== 'amount' || showAmount.value))
-const maskedCol = (k) => {
-  const d = dayOf()
-  if (!d) return false
-  if (k === 'sector_return_5d') return d < '2026-06-09'
-  if (k === 'sector_return_20d') return d < '2026-06-30'
-  return false
-}
-const rsMasked = (d) => d < '2026-06-30'
+const visibleCols = computed(() => COLS)
+const pendingCell = (k, r) => isPending(k, r, dayOf())
+const maskedCol = (k) => pendingCell(k, {})
+const rsMasked = (d) => rollingMask(d).rs
 const inWindow = computed(() => rsMasked(dayOf()))
-const valueOf = (r, k) => (maskedCol(k) ? null : r[k])
+const valueOf = (r, k) => (pendingCell(k, r) ? null : r[k])
 
 const idxType = ref('行业板块')
 const tradeDate = ref('')
