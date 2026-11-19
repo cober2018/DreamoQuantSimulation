@@ -13,16 +13,14 @@
             <div v-if="k.spark" role="img" :aria-label="`${k.label}近 10 日走势，当日${k.text}`">
               <EChart :option="k.spark" height="44px" />
             </div>
-            <p v-else class="placeholder">待接入：近 10 日历史（pool-structure · history）</p>
           </div>
         </div>
-        <p v-else class="placeholder">待接入：股票池结构（pool-structure · current）当日缺失。</p>
       </section>
 
       <section id="themes-board-ladder" class="panel mod" v-module="'structure'" aria-labelledby="themes-board-ladder-title">
         <h2 id="themes-board-ladder-title">连板梯队<small>1 板到最高板各有多少家，只计数</small></h2>
         <EChart v-if="tiers.length" :option="ladderOption" height="240px" />
-        <p v-else class="placeholder">当日没有连板梯队数据（theme-limit-stats · ladder）。</p>
+        <p v-else class="placeholder">当日暂无连板数据。</p>
       </section>
 
       <section id="themes-theme-limit-up" class="panel mod" v-module="'themes'" aria-labelledby="themes-theme-limit-up-title">
@@ -32,11 +30,6 @@
         <p class="note">{{ rule }}</p>
       </section>
 
-      <section id="themes-seal-time" class="panel mod" v-module="'themes'" aria-labelledby="themes-seal-time-title">
-        <h2 id="themes-seal-time-title">封板时间分布<small>涨停首次封板所在时段的只数</small></h2>
-        <div v-if="env.data?.detail_locked" class="lock-card">封板时间分布属于下钻明细，需要 {{ session.user?.perm_min_role?.['data.detail'] || '更高等级' }}。<router-link v-if="payOn()" to="/plans">查看会员套餐</router-link></div>
-        <p v-else class="placeholder">待接入：全市场按时段的涨停只数（theme-limit-stats · seal-time）。现有 seal_time_buckets 只给时段名称；题材行里的时段计数会把同一只股票计入多个题材，不能加总成分布。</p>
-      </section>
     </div>
   </PageFrame>
 </template>
