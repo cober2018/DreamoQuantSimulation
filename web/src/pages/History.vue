@@ -1,7 +1,7 @@
 <template>
   <PageFrame title="历史复盘" question="某一天的数据和历史对比是什么？" :env="env" :loading="loading" @retry="load" @jump="tradeDate = $event">
     <template #tools>
-      <input type="date" v-model="tradeDate" :min="INDUSTRY_FLOOR" aria-label="交易日" />
+      <input type="date" v-model="tradeDate" aria-label="交易日" />
     </template>
 
     <section class="panel" id="history-brief" aria-labelledby="history-brief-title">
