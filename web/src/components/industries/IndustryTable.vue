@@ -104,8 +104,11 @@ const ariaSort = (k) => (sortKey.value === k ? (sortDesc.value ? 'descending' : 
 // 待更新与 null 统一显示「数据待更新」，不显示 0 或 -0
 // 上游 field_status：更正中（06-01 前成交额、接缝期的量比与拥挤分位）；真缺数「数据待更新」；说明不可用单独标注
 const CORRECTING = ['amount_pre_correction', 'insufficient_lookback']
+// 上游字段名与页面字段名不同的别名（净流入：上游 net_inflow_*，页面 net_flow_*）
+const STATUS_ALIAS = { net_flow_1d: ['net_inflow_1d'], net_flow_5d: ['net_inflow_5d'], net_flow_20d: ['net_inflow_20d'] }
 const statusText = (c, r) => {
-  const st = r.field_status?.[c.key]
+  const keys = [c.key, ...(STATUS_ALIAS[c.key] || [])]
+  const st = keys.map((k) => r.field_status?.[k]).find(Boolean)
   if (st && CORRECTING.includes(st)) return '更正中'
   if (st === 'explanation_unavailable') return '说明暂不可用'
   if (st === 'unavailable') return '数据待更新'
