@@ -102,8 +102,17 @@ const sortIcon = (k) => (sortKey.value === k ? (sortDesc.value ? ' ↓' : ' ↑'
 const ariaSort = (k) => (sortKey.value === k ? (sortDesc.value ? 'descending' : 'ascending') : 'none')
 
 // 待更新与 null 统一显示「数据待更新」，不显示 0 或 -0
-const cellText = (c, r) => (cellPending(c.key, r, props.day) ? '数据待更新' : c.f(r[c.key] + 0))
-const cellClass = (c, r) => (cellPending(c.key, r, props.day) ? 'muted' : c.signed ? fmt.dir(r[c.key]) : '')
+// 上游 field_status：更正中（06-01 前成交额、接缝期的量比与拥挤分位）；真缺数「数据待更新」；说明不可用单独标注
+const CORRECTING = ['amount_pre_correction', 'insufficient_lookback']
+const statusText = (c, r) => {
+  const st = r.field_status?.[c.key]
+  if (st && CORRECTING.includes(st)) return '更正中'
+  if (st === 'explanation_unavailable') return '说明暂不可用'
+  if (st === 'unavailable') return '数据待更新'
+  return null
+}
+const cellText = (c, r) => statusText(c, r) || (cellPending(c.key, r, props.day) ? '数据待更新' : c.f(r[c.key] + 0))
+const cellClass = (c, r) => (cellText(c, r) !== c.f(r[c.key] + 0) ? 'muted' : c.signed ? fmt.dir(r[c.key]) : '')
 </script>
 
 <style scoped>
