@@ -20,13 +20,33 @@ backend/                 FastAPI 网关（insight_api）
     modules.py           各页面取数与统计口径
     main.py              路由、令牌中间件、错误处理
   fixtures/              开发夹具（情绪/前瞻风险为真实 ADS 导出行，行业与日历事件为合成）
-web/                     Vite + Vue 3 + ECharts 前端（7 个页面）
+web/                     React 19 + Vite + Tailwind 4 前端（首页、6 个数据页、账号与后台；2026-11 由 Vue 3 迁移）
 scripts/sandbox/         夹具生成与后端验证脚本
 docs/source/             输入文档冻结副本
 openspec/                规格与变更
 ```
 
 与旧平台**零代码引用**：唯一依赖是数据中台的 HTTP 接口 `GET /api/v1/data/apis/{service_key}/records`。
+
+## 2026-11-23 前端迁移到 React（feat/web-react）
+
+- `web/` 由 Vue 3 改为 React 19（Vite 8、Tailwind 4、shadcn/ui、TanStack Query、zustand）。地址、权限点、页面数据项与旧版一致；旧 Vue 代码只留在 git 历史里。
+- 图表：时间序列用 Recharts，行业页的旋转图和树图用 ECharts（只打进行业页的分包）。
+- 生产构建 `npm run build:prod` = 构建 + 混淆 + 产物扫描。混淆工具固定为 javascript-obfuscator 5.9.1：4.x 会把 Redux Toolkit 里引用自身类名的写法改坏，图表页一打开就报错；`disableConsoleOutput` 关闭，因为它注入的 `Function()` 会被线上 CSP（`script-src 'self'`）拦下。
+- 新增公开页：首页（星图 + 历史曲线演示）、关注页（二维码在 `web/public/social/`）、价格/小程序/文档/博客占位页、「没有这个页面」兜底页。
+- 网关：`backend/insight_api/supplement.py` 新增补充视图 `limit_history`、`breadth_history`，总览页的涨跌停、上涨占比历史曲线用它们，**网关要和前端一起发布，先发网关**。
+
+### 首页样例数据怎么更新
+
+首页第二屏的历史演示读静态文件 `web/src/intro/data/sample.json`（60 个交易日），不走接口，所以会随时间变旧，需要手动重新导出：
+
+1. 从数据中台对外接口取 3 个视图，日期范围取最近 60 个交易日：
+   - `public-market-participation` / `history`：`date`、`turnover`（两市成交额，亿元）
+   - `public-market-participation` / `breadth-history`：`trade_date`、`up_count`、`down_count`（每个指数各一行，按日期去重）
+   - `public-limit-pool-structure` / `history`：`tier_counts[].count`、`broken_board_count`、`limit_down_count`
+2. 每天一行，字段 `d`、`turnover`、`up`、`down`、`limit_up`、`limit_down`、`broken`。涨停数 = `tier_counts` 前四档（首板、2 连板、3 连板、高板）的 `count` 之和；上涨占比、封板率由页面按 `上涨 ÷（上涨 + 下跌）`、`lib/limitStructure.ts` 的 `sealRate` 计算，不写进文件。
+3. 缺数的日子填 `null`，不要补 0。2026-11-18 的跌停数、炸板数在中台是空值，修好之前终点不要选这一天。
+4. 改 `note` 里的导出日期；挑 3 天和中台 `current` 视图核对；`npm run build:prod` 后看首页演示。
 
 ## 2026-11-18 MCP 只读服务（ZS-108，内部封闭测试，本地完成、未部署）
 
@@ -86,8 +106,9 @@ openspec/                规格与变更
 
 ```
 backend/insight_api/access/   账号权限：store(SQLite) / security / service / gate / guard / routes
-web/src/{auth.js,pages/Login|Account|Admin|Terms.vue}   登录、签名请求、账号、管理后台
-web/src/{pageCatalog.js,pages/Plans|Locked.vue,components/DateTag.vue}   套餐页、锁定预告、分区数据日标注
+web/src/{lib/auth.ts,pages/Login|Account|Admin|Terms.tsx}   登录、签名请求、账号、管理后台
+web/src/{lib/pageCatalog.ts,pages/Plans|Locked.tsx,components/shell/DateTag.tsx}   套餐页、锁定预告、分区数据日标注
+web/src/{pages/Landing|Follow|Stub.tsx,components/site/,intro/}   公开页：首页星图与历史演示、关注页、占位页与「没有这个页面」
 docs/launch-checklist.md      上线检查清单
 web/scripts/{obfuscate,scan-dist}.mjs                   生产构建混淆与产物扫描
 miniprogram/                  uni-app 小程序 (npm run build:mp-weixin | build:h5)
@@ -103,7 +124,7 @@ cd backend && .venv/bin/python -m uvicorn insight_api.main:app --port 8090
 #   INSIGHT_JWT_SECRET (production 必须 >=32 位) / INSIGHT_BOOTSTRAP_ADMIN_USER+PASSWORD (首次启动创建管理员, 首登强制改密)
 # 可选: INSIGHT_AUTH_MODE=off(仅开发) INSIGHT_REGISTRATION=invite_only INSIGHT_MP_MOCK_LOGIN=1(仅开发)
 #       INSIGHT_WECHAT_APPID / INSIGHT_WECHAT_SECRET (有资质后)
-cd web && npm run dev         # http://127.0.0.1:5180 (代理 /api → 8090)
+cd web && npm run dev         # http://127.0.0.1:5181 (代理 /api → 8090，INSIGHT_API_TARGET 可改)
 cd web && npm run build:prod  # 构建 + 混淆 + 产物扫描
 cd miniprogram && npm run build:mp-weixin   # 导入微信开发者工具 dist/build/mp-weixin
 cd miniprogram && VITE_H5_MOCK_CODE=mock:h5demo npm run build:h5 && npx vite preview --outDir dist/build/h5  # 无开发者工具时的预览
@@ -142,10 +163,11 @@ INSIGHT_DATA_MODE=fixture .venv/bin/uvicorn insight_api.main:app --host 127.0.0.
 INSIGHT_UPSTREAM_BASE_URL=http://<数据中台> INSIGHT_UPSTREAM_API_KEY=<key> .venv/bin/uvicorn insight_api.main:app --host 127.0.0.1 --port 8090
 ```
 
-前端（Node 18+）：
+前端（Node 20.19+ 或 22.12+，Vite 8 的要求）：
 
 ```bash
-cd web && npm install && npm run dev   # http://127.0.0.1:5180，/api 代理到 8090
+cd web && npm ci && npm run dev   # http://127.0.0.1:5181，/api 代理到 8090
+cd web && npm run typecheck       # 类型检查
 ```
 
 验证：

@@ -152,6 +152,13 @@ sudo nginx -t && sudo systemctl reload nginx
 
 nginx 草案要点：`/api/` 覆盖写 `X-Forwarded-For $remote_addr`（配合 uvicorn `--proxy-headers --forwarded-allow-ips=127.0.0.1`，限流和封禁按真实 IP，客户端伪造的头无效）；API 响应 `no-store`、不走 `proxy_cache`；CSP 只允许同源；HSTS 不带 `includeSubDomains`。
 
+**前端换成 React 版后的发布注意（2026-11-23）**：发布命令不变（`cd web && npm ci && npm run build:prod`，看到 `SCAN OK`），本地 Node 要 20.19+ 或 22.12+。
+- 先发网关，再发前端：新总览页要用网关新增的补充视图 `limit_history`、`breadth_history`；旧前端不受新网关影响。
+- 发布后标题字体会从系统字体变成设计稿的宋体（`/fonts/zx-serif.woff2` 这次随前端发出；旧版取不到，线上一直在用系统字体）。
+- 关注页三张二维码随前端发出（`/social/*.png`），旧版取不到，线上是破图。
+- 发布后逐页打开看一遍：首页（往下滚出现历史演示）、关注页、6 个数据页、账号、后台，浏览器控制台不应有 CSP 报错。
+- 回滚同下表：`web/current` 指回上一个 `releases/<ts>`；只回前端时，新网关对旧前端无影响。
+
 ## 8. 【写】管理员与运营配置
 
 1. 在 env 里临时加 `INSIGHT_BOOTSTRAP_ADMIN_USER/PASSWORD`，`systemctl restart dk-insight-api`；登录后立即改密；删除这两行再重启（launch-checklist #17）。
