@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { fmt, SERVICE_NAMES, type Envelope } from '@/lib/api'
 import { payOn } from '@/lib/auth'
@@ -29,6 +29,13 @@ interface Props {
 }
 
 export function PageFrame({ title, question, env, loading, tools, onRetry, onJump, children }: Props) {
+  // 数据中台慢时（约 20 秒仍未返回）提示用户稍后刷新，不一直转圈
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    if (!loading) { setSlow(false); return }
+    const t = window.setTimeout(() => setSlow(true), 20_000)
+    return () => window.clearTimeout(t)
+  }, [loading])
   const status = env.status || ''
   const isError = ERRORS.includes(status)
   const errorText = ({
@@ -58,7 +65,7 @@ export function PageFrame({ title, question, env, loading, tools, onRetry, onJum
 
       {env.data_mode === 'fixture' && <Banner>开发夹具数据，非实时行情。部分数值为合成样本，仅用于演示页面结构。</Banner>}
 
-      {loading ? <div className="py-16 text-center text-ink-3">加载中…</div>
+      {loading ? <div className="py-16 text-center text-ink-3">{slow ? '数据加载较慢，请稍后刷新' : '加载中…'}</div>
         : isError ? (
           <Banner tone="error">
             <span>{errorText}</span>
