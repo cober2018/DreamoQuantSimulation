@@ -19,7 +19,7 @@ export function IndustryDetail({ code, name, endDate, rrgRef, canDetail, lockTex
     animationDuration: 800,
     tooltip: { formatter: (p: any) => `${p.data[2]}<br/>RS ${p.data[0]}<br/>Mom ${p.data[1]}` },
     grid: { left: 50, right: 30, top: 24, bottom: 40 },
-    xAxis: { type: 'value', scale: true, name: 'RS-Ratio', nameLocation: 'middle', nameGap: 26 },
+    xAxis: { type: 'value', scale: true, name: '相对强度', nameLocation: 'middle', nameGap: 26 },
     yAxis: { type: 'value', scale: true },
     series: [{ type: 'line', symbolSize: 8, itemStyle: { color: t['viz-3'] }, lineStyle: { color: t['viz-3'] }, data: trail,
       markLine: { silent: true, symbol: 'none', lineStyle: { color: t['ink-3'], type: 'dashed' }, data: [{ xAxis: rrgRef }, { yAxis: rrgRef }] } }],

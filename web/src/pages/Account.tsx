@@ -97,8 +97,8 @@ function McpPanel({ data }: { data: any }) {
     if (await confirmDialog({ title: `吊销令牌 ${t.prefix}…？`, body: '使用它的客户端将立即无法读取数据。', confirmText: '吊销', danger: true })) revoke.mutate(t.id)
   }
   return (
-    <Panel title="MCP 数据接入（内测）">
-      <p className="mb-3 text-sm leading-relaxed text-ink-3">在支持 MCP 的大模型客户端里只读调用本平台数据，等级与网页一致。当前限额：每分钟 {data.limits?.per_minute} 次、24 小时 {data.limits?.per_day} 次；每人最多 {data.max_active} 把有效令牌。</p>
+    <Panel title="大模型客户端接入（内测）">
+      <p className="mb-3 text-sm leading-relaxed text-ink-3">在支持的大模型客户端里只读调用本平台数据，等级与网页一致。当前限额：每分钟 {data.limits?.per_minute} 次、24 小时 {data.limits?.per_day} 次；每人最多 {data.max_active} 把有效令牌。</p>
       <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
         <span>服务地址：</span><code className="rounded bg-secondary px-1.5 py-0.5 text-[13px]">{endpoint}</code>
         <Button type="button" size="xs" variant="outline" onClick={() => copy(endpoint)}>复制</Button>
