@@ -1,0 +1,122 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./tokens.css";
+
+@font-face {
+  font-family: "ZX Serif";
+  src: url("/fonts/zx-serif.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 暗色只认 data-theme（和官网一致） */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* shadcn 的颜色名统一指向官网的 --c-* 变量；亮暗切换由 tokens.css 完成，这里不再写第二套色值 */
+:root {
+  --background: var(--c-bg);
+  --foreground: var(--c-ink);
+  --card: var(--c-surface);
+  --card-foreground: var(--c-ink);
+  --popover: var(--c-surface);
+  --popover-foreground: var(--c-ink);
+  --primary: var(--c-accent);
+  --primary-foreground: var(--c-on-accent);
+  --secondary: var(--c-surface-2);
+  --secondary-foreground: var(--c-ink);
+  --muted: var(--c-surface-2);
+  --muted-foreground: var(--c-ink-3);
+  --accent: var(--c-accent-soft);
+  --accent-foreground: var(--c-ink);
+  --destructive: var(--c-danger);
+  --border: var(--c-line);
+  --input: var(--c-line-strong);
+  --ring: var(--c-focus);
+  --chart-1: var(--c-viz-1);
+  --chart-2: var(--c-viz-2);
+  --chart-3: var(--c-viz-3);
+  --chart-4: var(--c-viz-4);
+  --chart-5: var(--c-viz-5);
+  --radius: var(--r-2);
+  /* 效果组件（描边流光、悬停光晕）用的品牌色：品牌金和它的亮色 */
+  --color-brand: var(--c-accent);
+  --color-brand-light: hsl(40 82% 56%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  /* 业务色：红涨绿跌、墨色三级、品牌金 */
+  --color-up: var(--c-up);
+  --color-down: var(--c-down);
+  --color-ink-2: var(--c-ink-2);
+  --color-ink-3: var(--c-ink-3);
+  --color-surface-hover: var(--c-surface-hover);
+  --color-accent-ink: var(--c-accent-ink);
+  --radius-sm: var(--r-1);
+  --radius-md: var(--r-2);
+  --radius-lg: var(--r-3);
+  --radius-xl: var(--r-4);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
+  }
+  :focus-visible { outline: 2px solid var(--c-focus); outline-offset: 2px; border-radius: var(--r-1); }
+}
+
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+/* 数字用展示字体（宋体子集含数字），等宽数字避免滚动时抖动 */
+.num-display { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; letter-spacing: 0.01em; }
+
+/* 内容区顶部的点阵底纹：呼应官网星图，向下淡出，不抢内容 */
+.dot-field { position: relative; }
+.dot-field::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 420px; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(var(--c-star-dim) 1px, transparent 1.4px);
+  background-size: 22px 22px; opacity: 0.5;
+  mask-image: radial-gradient(120% 100% at 70% 0%, #000 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(120% 100% at 70% 0%, #000 0%, transparent 72%);
+}
+.dot-field > * { position: relative; z-index: 1; }
+
+/* 走势末端的星点：轻微呼吸，表示"最新一日" */
+@keyframes star-pulse { 0%, 100% { opacity: 0.35; transform: scale(1); } 50% { opacity: 0; transform: scale(2.6); } }
+.star-pulse { transform-box: fill-box; transform-origin: center; animation: star-pulse 2.4s var(--ease-out, ease-out) infinite; }
+@media (prefers-reduced-motion: reduce) { .star-pulse { animation: none; opacity: 0; } }
+
+input[type="date"] { color-scheme: light; }
+[data-theme="dark"] input[type="date"] { color-scheme: dark; }

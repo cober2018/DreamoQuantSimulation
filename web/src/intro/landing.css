@@ -1,0 +1,52 @@
+/* 首页星图的样式。标签是 starfield.js 直接创建的元素，Tailwind 类加不上去，所以单独一份。
+   从旧版 Landing.vue 搬来，去掉 :deep()，全部挂在 .landing 下面。 */
+.landing .hero { position: relative; min-height: min(100svh, 920px); display: flex; flex-direction: column; justify-content: center; overflow: hidden; background: radial-gradient(120% 90% at 78% 40%, var(--c-bg) 0%, var(--c-bg-deep) 70%); border-bottom: 1px solid var(--c-line); }
+.landing .sky-wrap { position: absolute; inset: 0; }
+.landing .sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* 网格底纹：画布还没画出来（或浏览器不支持）时的静态海报 */
+.landing .grid-bg {
+  background-image: linear-gradient(var(--c-grid) 1px, transparent 1px), linear-gradient(90deg, var(--c-grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.landing .sky-poster { position: absolute; inset: 0; pointer-events: none; mask-image: radial-gradient(60% 60% at 70% 45%, #000 0%, transparent 75%); -webkit-mask-image: radial-gradient(60% 60% at 70% 45%, #000 0%, transparent 75%); opacity: 0.8; }
+.landing .sky-labels { position: absolute; inset: 0; pointer-events: none; z-index: 2; will-change: transform; }
+.landing .sky-labels .sl { position: absolute; white-space: nowrap; line-height: 16px; font-size: var(--fs-xs); text-shadow: 0 0 2px var(--c-bg-deep), 0 0 4px var(--c-bg-deep), 0 0 8px var(--c-bg-deep); opacity: 0; transition: opacity var(--dur-slow) var(--ease-out), color var(--dur-2); transition-delay: var(--d, 0ms), 0ms; }
+.landing .sky-labels.in .sl { opacity: 1; }
+.landing .sky-labels .sl.fact { color: var(--c-ink-2); font-weight: 500; }
+.landing .sky-labels .sl.fact.on { color: var(--c-accent-ink); }
+.landing .sky-labels .sl.fact.link { pointer-events: auto; cursor: pointer; text-decoration: underline dashed var(--c-line-strong); text-underline-offset: 4px; }
+.landing .sky-labels .sl.fact.link:hover { color: var(--c-accent-ink); text-decoration-color: var(--c-accent); }
+.landing .sky-labels .sl.grp { color: var(--c-ink-3); font-size: var(--fs-2xs); letter-spacing: 0.04em; }
+.landing .sky-labels .sl.grp.on { color: var(--c-accent-ink); }
+/* 放不下的读数：编号标记，悬停 / 聚焦 / 轻触时展开 */
+.landing .sky-labels .sky-mark { position: absolute; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--c-line-strong); background: var(--c-bg); color: var(--c-ink-2); font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; pointer-events: auto; opacity: 0; transition: opacity var(--dur-slow) var(--ease-out), border-color var(--dur-2), color var(--dur-2); transition-delay: var(--d, 0ms), 0ms, 0ms; }
+.landing .sky-labels.in .sky-mark { opacity: 1; }
+.landing .sky-labels .sky-mark.on, .landing .sky-labels .sky-mark:hover, .landing .sky-labels .sky-mark:focus-visible { border-color: var(--c-accent); color: var(--c-accent-ink); }
+.landing .sky-labels .sky-mark .pop { position: absolute; left: 26px; top: 50%; transform: translateY(-50%); padding: 4px var(--s-2); border: 1px solid var(--c-line-strong); border-radius: var(--r-1); background: var(--c-surface-2); color: var(--c-ink); font-size: var(--fs-xs); font-weight: 500; white-space: nowrap; box-shadow: var(--shadow-2); opacity: 0; visibility: hidden; transition: opacity var(--dur-2), visibility 0s linear var(--dur-2); z-index: 3; }
+.landing .sky-labels .sky-mark.pop-left .pop { left: auto; right: 26px; }
+.landing .sky-labels .sky-mark:hover .pop, .landing .sky-labels .sky-mark:focus-visible .pop, .landing .sky-labels .sky-mark:focus .pop { opacity: 1; visibility: visible; transition: opacity var(--dur-2); }
+.landing .sky-legend { position: absolute; z-index: 2; right: var(--s-6); bottom: 48px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--s-1) var(--s-4); max-width: 46%; font-size: var(--fs-2xs); color: var(--c-ink-2); list-style: none; margin: 0; padding: 0; }
+.landing .sky-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.landing .sky-legend .ln { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--c-line-strong); font-size: 9px; font-weight: 600; }
+.landing .caption { position: absolute; z-index: 1; right: var(--s-6); bottom: var(--s-5); display: flex; align-items: center; gap: var(--s-2); max-width: 46%; font-size: var(--fs-2xs); color: var(--c-ink-3); }
+.landing .caption .cdot { width: 5px; height: 5px; border-radius: 50%; background: var(--c-accent); flex: none; }
+.landing .hero-in { position: relative; z-index: 1; width: 100%; padding-top: 96px; padding-bottom: 96px; pointer-events: none; }
+.landing .hero-copy { max-width: 560px; pointer-events: auto; }
+.landing .lead .br-m { display: none; }
+
+/* 点亮星标签后，第二屏对应的格子描边闪一下 */
+.landing .tile-flash { box-shadow: 0 0 0 2px var(--c-accent), var(--shadow-glow); transition: box-shadow var(--dur-2); }
+
+@media (max-width: 899px) {
+  .landing .hero { min-height: 0; justify-content: flex-start; }
+  .landing .sky-wrap { position: relative; inset: auto; height: 340px; flex: none; margin-top: 56px; }
+  .landing .sky-poster { mask-image: radial-gradient(70% 40% at 50% 45%, #000 0%, transparent 80%); -webkit-mask-image: radial-gradient(70% 40% at 50% 45%, #000 0%, transparent 80%); }
+  .landing .sky-legend { position: static; max-width: none; justify-content: flex-start; padding: var(--s-2) var(--s-6) 0; }
+  .landing .hero-in { padding-top: var(--s-5); padding-bottom: var(--s-4); }
+  .landing .caption { position: static; max-width: none; padding: 0 var(--s-6) var(--s-5); }
+}
+@media (max-width: 640px) {
+  .landing .sky-wrap { height: 300px; }
+  .landing .sky-legend, .landing .caption { padding-left: var(--s-4); padding-right: var(--s-4); }
+  .landing .lead .br-m { display: inline; }
+}
