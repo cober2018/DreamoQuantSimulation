@@ -29,11 +29,11 @@ interface Props {
 }
 
 export function PageFrame({ title, question, env, loading, tools, onRetry, onJump, children }: Props) {
-  // 数据中台慢时（约 20 秒仍未返回）提示用户稍后刷新，不一直转圈
+  // 数据中台慢时（约 10 秒仍未返回）提示用户稍后刷新，不一直转圈
   const [slow, setSlow] = useState(false)
   useEffect(() => {
     if (!loading) { setSlow(false); return }
-    const t = window.setTimeout(() => setSlow(true), 20_000)
+    const t = window.setTimeout(() => setSlow(true), 10_000)
     return () => window.clearTimeout(t)
   }, [loading])
   const status = env.status || ''
