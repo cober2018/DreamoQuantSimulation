@@ -93,8 +93,8 @@ export function RrgChart({ items, day, inWindow, rrgRef, canDetail, lockText, se
     animationDuration: 900,
     tooltip: { formatter: (p: any) => `${p.data.name}${p.data.date ? ` · ${p.data.date}` : ''}<br/>RS ${p.data.value[0].toFixed(2)}<br/>动量 ${p.data.value[1].toFixed(2)}` },
     grid: { left: 52, right: 24, top: 28, bottom: 44 },
-    xAxis: { type: 'value', min: rrgRef - hx, max: rrgRef + hx, name: 'RS-Ratio', nameLocation: 'middle', nameGap: 28, splitLine: { lineStyle: { color: t.line } } },
-    yAxis: { type: 'value', min: rrgRef - hy, max: rrgRef + hy, name: 'RS-Momentum', splitLine: { lineStyle: { color: t.line } } },
+    xAxis: { type: 'value', min: rrgRef - hx, max: rrgRef + hx, name: '相对强度', nameLocation: 'middle', nameGap: 28, splitLine: { lineStyle: { color: t.line } } },
+    yAxis: { type: 'value', min: rrgRef - hy, max: rrgRef + hy, name: '相对动量', splitLine: { lineStyle: { color: t.line } } },
     series: [
       ...starSeries,
       {
@@ -123,7 +123,7 @@ export function RrgChart({ items, day, inWindow, rrgRef, canDetail, lockText, se
   }
 
   return (
-    <Panel title="相对旋转图（RRG）" hint="散点为当日位置。点选一个行业，按日期依次连出它近 5 个交易日的轨迹" className="h-full">
+    <Panel title="相对旋转图" hint="散点为当日位置。点选一个行业，按日期依次连出它近 5 个交易日的轨迹" className="h-full">
       {inWindow ? <div role="status" className="py-16 text-center text-sm text-ink-3">数据待更新</div> : (
         <>
           <EChart option={option} height={CHART_H} ariaLabel="相对旋转图" onClick={(p) => {
@@ -134,7 +134,7 @@ export function RrgChart({ items, day, inWindow, rrgRef, canDetail, lockText, se
           </ul>
         </>
       )}
-      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">横轴为相对强度 RS-Ratio，纵轴为相对动量 RS-Momentum，参考线为 {rrgRef}。颜色只表示象限位置，图形仅呈现历史相对位置。</p>
+      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">横轴为相对强度，纵轴为相对动量，参考线为 {rrgRef}。颜色只表示象限位置，图形仅呈现历史相对位置。</p>
       {inWindow ? <p className="mt-1 text-[11px] text-ink-3">该日期的 RS 指标窗口跨到 2026-09-18 之前，数据待更新，图中留空。</p>
         : !canDetail ? <p className="mt-1 text-[11px] text-ink-3">5 日轨迹需要 {lockText} 等级，当前只显示当日位置。</p>
         : <p className="mt-1 text-[11px] text-ink-3">选中的行业显示近 {STAR_DAYS} 个交易日的轨迹，其余行业只显示当日位置。</p>}

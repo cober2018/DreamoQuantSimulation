@@ -270,7 +270,7 @@ export function Component() {
                   </div>
                 </div>
               )}
-              <Note>{style?.definition || '强度分为阵营指数相对强度的历史评分（0–100）'}；横轴为观测序号，当前为近 20 个观测；按固定阵营顺序展示，不按强度排序，不提供 leader/signal 结论。</Note>
+              <Note>{style?.definition || '强度分为阵营指数相对强度的历史评分（0–100）'}；横轴为观测序号，当前为近 20 个观测；按固定阵营顺序展示，不按强度排序，不提供领先或信号结论。</Note>
             </Panel>
           </BlurFade>
         </ModuleGate>
