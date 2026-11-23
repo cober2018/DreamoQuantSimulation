@@ -12,7 +12,7 @@ export function Component() {
   return (
     <SiteShell>
       <h1 className="text-[clamp(32px,4vw,48px)] font-normal leading-[1.15]" style={{ fontFamily: 'var(--font-display)' }}>{title}</h1>
-      <EmptyState title={stub ? '这一页还在准备' : NOT_FOUND.title} desc={desc}>
+      <EmptyState title={stub ? '这一页还在准备' : NOT_FOUND.box} desc={desc}>
         <Button asChild variant="outline" size="sm"><Link to="/">回到首页</Link></Button>
       </EmptyState>
     </SiteShell>

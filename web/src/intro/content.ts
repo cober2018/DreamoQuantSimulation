@@ -59,9 +59,10 @@ export const FOLLOW = {
 export const STUBS: Record<string, { title: string; desc: string }> = {
   '/pricing': { title: '价格与权益', desc: '价格待公布。免费试用期内所有内容开放，正式档位和价格将另行公布。' },
   '/mp': { title: '小程序', desc: '小程序版本单独排期，暂未开放。' },
-  '/docs': { title: '文档', desc: '文档即将推出。开始使用、每日要点和 MCP 说明会陆续发布。' },
+  '/docs': { title: '文档', desc: '文档即将推出。开始使用和 MCP 说明会陆续发布。' },
   '/blog': { title: '博客', desc: '博客即将推出。首批文章会围绕指标口径和统计方法。' },
 }
-export const NOT_FOUND = { title: '没有这个页面', desc: '地址可能输错了，或者页面已经移走。' }
+// box 是框内标题，和页面大标题错开，不重复「没有这个页面」
+export const NOT_FOUND = { title: '没有这个页面', box: '地址可能输错了', desc: '或者页面已经移走。' }
 
 export const FOOTER_DISCLAIMER = '本平台提供市场数据与历史统计，仅供研究和学习参考，不构成任何投资建议、证券推荐或交易指令。数据可能存在延迟、缺失或误差，请以交易所及上市公司的官方披露为准。'
