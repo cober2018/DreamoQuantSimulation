@@ -24,16 +24,16 @@ BUILTIN_ROLES = {
 PAGE_PERMS = ["page.overview", "page.participation", "page.industries", "page.themes", "page.history", "page.calendar"]
 # 数值型权限点: 值是数字; 其余为布尔 (存在即授予)
 NUMERIC_PERMS = {"data.history_days": (1, 250), "max_sessions": (1, 20)}
-ALL_PERMS = PAGE_PERMS + ["data.detail", "client.web", "client.mp", "admin.console"] + list(NUMERIC_PERMS)
+ALL_PERMS = PAGE_PERMS + ["data.detail", "data.members", "client.web", "client.mp", "admin.console"] + list(NUMERIC_PERMS)
 
 DEFAULT_ROLE_PERMS: Dict[str, Dict[str, int]] = {
     "free": {"page.overview": 1, "page.calendar": 1, "client.web": 1, "client.mp": 1,
              "data.history_days": 5, "max_sessions": 2},
     "vip": {"page.overview": 1, "page.calendar": 1, "page.participation": 1, "page.industries": 1,
             "page.themes": 1, "client.web": 1, "client.mp": 1, "data.history_days": 30, "max_sessions": 2},
-    "svip": {**{p: 1 for p in PAGE_PERMS}, "data.detail": 1, "client.web": 1, "client.mp": 1,
+    "svip": {**{p: 1 for p in PAGE_PERMS}, "data.detail": 1, "data.members": 1, "client.web": 1, "client.mp": 1,
              "data.history_days": 250, "max_sessions": 3},
-    "admin": {**{p: 1 for p in PAGE_PERMS}, "data.detail": 1, "client.web": 1, "client.mp": 1,
+    "admin": {**{p: 1 for p in PAGE_PERMS}, "data.detail": 1, "data.members": 1, "client.web": 1, "client.mp": 1,
               "admin.console": 1, "data.history_days": 250, "max_sessions": 5},
 }
 
@@ -157,6 +157,13 @@ class Store:
                     for perm, val in DEFAULT_ROLE_PERMS[role].items():
                         c.execute("INSERT INTO role_permissions(role,perm,value) VALUES(?,?,?)", (role, perm, val))
             c.execute("INSERT OR IGNORE INTO meta(key,value) VALUES('role_version','1')")
+            # 一次性迁移（ZS-133）：新增权限点 data.members（成分股统计）。已有库里，原来有 data.detail 的角色各补一条；
+            # 只做一次，之后管理员在后台的增减不会被改回去
+            if not c.execute("SELECT 1 FROM meta WHERE key='perm_seed_data_members'").fetchone():
+                c.execute("INSERT OR IGNORE INTO role_permissions(role,perm,value) "
+                          "SELECT role,'data.members',1 FROM role_permissions WHERE perm='data.detail'")
+                c.execute("INSERT INTO meta(key,value) VALUES('perm_seed_data_members','1')")
+                c.execute("UPDATE meta SET value=CAST(value AS INTEGER)+1 WHERE key='role_version'")
 
     # ---- 权限版本 (角色/权限变更即递增, 缓存据此失效) ----
     def role_version(self) -> int:

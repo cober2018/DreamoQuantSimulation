@@ -8,6 +8,7 @@ import { Dumbbell, type DumbbellRow } from '@/components/charts/Dumbbell'
 import { DivergingBars, type BarRow } from '@/components/charts/DivergingBars'
 import { SeriesChart } from '@/components/charts/SeriesChart'
 import { IndustryDetail } from '@/components/industries/IndustryDetail'
+import { IndustryMembers } from '@/components/industries/IndustryMembers'
 import { IndustryTable } from '@/components/industries/IndustryTable'
 import { RrgChart } from '@/components/industries/RrgChart'
 import { SelectionBar } from '@/components/industries/SelectionBar'
@@ -37,6 +38,8 @@ export function Component() {
   const user = useSession((s) => s.user)
   const canDetail = can('data.detail')
   const lockText = user?.perm_min_role?.['data.detail'] || '更高等级'
+  const canMembers = can('data.members')
+  const membersLock = user?.perm_min_role?.['data.members'] || '更高等级'
 
   const [idxType, setIdxType] = useState('行业板块')
   const [level, setLevel] = useState('1')
@@ -182,6 +185,7 @@ export function Component() {
           <BlurFade className="xl:col-span-2" >
             <div id="industry-detail" className="scroll-mt-4" />
             <IndustryDetail code={selected} name={selectedName} endDate={env.trade_date || ''} rrgRef={rrgRef} canDetail={canDetail} lockText={lockText} />
+            <div className="mt-4"><IndustryMembers code={selected} name={selectedName} idxType={idxType} tradeDate={env.trade_date || ''} allowed={canMembers} lockText={membersLock} /></div>
           </BlurFade>
         )}
       </div>

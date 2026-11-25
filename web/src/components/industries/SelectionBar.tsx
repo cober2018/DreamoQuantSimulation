@@ -40,7 +40,7 @@ export function SelectionBar({ row, day, flowKey, flowLabel, rrgRef, rsOk, canDe
             <Item label="扩散度">{val('di', (v) => fmt.num(v, 3))}</Item>
             {quadrant && <Item label="所在象限">{quadrant}</Item>}
             <span className="ml-auto flex items-center gap-2">
-              {canDetail && <button type="button" onClick={onJumpDetail} className="cursor-pointer text-xs text-primary hover:underline">近期序列 ↓</button>}
+              {canDetail && <button type="button" onClick={onJumpDetail} className="cursor-pointer text-xs text-primary hover:underline">近期序列与成分股 ↓</button>}
               <button type="button" onClick={onClose} aria-label="取消选中" className="cursor-pointer rounded p-1 text-ink-3 hover:bg-surface-hover hover:text-foreground"><X className="size-4" /></button>
             </span>
           </div>

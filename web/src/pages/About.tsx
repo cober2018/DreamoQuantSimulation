@@ -22,6 +22,7 @@ const DEFS: [string, string, string][] = [
   ['相对旋转图坐标', '相对强度、相对动量：行业相对同类板块参考表现的偏离，单位百分点，参考线为 0', '板块日表'],
   ['行业级别', '行业板块按东方财富一级、二级、三级分类分开显示；概念、地域板块没有级别', '板块日表'],
   ['卖压相对强度', '当日主动卖出占比在近 20 个交易日里的排位（0–100）；图上粗线为 5 日均值', '市场情绪日表'],
+  ['涨停、跌停的统计范围', '涨停、跌停个股名单以及涨停数、跌停数、炸板数、各梯队家数，都只统计沪深 A 股，不含北交所', '股票池统计'],
   ['涨停个股的行业分布', '按涨停个股所属行业归类（行业分类口径，不是概念题材），覆盖当日全部涨停股', '题材日表'],
   ['股债收益差', '盈利收益率 − 10 年期国债收益率；分位缺失表示历史样本不足', '市场情绪日表'],
   ['首板溢价', '上游百分数口径的历史观察值（单位待数据中台确认），不代表未来收益', '市场情绪日表'],
@@ -48,7 +49,7 @@ export function Component() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {Object.entries(V1).map(([k, l]) => <TrendTile key={k} label={l} value={items.filter((i) => i.v1 === k).length} format={{ maximumFractionDigits: 0 }} />)}
             </div>
-            <Panel title={<>内容范围（CNT-001～037）<small className="ml-2 text-xs font-normal text-ink-3">仅管理员可见</small></>}
+            <Panel title={<>内容范围（CNT-001～039）<small className="ml-2 text-xs font-normal text-ink-3">仅管理员可见</small></>}
               action={<HaloSegmented items={FILTERS} value={filter} onValueChange={setFilter} translucent={false} className="[&_button]:whitespace-nowrap" />}>
               {q.isPending ? <p className="text-sm text-ink-3">加载中…</p> : (
                 <Table>

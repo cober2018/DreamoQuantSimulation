@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -41,6 +42,31 @@ POOL_CURRENT = ("public-limit-pool-structure", "current")
 POOL_HISTORY = ("public-limit-pool-structure", "history")
 POOL_COUNTS = ("public-limit-pool-structure", "pool-counts")
 OPEN5 = ("public-daily-review-summary", "open5")
+MEMBERS = ("public-industry-members", "list")
+
+# CNT-038 涨跌停个股名单：每只股票只取这四项事实
+POOL_STOCK_FIELDS = ["stock_code", "stock_name", "change_pct", "first_seal_time"]
+# 中台加上跌停梯队之前的字段清单；新清单被中台拒绝（4xx）时退回它，页面照常显示家数
+POOL_CURRENT_LEGACY = ["trade_date", "tier_counts", "broken_board_count", "limit_down_count"]
+
+# CNT-039 行业成分股统计：只取这 24 个字段（中台 public-industry-members / list 的全部对外字段）。
+# 评分、名次、角色、资金方向、准入、任何挑出来的名单都不在这里，上游多给也会被丢掉
+MEMBER_FIELDS = [
+    "stock_code", "stock_name", "member_count",
+    "change_pct", "change_5d_pct",
+    "change_pct_percentile", "change_5d_pct_percentile", "days_above_industry_median_5d",
+    "path_efficiency_5d", "max_drawdown_5d_pct", "top_day_gain_share_5d",
+    "intraday_path_efficiency", "intraday_close_location", "intraday_late_move_share", "intraday_max_drawdown_pct",
+    "open5_change_pct", "after_open5_change_pct",
+    "large_order_net_5d", "large_order_net_20d", "large_order_net_positive_days", "active_net_amount_ratio_pct",
+    "above_ma20", "ma20_deviation_pct", "is_3d_high",
+]
+# 可排序的字段：代码，加全部数值和真假字段（与中台合同一致）；默认按代码
+MEMBER_SORT_FIELDS = frozenset(f for f in MEMBER_FIELDS if f not in ("stock_name", "member_count"))
+# 字段名称和说明直接用中台返回的原文；出现这些词就不外露（合规硬约束，正常情况下不会命中）
+MEMBER_BANNED_WORDS = ("强度", "机会", "主力", "吸筹", "派发", "准入", "推荐", "信号", "龙头")
+# 个别列的显示名改用中性写法（只改名称，说明仍用中台原文）。中台原名是「近5日跑赢行业中位数天数」
+MEMBER_LABEL_OVERRIDE = {"days_above_industry_median_5d": "近5日涨跌幅高于行业中位数的天数"}
 
 # 上游改名对照（field-inventory 5.2）：本平台输出名 → 事实视图字段名
 INDUSTRY_RENAME = {"sector_code": "industry_code", "sector_name": "industry_name", "turnover_rate": "turnover_rate_1d"}
@@ -94,7 +120,8 @@ REQUEST_FIELDS = {
     THEMES: ["theme", "up_count", "broken_count", "highest_tier", "avg_pct"],
     LADDER: ["tier", "count"],
     SEAL: ["theme", "bucket", "count"],
-    POOL_CURRENT: ["trade_date", "tier_counts", "broken_board_count", "limit_down_count"],
+    POOL_CURRENT: [*POOL_CURRENT_LEGACY, "limit_down_tiers"],
+    MEMBERS: MEMBER_FIELDS,
     POOL_HISTORY: ["trade_date", "tier_counts", "broken_board_count", "limit_down_count"],
     POOL_COUNTS: ["pool", "window_days", "count", "status", "reason", "latest_date", "lag_days"],
     OPEN5: list(OPEN5_PUBLIC.values()),
@@ -418,6 +445,57 @@ async def industry_series(up: Upstream, sector_code: str, end_date: Optional[str
                     gaps=gaps + issue_gaps("CNT-032", res.issues), data=data)
 
 
+def _member_columns(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """各列的名称、单位、说明：用中台随数据返回的原文，本平台不另写。命中禁用词的名称或说明不外露。"""
+    cols = meta.get("columns") if isinstance(meta.get("columns"), dict) else {}
+    out = []
+    for f in MEMBER_FIELDS:
+        c = cols.get(f) if isinstance(cols.get(f), dict) else {}
+        label, desc = c.get("name"), c.get("description")
+        if label and f in MEMBER_LABEL_OVERRIDE:
+            label = MEMBER_LABEL_OVERRIDE[f]
+        if any(w in str(label or "") + str(desc or "") for w in MEMBER_BANNED_WORDS):
+            label = desc = None
+        if isinstance(desc, str):
+            # 说明里的三个英文词换成页面上的写法（表格里就是这么显示的），其余文字不动
+            desc = re.sub(r"\s*null\b", "空", re.sub(r"\btrue\b", "是", re.sub(r"\bfalse\b", "否", desc)))
+        out.append({"key": f, "label": label, "unit": c.get("unit"), "kind": c.get("type"), "description": desc,
+                    "sortable": f in MEMBER_SORT_FIELDS})
+    return out
+
+
+def _large_order_coverage(res: FetchResult) -> Optional[Dict[str, Any]]:
+    """资金类数据的覆盖情况（按全部成分股算，不随分页变）：只取三个只数。中台旧版本没有这一项时返回 None，页面不显示这一行。"""
+    cov = _ctx(res).get("large_order_coverage")
+    if not isinstance(cov, dict):
+        return None
+    return {k: to_int(cov.get(k)) for k in ("with_daily_record", "with_5d_value", "member_count")}
+
+
+async def industry_members(up: Upstream, sector_code: str, trade_date: Optional[str], idx_type: str,
+                           sort_by: str, sort_order: str, limit: int, offset: int) -> Dict[str, Any]:
+    """CNT-039 行业成分股逐只历史统计。排序参数原样交给中台（缺值总排在最后），本平台不做任何排序、打分或挑选；
+    中台单页最多 500 行，这里取全后按 limit / offset 切片返回。"""
+    ids = ["CNT-039"]
+    res = await _get(up, MEMBERS, trade_date, industry_code=sector_code, idx_type=idx_type, sort_by=sort_by, sort_order=sort_order)
+    rows = [pick(r, MEMBER_FIELDS) for r in res.rows if isinstance(r, dict)]
+    if not rows:
+        return envelope("industry_members", ids, up.data_mode, status="empty", trade_date=trade_date,
+                        latest_available_date=_latest(res))
+    data = {
+        "sector_code": sector_code, "idx_type": idx_type,
+        "member_count": next((r["member_count"] for r in rows if r.get("member_count") is not None), None),
+        "sort_by": sort_by, "sort_order": sort_order,
+        "pagination": {"limit": limit, "offset": offset, "total": len(rows), "has_more": offset + limit < len(rows)},
+        "columns": _member_columns(res.meta or {}),
+        "large_order_coverage": _large_order_coverage(res),
+        "items": rows[offset:offset + limit],
+        "note": "以上为历史数据统计，不构成投资建议。",
+    }
+    return envelope("industry_members", ids, up.data_mode, trade_date=_date(res), status=status_from([], res.issues),
+                    sources=[_source(MEMBERS[0], res)], gaps=issue_gaps("CNT-039", res.issues), data=data)
+
+
 # ---------------- 题材 ----------------
 def _board_counts(row: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     if not isinstance(row, dict):
@@ -438,6 +516,24 @@ def _board_counts(row: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         "limit_up_down_ratio": {"value": clean(limit_up / limit_down) if limit_down else None,
                                 "numerator": limit_up, "denominator": limit_down},
     }
+
+
+def _stock_list(stocks: Any) -> Optional[List[Dict[str, Any]]]:
+    """涨跌停个股名单：只留四项事实字段，顺序用中台给的（按涨跌幅），不重排。不是列表时返回 None。"""
+    if not isinstance(stocks, list):
+        return None
+    return [pick(s, POOL_STOCK_FIELDS) for s in stocks if isinstance(s, dict)]
+
+
+async def _pool_current(up: Upstream, trade_date: Optional[str]) -> FetchResult:
+    """当日涨跌停结构。中台还没发布跌停梯队字段时，带新字段的请求会被拒绝（4xx），这时用原来的字段清单再取一次。"""
+    try:
+        return await _get(up, POOL_CURRENT, trade_date)
+    except UpstreamError as e:
+        if not (e.status and 400 <= e.status < 500):
+            raise
+    service, view = POOL_CURRENT
+    return await up.fetch(service, {"view": view, "trade_date": trade_date or "latest", "fields": ",".join(POOL_CURRENT_LEGACY)})
 
 
 def _tier_rank(tier: Any) -> int:
@@ -506,10 +602,22 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
         gaps.append(gap("CNT-022", f"连板梯队不可用: {e}"))
 
     structure = pools_counts = None
+    down_tiers: Optional[List[Dict[str, Any]]] = None
     history: List[Dict[str, Any]] = []
     try:
-        cur = await _get(up, POOL_CURRENT, td)
-        counts = _board_counts(first(cur.rows))
+        cur = await _pool_current(up, td)
+        pool_row = first(cur.rows)
+        if isinstance(pool_row, dict):
+            # 涨停名单挂到对应的梯队上；跌停梯队中台没给时保持 None（页面写「数据待更新」，不当作没有跌停）
+            by_tier = {t.get("tier"): t for t in pool_row.get("tier_counts") or [] if isinstance(t, dict)}
+            for t in tiers:
+                stocks = _stock_list((by_tier.get(t.get("tier")) or {}).get("stocks"))
+                if stocks is not None:
+                    t["stocks"] = stocks
+            if isinstance(pool_row.get("limit_down_tiers"), list):
+                down_tiers = [{**pick(t, ["tier", "count"]), "stocks": _stock_list(t.get("stocks")) or []}
+                              for t in pool_row["limit_down_tiers"] if isinstance(t, dict)]
+        counts = _board_counts(pool_row)
         if counts is None:
             gaps.append(gap("CNT-025", "股票池 ADS 当日缺行或 pool_summary 无法解析"))
         else:
@@ -538,6 +646,8 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
         "limit_up_sample_size": seal_total,
         "seal_time_buckets": [b[0] for b in SEAL_BUCKETS],
         "board_tiers": tiers,
+        "limit_down_tiers": down_tiers,
+        "stock_list_scope": "个股名单和上方的涨停数、跌停数、炸板数、各梯队家数都只统计沪深 A 股，不含北交所；名单来自交易所涨跌停明细，每档最多列 300 只",
         "structure": structure,
         "pools": pools_counts,
         "history": history,

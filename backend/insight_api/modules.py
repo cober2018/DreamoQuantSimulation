@@ -234,8 +234,8 @@ def _style_strength(rot: Any) -> Optional[Dict[str, Any]]:
     }
 
 
-# CNT-013 阈值比较结果的中文（上游给 met / near / unmet）
-CONDITION_LABEL = {"met": "已达到阈值", "near": "接近阈值", "unmet": "未达到阈值"}
+# CNT-013 阈值比较结果的中文（上游给 met / near / unmet / insufficient）
+CONDITION_LABEL = {"met": "已达到阈值", "near": "接近阈值", "unmet": "未达到阈值", "insufficient": "数据不足"}
 
 
 def _bottom_conditions(ns: Any) -> Optional[Dict[str, Any]]:
