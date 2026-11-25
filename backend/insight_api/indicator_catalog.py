@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 
 PAGES = {
     "overview": "市场总览", "participation": "参与度与资金环境", "industries": "行业比较与轮动",
-    "themes": "题材与涨跌结构", "history": "历史复盘", "calendar": "事件日历",
+    "themes": "题材与涨跌结构", "history": "开盘五分钟与板块统计", "calendar": "事件日历",
 }
 PAGE_OF_PERM = {f"page.{p}": p for p in PAGES}
 
@@ -141,15 +141,15 @@ _add("industries", "list", "板块列表", "CNT-014/016", [
     ("net_flow_20d", "20 日资金净流入", "亿元", None, "net_flow_20d"),
 ], F, "facts", base="data.items[]")
 _add("industries", "rrg", "RRG 相对强度", "CNT-015", [
-    ("rs_ratio", "相对强度 RS-Ratio", "基准 100", "data.items[].rs_ratio", "rs_ratio"),
-    ("rs_momentum", "相对动量 RS-Momentum", "基准 100", "data.items[].rs_momentum", "rs_momentum"),
+    ("rs_ratio", "相对强度 RS-Ratio", "0 为参考线", "data.items[].rs_ratio", "rs_ratio"),
+    ("rs_momentum", "相对动量 RS-Momentum", "0 为参考线", "data.items[].rs_momentum", "rs_momentum"),
 ], F, "facts")
 _add("industries", "series", "板块近 N 日序列（下钻）", "CNT-032", [
     ("sector_return", "涨跌幅序列", "小数", "data.points[].sector_return", "sector_return"),
     ("net_flow_1d", "资金净流入序列", "亿元", "data.points[].net_flow_1d", "net_flow_1d"),
     ("amount", "成交额序列", "亿元", "data.points[].amount", "amount"),
-    ("rs_ratio", "RS-Ratio 序列", "基准 100", "data.points[].rs_ratio", "rs_ratio"),
-    ("rs_momentum", "RS-Momentum 序列", "基准 100", "data.points[].rs_momentum", "rs_momentum"),
+    ("rs_ratio", "RS-Ratio 序列", "0 为参考线", "data.points[].rs_ratio", "rs_ratio"),
+    ("rs_momentum", "RS-Momentum 序列", "0 为参考线", "data.points[].rs_momentum", "rs_momentum"),
     ("di", "DI 序列", "", "data.points[].di", "di"),
 ], F, "series", detail=True)
 
@@ -184,7 +184,7 @@ _add("themes", "pools", "股票池计数", "CNT-027", [
     ("momentum_extreme", "动量极端池个股数", "只", "data.pools.momentum_extreme", ("pool", "window_days", "count")),
 ], L, "pool-counts")
 
-# ---- 历史复盘 ----
+# ---- 开盘五分钟与板块统计（原历史复盘：网页已拆到参与度页和行业页，接口与权限点保留）----
 _add("history", "structure", "板块结构统计", "CNT-030", [
     ("rising_sector_ratio", "上涨板块占比", "比例", "data.structure.rising_sector_ratio", "sector_return"),
     ("di_mean", "扩散度均值", "", "data.structure.di_mean", "di"),
@@ -197,7 +197,7 @@ _add("history", "flow", "板块资金净流入排行", "CNT-029", [
     ("net_flow", "资金净流入", "亿元", "data.flow_ranking[].net_flow", ("net_flow_1d", "net_flow_5d", "net_flow_20d")),
     ("sector_return", "当日涨跌幅", "小数", "data.flow_ranking[].sector_return", "sector_return"),
 ], F, "facts")
-_add("history", "open5", "开盘 5 分钟统计（Open5）", "CNT-031", [
+_add("history", "open5", "开盘五分钟统计", "CNT-031", [
     ("coverage_ratio", "覆盖率", "比例", "data.open5.coverage_ratio", ("coverage_ratio", "expected_stock_count", "open5_ready_count")),
     ("positive_open5_ratio", "开盘 5 分钟为正占比", "比例", "data.open5.positive_open5_ratio", "positive_open5_ratio"),
     ("continuation_ratio", "收盘延续占比", "比例", "data.open5.continuation_ratio", "continuation_ratio"),

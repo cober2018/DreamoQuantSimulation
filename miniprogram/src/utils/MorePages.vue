@@ -20,7 +20,7 @@ const PAGES = [
   { name: '参与度与资金环境', url: '/pages/mood/index', perm: 'page.participation', tab: true, desc: '参与度、股债收益差、涨停结构' },
   { name: '行业比较与轮动', url: '/pages/industry/index', perm: 'page.industries', tab: true, desc: '行业涨跌、资金与序列' },
   { name: '题材与涨跌结构', url: '/pages/theme/index', perm: 'page.themes', tab: true, desc: '题材统计、梯队与封板时间' },
-  { name: '历史复盘', url: '/pages/history/index', perm: 'page.history', desc: '板块结构、开盘五分钟统计、资金全量排行' },
+  { name: '开盘五分钟与板块统计', url: '/pages/history/index', perm: 'page.history', desc: '开盘五分钟统计、板块结构、资金全量排行' },
   { name: '事件日历', url: '/pages/calendar/index', perm: 'page.calendar', desc: '宏观事件、前值与公布值' },
 ]
 const props = defineProps({ all: Boolean })

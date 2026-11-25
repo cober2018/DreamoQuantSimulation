@@ -62,14 +62,17 @@ function SparkCell({ code, name, endDate, canDetail }: { code: string; name: str
   return (
     <span ref={ref} className="inline-flex h-7 w-24 items-center justify-center">
       {vals.length >= 2 ? <Sparkline values={vals} width={96} height={28} label={`${name} 近 ${vals.length} 日累计涨跌幅`} />
-        : <span className="text-xs text-ink-3">{canDetail ? '—' : '需更高等级'}</span>}
+        : !canDetail ? <span className="text-xs text-ink-3">需更高等级</span>
+        // 迷你线逐行取数：取到之前显示加载中的细条，取完仍不足 2 个点才写「数据待更新」，两种情况不混在一起
+        : q.isSuccess ? <span className="text-xs text-ink-3">数据待更新</span>
+        : <span role="status" aria-label="加载中" className="h-0.5 w-16 animate-pulse rounded bg-[var(--c-line-strong)]" />}
     </span>
   )
 }
 
-interface Props { items: Row[]; keyword: string; day: string; endDate: string; canDetail: boolean; lockText: string; selected: string; onSelect: (code: string) => void }
+interface Props { title?: string; note?: React.ReactNode; items: Row[]; keyword: string; day: string; endDate: string; canDetail: boolean; lockText: string; selected: string; onSelect: (code: string) => void }
 
-export function IndustryTable({ items, keyword, day, endDate, canDetail, lockText, selected, onSelect }: Props) {
+export function IndustryTable({ title = '全行业表', note, items, keyword, day, endDate, canDetail, lockText, selected, onSelect }: Props) {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'sector_return', desc: true }])
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
   const kw = keyword.trim()
@@ -118,12 +121,14 @@ export function IndustryTable({ items, keyword, day, endDate, canDetail, lockTex
   const sortBy = (id: string) => setSorting(sort?.id === id ? [{ id, desc: !sort.desc }] : [{ id, desc: true }])
 
   return (
-    <Panel title="全行业表" hint={`${data.length} / ${items.length} 个，点击列头排序，点击名称查看近期序列`}>
+    <Panel title={title} hint={`${data.length} / ${items.length} 个，点击列头排序，点击名称查看近期序列`}>
+      {note}
       <div className="-mx-2 overflow-x-auto" tabIndex={0} role="region" aria-label="全行业表，可横向滚动">
-        <table className="w-full min-w-[1200px] text-sm">
+        <table className="w-full min-w-[1260px] text-sm">
           <thead>
             <tr className="border-b border-[var(--c-line-strong)] text-xs text-ink-3">
               <th scope="col" className="px-2 py-2 text-left font-normal">板块</th>
+              <th scope="col" className="px-2 py-2 text-right font-normal whitespace-nowrap">成分股数</th>
               {COLS.map((c) => (
                 <th key={c.key} scope="col" aria-sort={sort?.id === c.key ? (sort.desc ? 'descending' : 'ascending') : 'none'} className="px-2 py-2 text-right font-normal">
                   <button type="button" onClick={() => sortBy(c.key)} className={cn('cursor-pointer whitespace-nowrap hover:text-foreground', sort?.id === c.key && 'text-foreground')}>{c.label}{sort?.id === c.key ? (sort.desc ? ' ↓' : ' ↑') : ''}</button>
@@ -141,12 +146,13 @@ export function IndustryTable({ items, keyword, day, endDate, canDetail, lockTex
                     <button type="button" aria-pressed={r.sector_code === selected} onClick={() => onSelect(r.sector_code)} className="cursor-pointer hover:underline">{r.sector_name}</button>
                     <span className="tnum ml-1.5 text-xs text-ink-3">{r.sector_code}</span>
                   </td>
+                  <td className="tnum px-2 text-right text-ink-2">{r.member_count ?? <span className="text-ink-3">—</span>}</td>
                   {row.getAllCells().map((cell) => <td key={cell.id} className="tnum px-2 text-right whitespace-nowrap"><table.FlexRender cell={cell} /></td>)}
                   <td className="px-2 text-center"><SparkCell key={`${endDate}|${r.sector_code}`} code={r.sector_code} name={r.sector_name} endDate={endDate} canDetail={canDetail} /></td>
                 </tr>
               )
             })}
-            {!rows.length && <tr><td colSpan={COLS.length + 2} className="px-2 py-6 text-center text-ink-3">没有匹配的板块</td></tr>}
+            {!rows.length && <tr><td colSpan={COLS.length + 3} className="px-2 py-6 text-center text-ink-3">没有匹配的板块</td></tr>}
           </tbody>
         </table>
       </div>
@@ -157,7 +163,7 @@ export function IndustryTable({ items, keyword, day, endDate, canDetail, lockTex
           <Button type="button" variant="outline" size="sm" disabled={pagination.pageIndex >= pages - 1} onClick={() => setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))}>下一页</Button>
         </div>
       )}
-      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">涨跌幅为小数口径换算的百分比；资金净流入单位为亿元。扩散度、成交额占比等指标的精确公式以数据中台定义为准。{!canDetail && `迷你折线和近期序列需要 ${lockText} 等级。`}</p>
+      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">涨跌幅为小数口径换算的百分比；资金净流入单位为亿元。最后一列的迷你线滚动到可见时逐行加载。扩散度、成交额占比等指标的精确公式以数据中台定义为准。{!canDetail && `迷你折线和近期序列需要 ${lockText} 等级。`}</p>
     </Panel>
   )
 }

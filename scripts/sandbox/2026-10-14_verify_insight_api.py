@@ -156,7 +156,9 @@ def run_fixture_checks():
         bc = part["data"]["bottom_conditions"]
         check("底部条件 (CNT-013): 观察值+阈值且无预测/总分字段", bc is not None
               and len(bc["conditions"]) == 3
-              and all(set(cd) == {"key", "label", "value", "threshold", "condition"} for cd in bc["conditions"])
+              and all(set(cd) == {"key", "label", "value", "threshold", "condition", "condition_label"} for cd in bc["conditions"])
+              and all(cd["condition_label"] in ("已达到阈值", "接近阈值", "未达到阈值") for cd in bc["conditions"])
+              and "met" not in bc["note"]
               and "candidate_state" not in json.dumps(bc) and "readiness" not in json.dumps(bc))
         o5 = c.get("/api/v1/history").json()["data"]["open5"]
         check("Open5 汇总带分母 (CNT-031)", o5 is not None and o5["expected_stock_count"] == 5300

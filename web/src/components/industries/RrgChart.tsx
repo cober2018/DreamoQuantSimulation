@@ -14,18 +14,23 @@ const STAR_DAYS = 5
 const DRAW_MS = 260
 // 图高跟随窗口高度
 export const CHART_H = 'clamp(380px, 58vh, 640px)'
+// 参考线为 0 时，中台给的是小数（0.01 = 1 个百分点），图上按百分点画；参考线为 100 的旧口径原样画
+export const rrgScale = (rrgRef: number) => (rrgRef === 0 ? 100 : 1)
 
 export function RrgChart({ items, day, inWindow, rrgRef, canDetail, lockText, selected, onSelect }: Props) {
   const t = useTokens()
+  const k = rrgScale(rrgRef)
+  const unit = k === 100 ? ' 个百分点' : ''
+  const sc = (v: number) => (v - rrgRef) * k + rrgRef
   const points = inWindow ? [] : items.filter((r) => r.rs_ratio != null && r.rs_momentum != null)
-    .map((r) => ({ code: r.sector_code as string, name: r.sector_name as string, x: r.rs_ratio as number, y: r.rs_momentum as number }))
+    .map((r) => ({ code: r.sector_code as string, name: r.sector_name as string, x: sc(r.rs_ratio as number), y: sc(r.rs_momentum as number) }))
 
   // 选中行业的轨迹单独取数。取 20 天是为了和表格迷你线共用同一份缓存，只用最后 STAR_DAYS 天
   const starOn = !!selected && canDetail && !inWindow
   const starQ = useQuery({ ...industrySeriesQuery(selected, day, 20), enabled: starOn && !!day })
   const star = !starOn ? [] : ((starQ.data?.data?.points || []) as any[])
     .filter((p) => p.rs_ratio != null && p.rs_momentum != null && !rollingMask(p.trade_date).rs).slice(-STAR_DAYS)
-    .map((p) => ({ x: p.rs_ratio as number, y: p.rs_momentum as number, date: p.trade_date as string }))
+    .map((p) => ({ x: sc(p.rs_ratio as number), y: sc(p.rs_momentum as number), date: p.trade_date as string }))
   const n = star.length
   const selName = items.find((r) => r.sector_code === selected)?.sector_name || selected
 
@@ -50,7 +55,9 @@ export function RrgChart({ items, day, inWindow, rrgRef, canDetail, lockText, se
   }, [selected, n, run, reduced])
 
   // 坐标范围只按当日全部行业的位置定，以参考线为中心对称并留 30% 余量；选中、连线都不会再改动坐标轴
-  const half = (vals: number[]) => Math.max(2, Math.ceil(Math.max(0, ...vals.map((v) => Math.abs(v - rrgRef))) * 1.3))
+  // 百分点口径下数值多在 ±2 以内，半宽按 0.1 取整；旧口径按 1 取整
+  const step = k === 100 ? 0.1 : 1
+  const half = (vals: number[]) => Math.max(k === 100 ? 0.2 : 2, +(Math.ceil((Math.max(0, ...vals.map((v) => Math.abs(v - rrgRef))) * 1.3) / step) * step).toFixed(2))
   const hx = half(points.map((p) => p.x))
   const hy = half(points.map((p) => p.y))
   const outN = star.filter((p) => Math.abs(p.x - rrgRef) > hx || Math.abs(p.y - rrgRef) > hy).length
@@ -91,7 +98,7 @@ export function RrgChart({ items, day, inWindow, rrgRef, canDetail, lockText, se
   const dot = points.length > 150 ? 6 : points.length > 60 ? 7 : 9
   const option = {
     animationDuration: 900,
-    tooltip: { formatter: (p: any) => `${p.data.name}${p.data.date ? ` · ${p.data.date}` : ''}<br/>RS ${p.data.value[0].toFixed(2)}<br/>动量 ${p.data.value[1].toFixed(2)}` },
+    tooltip: { formatter: (p: any) => `${p.data.name}${p.data.date ? ` · ${p.data.date}` : ''}<br/>相对强度 ${p.data.value[0].toFixed(2)}${unit}<br/>相对动量 ${p.data.value[1].toFixed(2)}${unit}` },
     grid: { left: 52, right: 24, top: 28, bottom: 44 },
     xAxis: { type: 'value', min: rrgRef - hx, max: rrgRef + hx, name: '相对强度', nameLocation: 'middle', nameGap: 28, splitLine: { lineStyle: { color: t.line } } },
     yAxis: { type: 'value', min: rrgRef - hy, max: rrgRef + hy, name: '相对动量', splitLine: { lineStyle: { color: t.line } } },
@@ -100,6 +107,9 @@ export function RrgChart({ items, day, inWindow, rrgRef, canDetail, lockText, se
       {
         // 有选中时其余点透明度 0.2；选中的点交给下面的 sel 系列画
         type: 'scatter', id: 'today', symbolSize: dot, z: 3,
+        // 点不多（一级行业 31 个）时直接标名称，互相压住的自动隐藏；点多时只在悬停时显示
+        label: { show: points.length <= 40 && !selected, formatter: (p: any) => p.data.name, position: 'right', distance: 4, fontSize: 10, color: t['ink-2'] },
+        labelLayout: { hideOverlap: true },
         data: points.filter((p) => p.code !== selected).map((p) => ({
           value: [p.x, p.y], name: p.name, code: p.code,
           itemStyle: { color: t[quadrantToken(quadrantOf(p.x, p.y, rrgRef))], opacity: selected ? 0.2 : points.length > 150 ? 0.65 : 0.85 },
@@ -134,8 +144,8 @@ export function RrgChart({ items, day, inWindow, rrgRef, canDetail, lockText, se
           </ul>
         </>
       )}
-      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">横轴为相对强度，纵轴为相对动量，参考线为 {rrgRef}。颜色只表示象限位置，图形仅呈现历史相对位置。</p>
-      {inWindow ? <p className="mt-1 text-[11px] text-ink-3">该日期的 RS 指标窗口跨到 2026-09-18 之前，数据待更新，图中留空。</p>
+      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">横轴为相对强度，纵轴为相对动量，参考线为 {rrgRef}{k === 100 && '，单位为百分点：行业相对同类板块参考表现的偏离，正值为相对占优，负值为相对落后'}。颜色只表示象限位置，图形仅呈现历史相对位置。</p>
+      {inWindow ? <p className="mt-1 text-[11px] text-ink-3">该日期的相对强度窗口跨到 2026-09-18 之前，数据待更新，图中留空。</p>
         : !canDetail ? <p className="mt-1 text-[11px] text-ink-3">5 日轨迹需要 {lockText} 等级，当前只显示当日位置。</p>
         : <p className="mt-1 text-[11px] text-ink-3">选中的行业显示近 {STAR_DAYS} 个交易日的轨迹，其余行业只显示当日位置。</p>}
       {starOn && n >= 2 && (

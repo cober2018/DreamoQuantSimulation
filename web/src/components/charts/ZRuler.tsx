@@ -33,7 +33,7 @@ export function ZRuler({ rows, focus, onFocus }: { rows: RulerRow[]; focus: stri
             <li key={r.key} onPointerEnter={() => onFocus(r.key)}
               className={cn('flex items-center gap-2 rounded-[3px] px-1.5 py-1.5 text-xs transition-colors', isFocus && 'bg-accent')}>
               <span className="w-[68px] shrink-0 text-ink-2">{r.label}</span>
-              <span className="relative h-6 min-w-0 flex-1" title={r.value == null ? r.missingReason || '上游未提供该值' : undefined}>
+              <span className="relative h-6 min-w-0 flex-1" title={r.value == null ? r.missingReason || '该项暂不提供' : undefined}>
                 <i className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full" style={{ background: r.value == null ? HATCH : 'color-mix(in srgb, var(--c-line) 40%, transparent)' }} />
                 <i className="absolute top-1/2 h-1.5 -translate-y-1/2 bg-[var(--c-ink-3)]/20" style={{ left: pos(-1), width: `${(2 / (DOMAIN * 2)) * 100}%` }} />
                 {[-2, 2].map((t) => <i key={t} className="absolute top-1/2 h-2.5 w-px -translate-y-1/2 border-l border-dashed border-[var(--c-line-strong)]" style={{ left: pos(t) }} />)}

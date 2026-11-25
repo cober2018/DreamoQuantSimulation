@@ -234,11 +234,16 @@ def _style_strength(rot: Any) -> Optional[Dict[str, Any]]:
     }
 
 
+# CNT-013 阈值比较结果的中文（上游给 met / near / unmet）
+CONDITION_LABEL = {"met": "已达到阈值", "near": "接近阈值", "unmet": "未达到阈值"}
+
+
 def _bottom_conditions(ns: Any) -> Optional[Dict[str, Any]]:
     """CNT-013: 只投影三项条件观察值与阈值对比；下一状态预测、准备度总分与解读文字不进入响应。"""
     if not isinstance(ns, dict) or not isinstance(ns.get("conditions"), list):
         return None
-    conds = [pick(c, ["key", "label", "value", "threshold", "condition"])
+    conds = [{**pick(c, ["key", "label", "value", "threshold", "condition"]),
+              "condition_label": CONDITION_LABEL.get(c.get("condition"))}
              for c in ns["conditions"] if isinstance(c, dict)]
     if not conds:
         return None
@@ -248,7 +253,7 @@ def _bottom_conditions(ns: Any) -> Optional[Dict[str, Any]]:
         "data_status": ns.get("data_status"),
         "calc_version": ns.get("calc_version"),
         "conditions": conds,
-        "note": "条件值为当日观察值与规则阈值对比（met/near/unmet 为阈值比较结果），不构成状态预测",
+        "note": "每一项是当日观察值与固定阈值的对比，只说明当日数值在阈值的哪一侧，不构成状态预测",
     }
 
 
