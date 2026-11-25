@@ -57,8 +57,10 @@ export function Component() {
   const counts = defs.filter((k) => k.kind === 'count')
   const tiles = defs.filter((k) => k.kind !== 'count')
   const subOf = (k: (typeof defs)[number], cur: number | null, prev: number | null) => {
-    if (cur == null || prev == null) return '较前一日：—'
+    // 前一日没有数据时只写「—」；没有变化时写「与前一日相同」，不写「0 板」「+0」
+    if (cur == null || prev == null) return '—'
     const d = k.kind === 'rate' ? (cur - prev) * 100 : cur - prev
+    if (Number(d.toFixed(k.kind === 'rate' ? 1 : 0)) === 0) return '与前一日相同'
     const unit = k.kind === 'rate' ? ' 个百分点' : k.kind === 'board' ? ' 板' : ''
     return `较前一日 ${d > 0 ? '+' : ''}${fmt.num(d, k.kind === 'rate' ? 1 : 0)}${unit}`
   }
