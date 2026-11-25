@@ -65,6 +65,8 @@ MEMBER_FIELDS = [
 MEMBER_SORT_FIELDS = frozenset(f for f in MEMBER_FIELDS if f not in ("stock_name", "member_count"))
 # 字段名称和说明直接用中台返回的原文；出现这些词就不外露（合规硬约束，正常情况下不会命中）
 MEMBER_BANNED_WORDS = ("强度", "机会", "主力", "吸筹", "派发", "准入", "推荐", "信号", "龙头")
+# 个别列的显示名改用中性写法（只改名称，说明仍用中台原文）。中台原名是「近5日跑赢行业中位数天数」
+MEMBER_LABEL_OVERRIDE = {"days_above_industry_median_5d": "近5日涨跌幅高于行业中位数的天数"}
 
 # 上游改名对照（field-inventory 5.2）：本平台输出名 → 事实视图字段名
 INDUSTRY_RENAME = {"sector_code": "industry_code", "sector_name": "industry_name", "turnover_rate": "turnover_rate_1d"}
@@ -450,6 +452,8 @@ def _member_columns(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
     for f in MEMBER_FIELDS:
         c = cols.get(f) if isinstance(cols.get(f), dict) else {}
         label, desc = c.get("name"), c.get("description")
+        if label and f in MEMBER_LABEL_OVERRIDE:
+            label = MEMBER_LABEL_OVERRIDE[f]
         if any(w in str(label or "") + str(desc or "") for w in MEMBER_BANNED_WORDS):
             label = desc = None
         if isinstance(desc, str):
