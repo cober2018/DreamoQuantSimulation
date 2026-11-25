@@ -39,7 +39,7 @@ def member_row(i, **kw):
 
 def columns():
     return {"stock_code": {"name": "股票代码", "type": "string", "unit": None, "description": "A股代码。"},
-            "change_pct": {"name": "当日涨跌幅", "type": "number", "unit": "%", "description": "当日收盘相对前收的涨跌幅。"},
+            "change_pct": {"name": "当日涨跌幅", "type": "number", "unit": "%", "description": "当日收盘相对前收的涨跌幅。true：高于；false：不高于。数据不全时为 null。"},
             "large_order_net_5d": {"name": "超大单加大单净额近5日累计", "type": "number", "unit": "亿元", "description": "东方财富按单笔成交金额划分。"},
             "above_ma20": {"name": "主力吸筹位置", "type": "boolean", "unit": None, "description": "故意放进禁用词，验证不外露。"}}
 
@@ -112,6 +112,7 @@ def unit_checks():
         cols = {c["key"]: c for c in d["columns"]}
         check("列名和说明用上游原文", cols["change_pct"]["label"] == "当日涨跌幅" and cols["change_pct"]["unit"] == "%"
               and cols["large_order_net_5d"]["description"].startswith("东方财富"))
+        check("说明里的 null、true、false 换成中文，其余原文不动", cols["change_pct"]["description"] == "当日收盘相对前收的涨跌幅。是：高于；否：不高于。数据不全时为空。", cols["change_pct"]["description"])
         check("名称或说明里出现禁用词的列不外露文字", cols["above_ma20"]["label"] is None and cols["above_ma20"]["description"] is None)
         check("缺值保持为空，不补 0", d["items"][0]["change_pct"] == 0.3 and (await pm.industry_members(up, "BK0001.DC", None, "行业板块", "stock_code", "asc", 50, 0))["data"]["items"][2]["change_pct"] is None)
         empty = await pm.industry_members(FakeUp({}), "BK0001.DC", DAY, "行业板块", "stock_code", "asc", 50, 0)

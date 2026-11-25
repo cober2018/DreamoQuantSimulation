@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -451,6 +452,9 @@ def _member_columns(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
         label, desc = c.get("name"), c.get("description")
         if any(w in str(label or "") + str(desc or "") for w in MEMBER_BANNED_WORDS):
             label = desc = None
+        if isinstance(desc, str):
+            # 说明里的三个英文词换成页面上的写法（表格里就是这么显示的），其余文字不动
+            desc = re.sub(r"\s*null\b", "空", re.sub(r"\btrue\b", "是", re.sub(r"\bfalse\b", "否", desc)))
         out.append({"key": f, "label": label, "unit": c.get("unit"), "kind": c.get("type"), "description": desc,
                     "sortable": f in MEMBER_SORT_FIELDS})
     return out
