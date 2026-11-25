@@ -26,6 +26,9 @@ const dirClass = (v: number | null | undefined) => (fmt.dir(v) === 'rise' ? 'tex
 const PENDING = '数据待更新'
 const fixed2 = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 const CARD = 'h-full rounded-lg border bg-card p-5 shadow-[var(--shadow-1)] sm:p-6'
+// 首屏指数卡固定列这四个：上证、沪深 300、创业板、中证 1000
+const BENCH = ['000001.SH', '000300.SH', '399006.SZ', '000852.SH']
+const INDEX_NAMES: Record<string, string> = { '000300.SH': '沪深300' }
 const Eyebrow = ({ children }: { children: ReactNode }) => <div className="text-xs tracking-[0.08em] text-accent-ink">{children}</div>
 
 export function Component() {
@@ -48,6 +51,7 @@ export function Component() {
   const idxRows: any[] = idxOverview?.rows || []
   const closes = (code: string) => (idxHistory?.rows || []).filter((r) => r.index_code === code).map((r) => r.close as number)
   const bench = idxRows.find((r) => r.index_code === d.index_code)
+  const benchRows = BENCH.map((code) => idxRows.find((r) => r.index_code === code)).filter(Boolean) as any[]
   const turnoverRows: any[] = turnoverHist?.rows || []
   const limitRows = (limitHist?.rows || []) as LimitRow[]
   const breadthRows = (breadthHist?.rows || []) as BreadthRow[]
@@ -58,14 +62,31 @@ export function Component() {
   if (show('index_change_pct')) hero.push({ id: 'index', el: (
     <BorderBeam radius={12} duration={10} size={64} className="h-full">
       <div className={CARD}>
-        <Eyebrow>基准指数 · {bench?.index_name ? `${bench.index_name} ` : ''}{d.index_code || ''}</Eyebrow>
-        <div className={cn('num-display mt-2 text-[44px] leading-none', dirClass(d.index_change_pct))}>
-          {d.index_change_pct == null ? '—' : <NumberFlow value={d.index_change_pct} format={{ signDisplay: 'exceptZero', minimumFractionDigits: 2, maximumFractionDigits: 2 }} suffix="%" />}
-        </div>
-        <div className="tnum mt-2 text-xs text-ink-3">
-          {bench ? <>收盘 {fixed2(bench.close)} 点<span className="mx-1.5">·</span>20 日 <span className={dirClass(bench.return_20d_pct)}>{bench.return_20d_pct == null ? PENDING : fmt.signedPct(bench.return_20d_pct)}</span></> : '当日涨跌幅'}
-        </div>
-        {closes(d.index_code).length > 1 && <div className="mt-4"><FluidSparkline values={closes(d.index_code)} height={56} area delay={0.2} label="基准指数近 60 日收盘走势" /><div className="mt-1 text-[11px] text-ink-3">近 {closes(d.index_code).length} 日收盘</div></div>}
+        {benchRows.length > 0 ? (
+          <>
+            <Eyebrow>主要指数 · 当日涨跌</Eyebrow>
+            <ul className="mt-3 space-y-2.5">
+              {benchRows.map((r, i) => (
+                <li key={r.index_code} className="flex items-center gap-3">
+                  <span className="w-[68px] shrink-0 text-sm">{r.index_name || r.index_code}</span>
+                  <span className="min-w-0 flex-1">{closes(r.index_code).length > 1 && <Sparkline values={closes(r.index_code)} width={120} height={26} delay={0.2 + i * 0.06} label={`${r.index_name || r.index_code} 近 60 日收盘走势`} />}</span>
+                  <span className="tnum w-[72px] shrink-0 text-right text-xs text-ink-3">{fixed2(r.close)}</span>
+                  <span className={cn('num-display w-[76px] shrink-0 text-right text-[22px] leading-none', dirClass(r.return_1d_pct))}>{r.return_1d_pct == null ? <span className="text-xs text-ink-3">{PENDING}</span> : fmt.signedPct(r.return_1d_pct)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 text-[11px] text-ink-3">曲线为近 60 日收盘，中间一列为收盘点位。更多指数见下方「主要指数一览」。</div>
+          </>
+        ) : (
+          <>
+            <Eyebrow>基准指数 · {bench?.index_name || INDEX_NAMES[d.index_code] || ''}</Eyebrow>
+            <div className={cn('num-display mt-2 text-[44px] leading-none', dirClass(d.index_change_pct))}>
+              {d.index_change_pct == null ? '—' : <NumberFlow value={d.index_change_pct} format={{ signDisplay: 'exceptZero', minimumFractionDigits: 2, maximumFractionDigits: 2 }} suffix="%" />}
+            </div>
+            <div className="tnum mt-2 text-xs text-ink-3">当日涨跌幅 · 其他主要指数{PENDING}</div>
+            {closes(d.index_code).length > 1 && <div className="mt-4"><FluidSparkline values={closes(d.index_code)} height={56} area delay={0.2} label="基准指数近 60 日收盘走势" /><div className="mt-1 text-[11px] text-ink-3">近 {closes(d.index_code).length} 日收盘</div></div>}
+          </>
+        )}
       </div>
     </BorderBeam>
   ) })
@@ -130,8 +151,13 @@ export function Component() {
             </Panel>
           </BlurFade>
         )}
+        {idxRows.length === 0 && idxOverview !== undefined && (
+          <BlurFade delay={0.2} className="xl:col-span-8">
+            <Panel title="主要指数一览" hint="今天各主要指数怎么样，离一年高点多远" className="h-full"><p className="text-sm text-ink-3">{PENDING}，请稍后刷新。</p></Panel>
+          </BlurFade>
+        )}
         {limitRows.length > 0 && (
-          <BlurFade delay={0.26} className={idxRows.length ? 'xl:col-span-4' : 'xl:col-span-12'}>
+          <BlurFade delay={0.26} className={idxRows.length || idxOverview !== undefined ? 'xl:col-span-4' : 'xl:col-span-12'}>
             <LimitPanel rows={limitRows} className="h-full" />
           </BlurFade>
         )}
@@ -148,7 +174,7 @@ export function Component() {
 
       <BlurFade delay={0.38} className="mt-8">
         <h2 className="mb-3 text-[15px] font-medium">更多数据</h2>
-        <GlowHover className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5" maskSize={380} glowIntensity={0.1}
+        <GlowHover className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" maskSize={380} glowIntensity={0.1}
           items={more.map((p) => {
             const Icon = PAGE_ICONS[p.key]
             return {

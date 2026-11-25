@@ -5,7 +5,7 @@
     { "path": "pages/industry/index", "style": { "navigationBarTitleText": "行业比较与轮动" } },
     { "path": "pages/theme/index", "style": { "navigationBarTitleText": "题材与涨跌结构" } },
     { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } },
-    { "path": "pages/history/index", "style": { "navigationBarTitleText": "历史复盘" } },
+    { "path": "pages/history/index", "style": { "navigationBarTitleText": "开盘五分钟与板块统计" } },
     { "path": "pages/calendar/index", "style": { "navigationBarTitleText": "事件日历" } }
   ],
   "tabBar": {

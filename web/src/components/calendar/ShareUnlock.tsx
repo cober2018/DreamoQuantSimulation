@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Panel } from '@/components/shell/Panel'
 import { RankBars } from '@/components/charts/RankBars'
 import { fmt } from '@/lib/api'
@@ -41,7 +42,12 @@ export function UnlockCard({ u, defaultOpen }: { u: Item; defaultOpen?: boolean 
 }
 
 // 限售股解禁：顶部按解禁日画参考市值，下面是可展开的卡片。只列事实：解禁日期、股数、占比和估算市值，不代表对股价的判断
-export function ShareUnlock({ unlocks, label, selectedDate, onPickDate }: { unlocks: Item[] | null; label?: string; selectedDate?: string; onPickDate?: (date: string) => void }) {
+const FOLD = 6
+export function ShareUnlock({ unlocks, label, selectedDate, fromDate, onPickDate }: { unlocks: Item[] | null; label?: string; selectedDate?: string; fromDate?: string; onPickDate?: (date: string) => void }) {
+  const [open, setOpen] = useState(false)
+  // 卡片默认只列数据日及之后最近的几个解禁日，其余（含已过去的）展开后看；上方的图始终画全部日期
+  const upcoming = (unlocks || []).filter((u) => !fromDate || String(u.event_date) >= fromDate)
+  const cards = open ? unlocks || [] : upcoming.slice(0, FOLD)
   const withValue = (unlocks || []).filter((u) => u.total_float_value_ref != null)
   const bars = withValue.map((u) => ({ name: String(u.event_date).slice(5), value: u.total_float_value_ref / 1e8 }))
   return (
@@ -51,15 +57,24 @@ export function ShareUnlock({ unlocks, label, selectedDate, onPickDate }: { unlo
         : (
           <>
             {label && <p className="mb-3 text-[11px] leading-relaxed text-ink-3">{label}</p>}
-            {bars.length > 0 && (
-              <div className="mb-4">
-                <div className="mb-2 text-[11px] text-ink-3">各解禁日参考市值（亿元）</div>
-                <RankBars rows={bars} color="var(--c-viz-1)" format={(v) => fmt.num(v, 1)} label="各解禁日参考市值"
-                  onSelect={onPickDate ? (i) => onPickDate(String(withValue[i].event_date)) : undefined} selectedIndex={selectedDate ? withValue.findIndex((u) => u.event_date === selectedDate) : null} />
+            <div className="grid grid-cols-1 items-start gap-x-6 gap-y-4 lg:grid-cols-2">
+              {bars.length > 0 && (
+                <div>
+                  <div className="mb-2 text-[11px] text-ink-3">各解禁日参考市值（亿元），点一行查看当天的宏观事件和解禁明细</div>
+                  <RankBars rows={bars} color="var(--c-viz-1)" format={(v) => fmt.num(v, 1)} label="各解禁日参考市值"
+                    onSelect={onPickDate ? (i) => onPickDate(String(withValue[i].event_date)) : undefined} selectedIndex={selectedDate ? withValue.findIndex((u) => u.event_date === selectedDate) : null} />
+                </div>
+              )}
+              <div>
+                <div className="mb-2 text-[11px] text-ink-3">{open ? `全部 ${cards.length} 个解禁日` : `${fromDate || '数据日'} 起最近 ${cards.length} 个解禁日`}，点开看个股</div>
+                <div className="space-y-2">
+                  {cards.map((u) => <UnlockCard key={u.event_date + u.display_title} u={u} />)}
+                  {!cards.length && <p className="text-sm text-ink-3">数据日之后暂无限售股解禁。</p>}
+                </div>
+                {(unlocks.length > cards.length || open) && (
+                  <button type="button" onClick={() => setOpen((v) => !v)} className="mt-2 cursor-pointer text-xs text-primary hover:underline">{open ? '收起' : `展开全部 ${unlocks.length} 个解禁日`}</button>
+                )}
               </div>
-            )}
-            <div className="space-y-2">
-              {unlocks.map((u) => <UnlockCard key={u.event_date + u.display_title} u={u} />)}
             </div>
           </>
         )}

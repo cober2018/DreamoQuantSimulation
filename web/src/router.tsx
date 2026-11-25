@@ -53,7 +53,9 @@ export const router = createBrowserRouter([{
     { path: '/app/states', loader: () => redirect('/overview') },
     { ...dataPage('/overview'), ...lazyPage(() => import('./pages/Overview')) },
     { ...dataPage('/themes'), ...lazyPage(() => import('./pages/Themes')) },
-    { ...dataPage('/history'), ...lazyPage(() => import('./pages/History')) },
+    // 历史复盘页已拆掉（2026-11）：开盘五分钟在参与度页，行业资金排行和领涨行业在行业页。旧地址和旧的锁定预告地址都跳转，不出现「没有这个页面」
+    { path: '/history', loader: () => redirect('/participation') },
+    { path: '/locked/history', loader: () => redirect('/participation') },
     { ...dataPage('/participation'), ...lazyPage(() => import('./pages/Participation')) },
     { ...dataPage('/industries'), ...lazyPage(() => import('./pages/Industries')) },
     { ...dataPage('/calendar'), ...lazyPage(() => import('./pages/Calendar')) },

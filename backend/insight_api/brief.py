@@ -217,7 +217,7 @@ def r12_open5(hist, _prev, d):
     if r is None or (cov is not None and cov < 0.8) or 0.2 < r < 0.8:
         return []
     return [_fact("极值", f"开盘五分钟累计上涨的个股占 {_pct(r)}（样本覆盖 {_pct(cov or 0, 0)}）", abs(r - 0.5) * 200,
-                  o5.get("trade_date") or d, "历史复盘 · 开盘五分钟统计", ["positive_open5_ratio", "coverage_ratio"])]
+                  o5.get("trade_date") or d, "参与度与资金环境 · 开盘五分钟统计", ["positive_open5_ratio", "coverage_ratio"])]
 
 
 def schedule(cal: Dict[str, Any], d: Optional[str], days: int = 3, min_stars: int = 4, limit: int = 6) -> List[Dict[str, Any]]:

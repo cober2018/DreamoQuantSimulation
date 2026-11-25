@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { PageFrame } from '@/components/shell/PageFrame'
 import { Panel } from '@/components/shell/Panel'
 import { DateInput } from '@/components/shell/DateInput'
@@ -10,7 +11,7 @@ import { RankBars } from '@/components/charts/RankBars'
 import { TrendTile } from '@/components/charts/TrendTile'
 import { BlurFade } from '@/components/fx/blur-fade'
 import { fmt } from '@/lib/api'
-import { sealRate, tierHeight } from '@/lib/limitStructure'
+import { HIGH_TIER, sealRate, tierHeight } from '@/lib/limitStructure'
 import { useModule } from '@/lib/queries'
 
 type Hist = { trade_date: string; limit_up_count?: number | null; limit_down_count?: number | null; broken_board_count?: number | null; max_ladder?: string | null }
@@ -26,6 +27,7 @@ export function Component() {
   // 跌停梯队与名单由中台字段提供；接口没有该字段时为 undefined，页面显示「待接入」，不当作没有跌停
   const downTiers: Tier[] | null = Array.isArray(data?.limit_down_tiers) ? data.limit_down_tiers : null
   const [kw, setKw] = useState('')
+  const [allThemes, setAllThemes] = useState(false)
   const matchN = [...tiers, ...(downTiers || [])].reduce((n, t) => n + (kw.trim() ? (t.stocks || []).filter((s) => s.stock_name?.includes(kw.trim())).length : 0), 0)
   const hasNames = [...tiers, ...(downTiers || [])].some((t) => (t.stocks || []).length > 0)
   const themes: any[] = data?.themes || []
@@ -48,40 +50,60 @@ export function Component() {
     { key: 'max-board', label: '最高连板', ind: 'themes.structure.ladder', kind: 'board', color: 'var(--c-viz-2)', cur: maxBoard, field: (h) => tierHeight(h.max_ladder) },
   ] : []
 
-  const topThemes = themes.filter((t) => t.up_count != null).sort((a, b) => b.up_count - a.up_count).slice(0, 15)
+  // 涨停个股按所属行业归类，覆盖当日全部涨停股；默认列前 15 个行业，其余可展开
+  const rankedThemes = themes.filter((t) => t.up_count != null).sort((a, b) => b.up_count - a.up_count)
+  const topThemes = allThemes ? rankedThemes : rankedThemes.slice(0, 15)
+  const coverage = data?.theme_coverage as { classified?: number | null; total?: number | null } | undefined
+  const counts = defs.filter((k) => k.kind === 'count')
+  const tiles = defs.filter((k) => k.kind !== 'count')
+  const subOf = (k: (typeof defs)[number], cur: number | null, prev: number | null) => {
+    if (cur == null || prev == null) return '较前一日：—'
+    const d = k.kind === 'rate' ? (cur - prev) * 100 : cur - prev
+    const unit = k.kind === 'rate' ? ' 个百分点' : k.kind === 'board' ? ' 板' : ''
+    return `较前一日 ${d > 0 ? '+' : ''}${fmt.num(d, k.kind === 'rate' ? 1 : 0)}${unit}`
+  }
+  const curOf = (k: (typeof defs)[number]) => (hover == null ? k.cur : k.field(recent[hover]))
+  const prevOf = (k: (typeof defs)[number]) => (hover == null ? (prevDay ? k.field(prevDay) : null) : hover > 0 ? k.field(recent[hover - 1]) : null)
   const shownDate = hover == null ? env.trade_date : recent[hover]?.trade_date
 
   return (
-    <PageFrame title="题材与涨跌结构" question="当日涨停、跌停、炸板如何分布，连板和题材集中在哪里？" env={env} loading={loading} onRetry={load} onJump={setTradeDate}
+    <PageFrame title="题材与涨跌结构" question="当日涨停、跌停、炸板如何分布，连板和涨停集中在哪些行业？" env={env} loading={loading} onRetry={load} onJump={setTradeDate}
       tools={<DateInput value={tradeDate} onChange={setTradeDate} />}>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {defs.length > 0 && (
           <ModuleGate module="structure">
             <BlurFade className="lg:col-span-2">
-              <Panel title="涨停结构" hint="涨停、跌停、炸板、封板率、最高连板，附前一日对比与近 10 日走势" action={recent.length > 1 ? <DayChip hover={hover} date={shownDate} /> : undefined}>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-                  {defs.map((k, i) => {
-                    // 指针在曲线上时回看那一日；否则用当日值，前一日取接口历史里的前一条
-                    const cur = hover == null ? k.cur : k.field(recent[hover])
-                    const prev = hover == null ? (prevDay ? k.field(prevDay) : null) : hover > 0 ? k.field(recent[hover - 1]) : null
-                    const series = recent.map(k.field)
-                    let sub = '较前一日：—'
-                    if (cur != null && prev != null) {
-                      const d = k.kind === 'rate' ? (cur - prev) * 100 : cur - prev
-                      const unit = k.kind === 'rate' ? ' 个百分点' : k.kind === 'board' ? ' 板' : ''
-                      sub = `较前一日 ${d > 0 ? '+' : ''}${fmt.num(d, k.kind === 'rate' ? 1 : 0)}${unit}`
-                    }
-                    return (
+              <Panel title="涨停结构" hint="当日涨停、跌停、炸板家数，以及封板率和最高连板的近 10 日走势" action={recent.length > 1 ? <DayChip hover={hover} date={shownDate} /> : undefined}>
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+                  {/* 涨停、跌停、炸板的家数和走势在市场总览已有，这里只留一行数字 */}
+                  <dl className="grid grid-cols-3 gap-3 rounded-md border bg-background/50 p-3 lg:col-span-5">
+                    {counts.map((k) => (
                       <IndGate key={k.key} ind={k.ind}>
-                        <TrendTile label={k.label} value={cur} tone={k.tone} color={k.color} delay={0.3 + i * 0.07} sub={sub}
-                          format={k.kind === 'rate' ? { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 } : undefined}
-                          text={k.kind === 'board' && cur != null ? `${cur} 板` : undefined}
-                          series={series.filter((v) => v != null).length >= 2 ? series : undefined} hover={hover} onHover={setHover} />
+                        <div>
+                          <dt className="text-xs text-ink-3">{k.label}</dt>
+                          <dd className={`num-display mt-1 text-[26px] leading-none ${k.tone === 'up' ? 'text-up' : k.tone === 'down' ? 'text-down' : ''}`}>{curOf(k) ?? <span className="text-sm text-ink-3">数据待更新</span>}</dd>
+                          <dd className="tnum mt-1 text-[11px] text-ink-3">{subOf(k, curOf(k), prevOf(k))}</dd>
+                        </div>
                       </IndGate>
-                    )
-                  })}
+                    ))}
+                    <p className="col-span-3 text-[11px] text-ink-3">单位：只。三项的近 20 日走势见<Link to="/overview" className="mx-0.5 text-primary underline">市场总览</Link>。</p>
+                  </dl>
+                  <div className="grid grid-cols-2 gap-3 lg:col-span-7">
+                    {tiles.map((k, i) => {
+                      const cur = curOf(k)
+                      const series = recent.map(k.field)
+                      return (
+                        <IndGate key={k.key} ind={k.ind}>
+                          <TrendTile label={k.label} value={cur} color={k.color} delay={0.3 + i * 0.07} sub={subOf(k, cur, prevOf(k))}
+                            format={k.kind === 'rate' ? { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 } : undefined}
+                            text={k.kind === 'board' && cur != null ? `${cur} 板${cur >= HIGH_TIER ? '及以上' : ''}` : undefined}
+                            series={series.filter((v) => v != null).length >= 2 ? series : undefined} hover={hover} onHover={setHover} />
+                        </IndGate>
+                      )
+                    })}
+                  </div>
                 </div>
-                {recent.length > 1 && <p className="mt-3 text-[11px] text-ink-3">移到曲线上可回看近 {recent.length} 日中的任意一天。封板率 = 涨停 ÷（涨停 + 炸板）。</p>}
+                {recent.length > 1 && <p className="mt-3 text-[11px] text-ink-3">移到曲线上可回看近 {recent.length} 日中的任意一天。封板率 = 涨停 ÷（涨停 + 炸板）。最高连板按梯队取，梯队最高一档是「高板」（4 板及以上），所以最多显示到「4 板及以上」。</p>}
               </Panel>
             </BlurFade>
           </ModuleGate>
@@ -89,15 +111,15 @@ export function Component() {
 
         <ModuleGate module="structure">
           <BlurFade delay={0.08} className="lg:col-span-2">
-            <Panel title={<>涨停梯队{kw.trim() && <small className="ml-2 text-xs font-normal text-primary">匹配 {matchN} 只</small>}</>} hint="1 板到最高板各有多少家，附个股名称；移到名称上看代码、涨幅和首封时间"
+            <Panel title={<>涨停梯队{kw.trim() && <small className="ml-2 text-xs font-normal text-primary">匹配 {matchN} 只</small>}</>} hint={hasNames ? '1 板到最高板各有多少家，附个股名称；移到名称上看代码、涨幅和首封时间' : '1 板到最高板各有多少家'}
               action={hasNames ? <Input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="按名称高亮，如 东方" aria-label="按名称高亮" className="h-8 w-44 text-xs" /> : undefined}>
               {tiers.length ? <TierBoard tiers={tiers} kind="up" keyword={kw} label="涨停梯队" /> : <p className="text-sm text-ink-3">当日暂无连板数据。</p>}
-              {tiers.length > 0 && !hasNames && <p className="mt-3 text-[11px] text-ink-3">个股名称待数据接入。</p>}
+              {tiers.length > 0 && !hasNames && <p className="mt-3 text-[11px] text-ink-3">涨停个股名单（代码、名称、涨幅、首封时间）：数据待更新。</p>}
             </Panel>
           </BlurFade>
           <BlurFade delay={0.11} className="lg:col-span-2">
-            <Panel title="跌停梯队" hint="首次跌停到连续跌停各有多少家，附个股名称">
-              {downTiers === null ? <p className="text-sm text-ink-3">跌停梯队数据待接入。</p>
+            <Panel title="跌停梯队" hint="首次跌停到连续跌停各有多少家">
+              {downTiers === null ? <p className="text-sm text-ink-3">{st?.limit_down_count != null && <>当日跌停 <b className="tnum font-medium text-down">{st.limit_down_count}</b> 只。</>}连续跌停天数和跌停个股名单：数据待更新。</p>
                 : downTiers.length === 0 ? <p className="text-sm text-ink-3">当日没有跌停个股。</p>
                 : <TierBoard tiers={downTiers} kind="down" keyword={kw} label="跌停梯队" />}
             </Panel>
@@ -106,11 +128,17 @@ export function Component() {
 
         <ModuleGate module="themes">
           <BlurFade delay={0.14} className="lg:col-span-2">
-            <Panel title="题材涨停数" hint="涨停只数前 15 的题材" className="h-full">
+            <Panel title="涨停个股的行业分布" className="h-full"
+              hint={coverage?.total ? `按涨停个股所属行业归类，共 ${rankedThemes.length} 个行业，覆盖当日 ${coverage.classified ?? '—'} / ${coverage.total} 只涨停股` : `按涨停个股所属行业归类，共 ${rankedThemes.length} 个行业`}>
               {topThemes.length
-                ? <RankBars rows={topThemes.map((t) => ({ name: t.industry, value: t.up_count, tag: t.highest_tier ?? '' }))} label="题材涨停只数排行" />
-                : <p className="text-sm text-ink-3">当日没有进入题材榜的行业。</p>}
-              {data?.theme_member_rule && <p className="mt-3 text-[11px] leading-relaxed text-ink-3">{data.theme_member_rule}</p>}
+                ? <RankBars rows={topThemes.map((t) => ({ name: t.industry, value: t.up_count }))} label="各行业涨停只数" />
+                : <p className="text-sm text-ink-3">当日没有涨停个股的行业归类数据。</p>}
+              {rankedThemes.length > 15 && (
+                <button type="button" onClick={() => setAllThemes((v) => !v)} className="mt-3 cursor-pointer text-xs text-primary hover:underline">
+                  {allThemes ? '只看前 15 个行业' : `展开全部 ${rankedThemes.length} 个行业（其余 ${rankedThemes.length - 15} 个合计 ${rankedThemes.slice(15).reduce((n, t) => n + t.up_count, 0)} 只）`}
+                </button>
+              )}
+              <p className="mt-3 text-[11px] leading-relaxed text-ink-3">单位：只。{data?.theme_member_rule || '按涨停个股所属行业归类（行业分类口径，不是概念题材）'}。个别行业名称在数据源里被截成 4 个字，按原样显示。</p>
             </Panel>
           </BlurFade>
         </ModuleGate>

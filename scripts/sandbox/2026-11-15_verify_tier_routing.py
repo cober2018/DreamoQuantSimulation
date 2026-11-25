@@ -243,7 +243,11 @@ def verify_public_pages(TestClient):
         r = u.get("/api/v1/themes?trade_date=2026-09-09")
         body = r.json()
         check("题材页走事实视图返回 200", r.status_code == 200 and body["status"] in ("ok", "partial")
-              and len(body["data"]["themes"]) == 4 and body["data"]["limit_up_sample_size"] == 48, r.text[:200])
+              and body["data"]["limit_up_sample_size"] == 48, r.text[:200])
+        # ZS-132：行业归类覆盖当日全部涨停股（行业榜视图只列不少于 3 只的 4 个行业，其余由封板时间视图按行业加总补齐）
+        check("题材页行业归类覆盖全部涨停股", len(body["data"]["themes"]) == 28
+              and sum(t["up_count"] for t in body["data"]["themes"]) == 48
+              and body["data"]["theme_coverage"] == {"classified": 48, "total": 48})
         check("上游多给的字段被投影丢弃", all("rotation_zone" not in t for t in body["data"]["themes"]))
         check("题材页来源为 public 服务", {s["service_key"] for s in body["sources"]} <= {"public-theme-limit-stats", "public-limit-pool-structure"})
         r = u.get("/api/v1/participation?trade_date=2026-09-09")

@@ -114,7 +114,7 @@ TOOLS: List[Tool] = [
          "读取指定交易日的题材统计与涨跌停结构：各题材涨停/炸板数、连板梯队、涨停/炸板/跌停计数及近期序列、股票池计数。",
          {"trade_date": DATE}, page="themes",
          load=lambda pg, u, p, a: pg.themes(u, p, a.get("trade_date"))),
-    Tool("get_history", "历史复盘",
+    Tool("get_history", "开盘五分钟与板块统计",
          "读取指定交易日的板块结构统计、板块资金净流入排行（按 1/5/20 日口径）和开盘 5 分钟统计。",
          {"trade_date": DATE, "idx_type": IDX,
           "period": {"type": "string", "enum": ["1d", "5d", "20d"], "default": "1d", "description": "资金统计口径"}},

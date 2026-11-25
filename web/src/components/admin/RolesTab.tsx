@@ -12,7 +12,7 @@ import { QueryState } from './QueryState'
 
 const PERM_LABEL: Record<string, string> = {
   'page.overview': '市场总览', 'page.participation': '参与度与资金环境', 'page.industries': '行业比较与轮动',
-  'page.themes': '题材与涨跌结构', 'page.history': '历史复盘', 'page.calendar': '事件日历',
+  'page.themes': '题材与涨跌结构', 'page.history': '开盘五分钟与板块统计', 'page.calendar': '事件日历',
   'data.detail': '下钻明细', 'client.web': '网页端', 'client.mp': '小程序', 'admin.console': '管理后台',
   'data.history_days': '可查历史（交易日）', max_sessions: '同时在线会话数',
 }

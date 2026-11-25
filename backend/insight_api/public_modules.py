@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -29,6 +30,7 @@ DERIVATIVES = ("public-market-derivatives", "raw-stats")
 DERIVATIVES_HISTORY = ("public-market-derivatives", "raw-stats-history")
 STYLE = ("public-market-style-rotation", "current")
 FACTS = ("public-industry-review", "facts")
+LEVELS = ("public-industry-review", "overview")
 SERIES = ("public-industry-review", "series")
 CALENDAR = ("public-forward-risk-events", "calendar-facts")
 SHARE_UNLOCK = ("public-share-unlock", "calendar")
@@ -54,6 +56,14 @@ SHORT_MAP = {"seal_rate": ("seal_rate_pct", 0.01), "consecutive_board_count": ("
              "max_consecutive_days": ("maximum_boards", 1), "first_board_premium": ("first_board_return_pct", 1),
              "broken_repair_rate": ("repair_rate_pct", 0.01)}
 STYLE_RENAME = {"label": "name", "strength_score": "strength", "source_date": "date"}
+# 衍生品「缺失原因」上游给的是英文代码，页面、小程序、MCP 一律给中文说明；未登记的代码不外露
+DERIVATIVE_REASON_TEXT = {
+    "csi1000_etf_option_not_listed": "没有对应的 ETF 期权，认沽认购比不提供",
+    "star50_proxy": "没有对应的股指期货，基差、持仓比、成交持仓比不提供",
+}
+# 相对强度、相对动量：事实视图给的是以 0 为参考的小数（0.01 = 1 个百分点），不是以 100 为基准的刻度
+RRG_REFERENCE = 0
+RRG_UNIT = "小数（0.01 = 1 个百分点），0 为参考线"
 FACTOR_PUBLIC_KEYS = {key: key for key, _ in SMART_MONEY_FACTOR_KEYS.values()}
 FACTOR_PUBLIC_KEYS["uncrowded_liquidity"] = "uncongested_liquidity"
 
@@ -78,6 +88,7 @@ REQUEST_FIELDS = {
             "sector_return_60d", "amount", "turnover_rate_1d", "up_num", "down_num", "member_count", "up_stock_ratio",
             "above_ma20_ratio", "new_high_20d_ratio", "di", "market_amount_share", "amount_ratio_ma20", "rs_ratio",
             "rs_momentum", "net_flow_1d", "net_flow_5d", "net_flow_20d", "coverage_ratio", "is_fallback"],
+    LEVELS: ["industry_code", "level"],
     SERIES: ["trade_date", *SERIES_FIELDS, "coverage_ratio"],
     CALENDAR: list(dict.fromkeys([*CALENDAR_PUBLIC.values(), *([CALENDAR_AI_FIELD] if CALENDAR_AI_FIELD else [])])),
     THEMES: ["theme", "up_count", "broken_count", "highest_tier", "avg_pct"],
@@ -122,17 +133,25 @@ def _rename(row: Dict[str, Any], fields: List[str], rename: Dict[str, str]) -> D
     return pick(row, {f: rename.get(f, f) for f in fields})
 
 
-def _series_values(series: Any) -> Optional[List[Any]]:
-    """事实视图的序列是 [{sequence, value}]，本平台对外沿用 review-* 的数字数组（按 sequence 升序）。"""
-    if not isinstance(series, list):
-        return series
-    if not any(isinstance(p, dict) for p in series):
-        return series
-    # 只转换合同内的 {sequence, value}；出现其他键就原样返回，交给出口禁止键守卫判定，不在这里悄悄丢掉
-    if any(not isinstance(p, dict) or not set(p) <= {"sequence", "value"} for p in series):
-        return series
-    points = sorted((p for p in series if isinstance(p, dict)), key=lambda p: to_int(p.get("sequence")) or 0)
-    return [clean(to_float(p.get("value"))) for p in points]
+def _series_points(series: Any) -> tuple:
+    """事实视图的序列是 [{sequence, date, value}]，本平台对外给数字数组和等长的日期数组（按 sequence 升序）。
+    返回 (数值, 日期)；不是这个形状时原样返回 (series, None)，交给出口禁止键守卫判定，不在这里悄悄丢掉。"""
+    if not isinstance(series, list) or not any(isinstance(p, dict) for p in series):
+        return series, None
+    if any(not isinstance(p, dict) or not set(p) <= {"sequence", "date", "value"} for p in series):
+        return series, None
+    points = sorted(series, key=lambda p: to_int(p.get("sequence")) or 0)
+    dates = [str(p["date"])[:10] if p.get("date") else None for p in points]
+    return [clean(to_float(p.get("value"))) for p in points], dates if any(dates) else None
+
+
+def _reason_text(code: Any) -> Optional[str]:
+    if not code:
+        return None
+    for prefix, text in DERIVATIVE_REASON_TEXT.items():
+        if str(code).startswith(prefix):
+            return text
+    return "部分指标暂不提供"
 
 
 def _ai_flag(row: Dict[str, Any]) -> Optional[bool]:
@@ -234,7 +253,8 @@ async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, An
     try:
         der = await _get(up, DERIVATIVES, td)
         issues.extend(der.issues)
-        blocks["derivatives"] = [pick({**m, "oi_volume_crowding_zscore_60d": m.get("oi_volume_ratio_zscore_60d")},
+        blocks["derivatives"] = [pick({**m, "oi_volume_crowding_zscore_60d": m.get("oi_volume_ratio_zscore_60d"),
+                                       "missing_reason": _reason_text(m.get("missing_reason"))},
                                       DERIVATIVE_FIELDS) for m in der.rows if isinstance(m, dict)]
     except UpstreamError:
         gaps.append(gap("CNT-010", "derivatives_matrix_json 缺失或无法解析"))
@@ -243,7 +263,8 @@ async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, An
     try:
         dh = await _get(up, DERIVATIVES_HISTORY, td, sessions="60")
         issues.extend(dh.issues)
-        blocks["derivatives_history"] = [pick(m, DERIVATIVE_HISTORY_FIELDS) for m in dh.rows if isinstance(m, dict)]
+        blocks["derivatives_history"] = [pick({**m, "missing_reason": _reason_text(m.get("missing_reason"))},
+                                              DERIVATIVE_HISTORY_FIELDS) for m in dh.rows if isinstance(m, dict)]
     except UpstreamError:
         gaps.append(gap("CNT-010", "衍生品标准分历史不可用"))
         blocks["derivatives_history"] = []
@@ -260,8 +281,15 @@ async def participation(up: Upstream, trade_date: Optional[str]) -> Dict[str, An
     try:
         sty = await _get(up, STYLE, td)
         camps = [_rename(c, STYLE_CAMP_FIELDS, STYLE_RENAME) for c in sty.rows if isinstance(c, dict)]
-        camps = [{**c, "strength_series": _series_values(c.get("strength_series"))} for c in camps if c.get("available")]
-        blocks["style_strength"] = {"camps": camps, "definition": "强度分为阵营指数相对强度的历史评分（0–100）；序列为近 20 个交易日"} if camps else None
+        out = []
+        for c in camps:
+            if not c.get("available"):
+                continue
+            values, dates = _series_points(c.get("strength_series"))
+            out.append({**c, "strength_series": values, "series_dates": dates})
+        camps = out
+        n = max((len(c["strength_series"]) for c in camps if isinstance(c["strength_series"], list)), default=0)
+        blocks["style_strength"] = {"camps": camps, "definition": f"强度分为阵营指数相对强度的历史评分（0–100）；序列为近 {n} 个交易日"} if camps else None
     except UpstreamError:
         blocks["style_strength"] = None
     if blocks["style_strength"] is None:
@@ -319,6 +347,30 @@ async def _facts(up: Upstream, trade_date: Optional[str], idx_type: str) -> Fetc
     return await _get(up, FACTS, trade_date, idx_type=idx_type)
 
 
+# 最近一次成功取到的层级表。层级是板块代码的分类属性（一级 31、二级 128、三级 337，各交易日相同），不是当日行情；
+# overview 视图偶尔慢或失败时沿用它，不让行业页多等一个超时
+_LAST_LEVELS: Dict[str, int] = {}
+LEVELS_TIMEOUT = 8.0
+
+
+async def _levels(up: Upstream, trade_date: Optional[str], rows: List[Dict[str, Any]]) -> Dict[str, int]:
+    """行业层级（东财一级 1、二级 2、三级 3）。facts 视图的 level 目前全为空，改用同一服务 overview 视图给出的 level；
+    两处都是中台的原值，本平台不按名称推算。取不到时返回空，页面按全部行业显示并注明。"""
+    own = {r.get("industry_code"): to_int(r.get("level")) for r in rows}
+    if any(v in (1, 2, 3) for v in own.values()):
+        return {k: v for k, v in own.items() if v in (1, 2, 3)}
+    try:
+        res = await asyncio.wait_for(_get(up, LEVELS, trade_date, idx_type="行业板块"), LEVELS_TIMEOUT)
+    except (UpstreamError, asyncio.TimeoutError):
+        return dict(_LAST_LEVELS)
+    got = {r.get("industry_code"): to_int(r.get("level")) for r in res.rows if isinstance(r, dict)}
+    got = {k: v for k, v in got.items() if v in (1, 2, 3)}
+    if got:
+        _LAST_LEVELS.clear()
+        _LAST_LEVELS.update(got)
+    return got or dict(_LAST_LEVELS)
+
+
 async def industries(up: Upstream, trade_date: Optional[str], idx_type: str) -> Dict[str, Any]:
     ids = ["CNT-014", "CNT-015", "CNT-016", "CNT-020"]
     res = await _facts(up, trade_date, idx_type)
@@ -328,16 +380,19 @@ async def industries(up: Upstream, trade_date: Optional[str], idx_type: str) -> 
     # level：东财一级/二级/三级 = 1/2/3，概念、地域板块为 null；ZS-116 发版前的历史分区全是 null
     # field_status 的行号是本页 rows 的下标；在转换前按原下标挂到每一行上，排序后不会错位
     fs_map = (res.meta or {}).get("field_status") or {}
+    levels = await _levels(up, _date(res), res.rows) if idx_type == "行业板块" else {}
     items = []
     for idx, r in enumerate(res.rows):
         it = _rename(r, [*INDUSTRY_FIELDS, "level"], INDUSTRY_RENAME)
-        st = fs_map.get(str(idx))
+        it["level"] = levels.get(it["sector_code"])
+        st = {k: v for k, v in (fs_map.get(str(idx)) or {}).items() if not (k == "level" and it["level"])}
         if st:
             it["field_status"] = st
         items.append(it)
     items.sort(key=lambda x: (x["sector_return"] is None, -(x["sector_return"] or 0)))
-    data = {"idx_type": idx_type, "idx_types": list(IDX_TYPES), "items": items, "units": FIELD_UNITS,
-            "rrg_reference": 100, "notes": [str(n) for n in ((res.meta or {}).get("notes") or []) if isinstance(n, str)]}
+    data = {"idx_type": idx_type, "idx_types": list(IDX_TYPES), "items": items,
+            "units": {**FIELD_UNITS, "rs_ratio": RRG_UNIT, "rs_momentum": RRG_UNIT},
+            "rrg_reference": RRG_REFERENCE, "notes": [str(n) for n in ((res.meta or {}).get("notes") or []) if isinstance(n, str)]}
     return envelope("industries", ids, up.data_mode, trade_date=_date(res), status=status_from([], res.issues),
                     sources=[_industry_source(res, res.rows)], gaps=issue_gaps("CNT-014", res.issues), data=data)
 
@@ -356,7 +411,8 @@ async def industry_series(up: Upstream, sector_code: str, end_date: Optional[str
         gaps.append(gap("CNT-032", f"查找窗口内仅找到 {len(points)}/{days} 个有数交易日，未插值"))
     data = {"sector_code": sector_code, "sector_name": c.get("industry_name") or res.meta.get("industry_name"),
             "idx_type": c.get("idx_type") or res.meta.get("idx_type"),
-            "requested_days": days, "points": points, "units": FIELD_UNITS}
+            "requested_days": days, "points": points,
+            "units": {**FIELD_UNITS, "rs_ratio": RRG_UNIT, "rs_momentum": RRG_UNIT}, "rrg_reference": RRG_REFERENCE}
     return envelope("industry_series", ids, up.data_mode, trade_date=str(head["trade_date"])[:10],
                     status=status_from(gaps, res.issues), sources=[_industry_source(res, [head])],
                     gaps=gaps + issue_gaps("CNT-032", res.issues), data=data)
@@ -382,6 +438,13 @@ def _board_counts(row: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         "limit_up_down_ratio": {"value": clean(limit_up / limit_down) if limit_down else None,
                                 "numerator": limit_up, "denominator": limit_down},
     }
+
+
+def _tier_rank(tier: Any) -> int:
+    """梯队名称的高低：首板 1、N 连板 N、高板排最后。原先按字符串比大小，会把「首板」排在「3连板」之上。"""
+    s = str(tier)
+    digits = "".join(ch for ch in s if ch.isdigit())
+    return int(digits) if digits else 1 if "首" in s else 99 if "高" in s else 0
 
 
 def _pool_counts(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
@@ -412,20 +475,25 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
     sources = [_source(THEMES[0], res)]
     ranked = [pick(r, {"industry": "theme", "up_count": "up_count", "broken_count": "broken_count",
                        "highest_tier": "highest_tier", "avg_pct": "avg_pct"}) for r in res.rows if isinstance(r, dict)]
-    names = {r["industry"] for r in ranked if r.get("industry")}
-
     seal: Dict[str, Dict[str, int]] = {}
     seal_total = 0
     try:
         sres = await _get(up, SEAL, td)
         labels = {b[0] for b in SEAL_BUCKETS}
         for d in sres.rows:
-            if d.get("theme") in names and d.get("bucket") in labels:
+            if d.get("theme") and d.get("bucket") in labels:
                 seal.setdefault(d["theme"], {})[d["bucket"]] = to_int(d.get("count")) or 0
         seal_total = to_int(_ctx(sres).get("limit_up_total")) or 0
         issues.extend(sres.issues)
     except UpstreamError as e:
         gaps.append(gap("CNT-022", f"封板时间明细不可用: {e}"))
+    # 行业榜视图只列涨停不少于 3 只的行业；其余行业的涨停只数由封板时间视图按行业加总补齐，使归类覆盖当日全部涨停股
+    listed = {r["industry"] for r in ranked if r.get("industry")}
+    for name, buckets in seal.items():
+        if name not in listed:
+            ranked.append({"industry": name, "up_count": sum(buckets.values()), "broken_count": None,
+                           "highest_tier": None, "avg_pct": None})
+    ranked.sort(key=lambda r: -(to_int(r.get("up_count")) or 0))
     for r in ranked:
         r["seal_time_buckets"] = seal.get(r.get("industry"), {})
         r["avg_return_pct"] = r.pop("avg_pct", None)
@@ -457,7 +525,7 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
                 history.append({"trade_date": str(r.get("trade_date"))[:10], "limit_up_count": c["limit_up_count"],
                                 "broken_board_count": c["broken_board_count"], "limit_down_count": c["limit_down_count"],
                                 "broken_board_rate": c["broken_board_rate"]["value"],
-                                "max_ladder": max((k for k, v in c["ladder"].items() if v), default=None)})
+                                "max_ladder": max((k for k, v in c["ladder"].items() if v and k), key=_tier_rank, default=None)})
     except UpstreamError as e:
         gaps.append(gap("CNT-025", f"股票池 ADS 不可用: {e}"))
     if structure is not None and len(history) < 2:
@@ -465,7 +533,8 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
 
     data = {
         "themes": ranked,
-        "theme_member_rule": "按涨停个股所属行业归类（行业分类，非概念板块），仅统计当日进入题材榜的行业",
+        "theme_member_rule": "按涨停个股所属行业归类（行业分类口径，不是概念题材）；炸板数、平均涨幅只对涨停不少于 3 只的行业提供",
+        "theme_coverage": {"classified": sum(to_int(r.get("up_count")) or 0 for r in ranked), "total": seal_total or None},
         "limit_up_sample_size": seal_total,
         "seal_time_buckets": [b[0] for b in SEAL_BUCKETS],
         "board_tiers": tiers,
@@ -478,7 +547,7 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
                     sources=sources, gaps=gaps + issue_gaps("CNT-022", issues), data=data)
 
 
-# ---------------- 历史复盘 ----------------
+# ---------------- 开盘五分钟与板块统计（原历史复盘；网页拆到参与度页、行业页，小程序与 MCP 仍用本接口）----------------
 async def history(up: Upstream, trade_date: Optional[str], idx_type: str, period: str) -> Dict[str, Any]:
     ids = ["CNT-029", "CNT-030", "CNT-031"]
     gaps: List[Dict[str, Any]] = []
