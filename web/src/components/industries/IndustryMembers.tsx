@@ -27,6 +27,8 @@ const DEFAULT_KEYS = ['change_pct', 'change_5d_pct', 'change_pct_percentile', 'c
 const SIGNED = new Set(['change_pct', 'change_5d_pct', 'open5_change_pct', 'after_open5_change_pct', 'ma20_deviation_pct', 'active_net_amount_ratio_pct', 'large_order_net_5d', 'large_order_net_20d'])
 const PAGE_SIZE = 50
 const PENDING = '数据待更新'
+// 这张表里单元格没有数值是口径规定的正常情况（例如窗口内有一天没有记录），统一显示「—」，原因写在各列说明里
+const EMPTY = '—'
 
 function cellText(c: Col, v: any): string {
   if (c.kind === 'boolean') return v ? '是' : '否'
@@ -61,6 +63,11 @@ export function IndustryMembers({ code, name, idxType, tradeDate, allowed, lockT
   const colOf = (key: string) => cols.find((c) => c.key === key)
   const rows: Row[] = d?.items || []
   const total: number = d?.pagination?.total ?? rows.length
+  // 资金类数据的覆盖情况：接口没给（中台旧版本）时不显示
+  const cov = d?.large_order_coverage as { with_daily_record?: number | null; with_5d_value?: number | null; member_count?: number | null } | null | undefined
+  const covText = cov && cov.member_count != null && cov.with_daily_record != null
+    ? `资金类数据：${cov.member_count} 只成分股中 ${cov.with_daily_record} 只有当日记录${cov.with_5d_value != null ? `，${cov.with_5d_value} 只有近 5 日累计` : ''}。`
+    : null
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   const allOpen = open.length === GROUPS.length
@@ -111,10 +118,10 @@ export function IndustryMembers({ code, name, idxType, tradeDate, allowed, lockT
                   {rows.map((r) => (
                     <tr key={r.stock_code} className="border-b last:border-0 transition-colors hover:bg-surface-hover">
                       <td className="tnum px-2 py-2 whitespace-nowrap text-ink-2">{r.stock_code}</td>
-                      <td className="px-2 py-2 whitespace-nowrap">{r.stock_name || <span className="text-[11px] text-ink-3">{PENDING}</span>}</td>
+                      <td className="px-2 py-2 whitespace-nowrap">{r.stock_name || <span className="text-ink-3">{EMPTY}</span>}</td>
                       {shown.map((c) => {
                         const v = r[c.key]
-                        if (v == null) return <td key={c.key} className="px-2 text-right text-[11px] text-ink-3 whitespace-nowrap">{PENDING}</td>
+                        if (v == null) return <td key={c.key} className="px-2 text-right text-ink-3">{EMPTY}</td>
                         const tone = SIGNED.has(c.key) ? (v > 0 ? 'text-up' : v < 0 ? 'text-down' : '') : ''
                         return <td key={c.key} className={cn('tnum px-2 text-right whitespace-nowrap', tone)}>{cellText(c, v)}</td>
                       })}
@@ -137,9 +144,10 @@ export function IndustryMembers({ code, name, idxType, tradeDate, allowed, lockT
               </dl>
             </details>
             <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
-              把指针停在列头上可以看这一列的算法。「{PENDING}」表示这一项当日没有数据，或按定义算不出来（例如近 5 日没有上涨日）。
+              「{EMPTY}」表示该项在数据日没有可用数值，原因见各列说明。把指针停在列头上可以看这一列的算法。
+              {covText}
               资金分组里的超大单、大单是东方财富按单笔成交金额划分的口径，分档由第三方决定，不代表真实账户身份。红绿只表示数值的正负。
-              按某一列排序时，没有数据的行排在最后。
+              按某一列排序时，没有数值的行排在最后。
             </p>
             <p className="mt-1 text-[11px] text-ink-3">{d?.note || '以上为历史数据统计，不构成投资建议。'}</p>
           </>

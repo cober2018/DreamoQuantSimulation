@@ -122,12 +122,12 @@ export function Component() {
             </Panel>
           </BlurFade>
           <BlurFade delay={0.11} className="lg:col-span-2">
-            <Panel title="跌停梯队" hint={downTiers ? '首次跌停到连续跌停各有多少家，每档列出个股的名称、代码、当日涨跌幅和首次封板时间' : '首次跌停到连续跌停各有多少家'}>
+            <Panel title="跌停梯队" hint={downTiers ? '首次跌停到连续跌停各有多少家，每档列出个股的名称、代码和当日涨跌幅' : '首次跌停到连续跌停各有多少家'}>
               {downTiers === null ? <p className="text-sm text-ink-3">{st?.limit_down_count != null && <>当日跌停 <b className="tnum font-medium text-down">{st.limit_down_count}</b> 只。</>}连续跌停天数和跌停个股名单：数据待更新。</p>
                 : downTiers.length === 0 ? <p className="text-sm text-ink-3">当日没有跌停个股。</p>
                 : <TierBoard tiers={downTiers} kind="down" keyword={kw} label="跌停梯队" />}
               {downTiers !== null && downTiers.length > 0 && (
-                <p className="mt-3 text-[11px] leading-relaxed text-ink-3">{scopeNote}每档内按当日跌幅从大到小排列。
+                <p className="mt-3 text-[11px] leading-relaxed text-ink-3">{scopeNote}每档内按当日跌幅从大到小排列。首次封板时间数据源给出时显示在涨跌幅后面，没给的留空。
                   {st?.limit_down_count != null && downTiers.reduce((n, t) => n + (t.count ?? 0), 0) !== st.limit_down_count && '数据源修订中，名单与计数暂不一致。'}</p>
               )}
             </Panel>

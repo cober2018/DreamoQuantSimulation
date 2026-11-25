@@ -464,6 +464,14 @@ def _member_columns(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
     return out
 
 
+def _large_order_coverage(res: FetchResult) -> Optional[Dict[str, Any]]:
+    """资金类数据的覆盖情况（按全部成分股算，不随分页变）：只取三个只数。中台旧版本没有这一项时返回 None，页面不显示这一行。"""
+    cov = _ctx(res).get("large_order_coverage")
+    if not isinstance(cov, dict):
+        return None
+    return {k: to_int(cov.get(k)) for k in ("with_daily_record", "with_5d_value", "member_count")}
+
+
 async def industry_members(up: Upstream, sector_code: str, trade_date: Optional[str], idx_type: str,
                            sort_by: str, sort_order: str, limit: int, offset: int) -> Dict[str, Any]:
     """CNT-039 行业成分股逐只历史统计。排序参数原样交给中台（缺值总排在最后），本平台不做任何排序、打分或挑选；
@@ -480,6 +488,7 @@ async def industry_members(up: Upstream, sector_code: str, trade_date: Optional[
         "sort_by": sort_by, "sort_order": sort_order,
         "pagination": {"limit": limit, "offset": offset, "total": len(rows), "has_more": offset + limit < len(rows)},
         "columns": _member_columns(res.meta or {}),
+        "large_order_coverage": _large_order_coverage(res),
         "items": rows[offset:offset + limit],
         "note": "以上为历史数据统计，不构成投资建议。",
     }

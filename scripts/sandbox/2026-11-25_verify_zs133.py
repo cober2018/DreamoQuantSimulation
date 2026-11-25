@@ -96,7 +96,8 @@ def unit_checks():
 
     async def run():
         rows = [member_row(i) for i in range(7)]
-        up = FakeUp({pm.MEMBERS: FetchResult(rows=rows, meta={"trade_date": DAY, "columns": columns()})})
+        up = FakeUp({pm.MEMBERS: FetchResult(rows=rows, meta={"trade_date": DAY, "columns": columns(), "context": {
+            "large_order_coverage": {"with_daily_record": 6, "with_5d_value": 5, "member_count": 7, "internal_note": "x"}}})})
         out = await pm.industry_members(up, "BK0001.DC", None, "概念板块", "change_5d_pct", "desc", 3, 3)
         sent = up.calls[0][1]
         check("排序参数、板块类型原样交给上游", sent.get("sort_by") == "change_5d_pct" and sent.get("sort_order") == "desc"
@@ -105,6 +106,9 @@ def unit_checks():
         d = out["data"]
         check("分页：按 limit / offset 切片，顺序不动，total 为全量", [i["stock_code"] for i in d["items"]] == ["T0003.SH", "T0004.SH", "T0005.SH"]
               and d["pagination"] == {"limit": 3, "offset": 3, "total": 7, "has_more": True}, d["pagination"])
+        check("资金类覆盖情况透传三个只数，多余的键丢掉，不随分页变", d["large_order_coverage"] == {"with_daily_record": 6, "with_5d_value": 5, "member_count": 7})
+        old = await pm.industry_members(FakeUp({pm.MEMBERS: FetchResult(rows=rows, meta={"trade_date": DAY, "columns": columns()})}), "BK0001.DC", None, "行业板块", "stock_code", "asc", 3, 0)
+        check("中台旧版本没有覆盖情况时为空，不报错", old["status"] == "ok" and old["data"]["large_order_coverage"] is None)
         check("每行恰好是白名单字段", all(list(i) == pm.MEMBER_FIELDS for i in d["items"]))
         hit = sorted({k for k in keys_of(out) for w in JUDGEMENT if w in k.lower()})
         check("返回里没有任何评分、名次、角色、方向、准入类的键", hit == [], hit)

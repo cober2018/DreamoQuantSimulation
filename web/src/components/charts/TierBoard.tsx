@@ -4,14 +4,14 @@ import { cn } from '@/lib/utils'
 
 // 梯队看板（涨停、跌停共用）：最高档在上、首档在下；每档一行 = 档名、家数、短条、个股名称标签。
 // 名单取自接口 stocks[]（代码、名称、当日涨跌幅、首次封板时间），顺序用接口给的，前端不重排；接口没给名单时只显示家数和短条。
-// 档名、连续天数都以接口为准，前端不推算。
+// 档名、连续天数都以接口为准，前端不推算。首次封板时间数据源没给时留空（跌停个股通常没有），不写「数据待更新」。
 export interface TierStock { stock_code?: string; stock_name?: string; change_pct?: number | null; first_seal_time?: string | null }
 export interface Tier { tier: string; count: number | null; stocks?: TierStock[] | null }
 
 const FOLD = 12
 
 const pctText = (v: number | null | undefined) => (v == null ? null : `${v > 0 ? '+' : ''}${v.toFixed(2)}%`)
-const stockTip = (s: TierStock) => [s.stock_name, s.stock_code, pctText(s.change_pct), s.first_seal_time ? `首封 ${s.first_seal_time}` : '首封时间：数据待更新'].filter(Boolean).join(' · ')
+const stockTip = (s: TierStock) => [s.stock_name, s.stock_code, pctText(s.change_pct), s.first_seal_time ? `首封 ${s.first_seal_time}` : null].filter(Boolean).join(' · ')
 
 export function TierBoard({ tiers, kind, keyword, label }: { tiers: Tier[]; kind: 'up' | 'down'; keyword: string; label: string }) {
   const [open, setOpen] = useState<Record<string, boolean>>({})
