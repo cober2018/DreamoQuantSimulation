@@ -66,7 +66,7 @@ def run_fixture_checks():
     app = fresh_app(INSIGHT_DATA_MODE="fixture")
     with client(app) as c:
         scope = c.get("/api/v1/meta/content-scope").json()["items"]
-        check("注册表 37 条且编号连续", [i["id"] for i in scope] == [f"CNT-{n:03d}" for n in range(1, 38)])
+        check("注册表 39 条且编号连续", [i["id"] for i in scope] == [f"CNT-{n:03d}" for n in range(1, 40)])
         check("非保留项无一 delivered",
               all(i["v1"] != "delivered" for i in scope if i["selection"] != "keep"))
         delivered = {i["id"] for i in CONTENT_SCOPE if i["v1"] == "delivered"}

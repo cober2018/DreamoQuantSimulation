@@ -534,7 +534,7 @@ class AccessService:
         roles = [r["name"] for r in self.store.q("SELECT name FROM roles WHERE name NOT IN ('admin','free')")]
         roles.sort(key=self._rank)
         out: Dict[str, Optional[str]] = {}
-        for perm in [p for p in ALL_PERMS if p.startswith("page.")] + ["data.detail"]:
+        for perm in [p for p in ALL_PERMS if p.startswith("page.")] + ["data.detail", "data.members"]:
             hit = next((r for r in roles if perm in self.role_permissions(r)), None)
             out[perm] = self.role_label(hit) if hit else None
         return out

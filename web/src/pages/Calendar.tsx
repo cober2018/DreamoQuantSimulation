@@ -87,7 +87,7 @@ export function Component() {
   return (
     <PageFrame title="事件日历" question="哪些事件已公布、将公布，事实是什么？" env={env} loading={loading} onRetry={load} onJump={setTradeDate}
       tools={<DateInput value={tradeDate} onChange={setTradeDate} label="数据日" />}>
-      {win.complete === false && <div className="mb-4 rounded-md border border-[var(--c-warn)]/40 bg-[var(--c-warn)]/10 px-4 py-3 text-sm">日历窗口不完整，以下仅列出已取得的事件。</div>}
+      {win.complete === false && <div className="mb-4 rounded-md border border-[var(--c-warn)]/40 bg-[var(--c-warn)]/10 px-4 py-3 text-sm">所选时间范围超出了当日数据的覆盖范围，以下只列到 {win.end_date || '已取得的最后一天'}。</div>}
       {/* 限售股解禁和 A 股直接相关，放在最上面整行；宏观事件在下面 */}
       <div className="grid grid-cols-1 gap-4">
         <BlurFade className="min-w-0">

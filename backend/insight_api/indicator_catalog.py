@@ -31,18 +31,20 @@ class Indicator:
     paths: Tuple[str, ...]
     upstream: Tuple[Tuple[str, str, str], ...]
     detail: bool = False
+    # 需要的独立权限点（如 data.members）；有它的指标自成一个接口，不参与所在页面主接口的裁剪，也不出现在 MCP 里
+    perm: str = ""
 
 
 _ITEMS: List[Indicator] = []
 
 
-def _add(page, module, module_label, cnt, rows, service, view, base="", detail=False):
+def _add(page, module, module_label, cnt, rows, service, view, base="", detail=False, perm=""):
     """rows: (指标键, 名称, 单位, 响应路径或 None, 上游字段或元组)"""
     for key, label, unit, path, fields in rows:
         fields = (fields,) if isinstance(fields, str) else tuple(fields)
         paths = (path,) if isinstance(path, str) else tuple(path or (f"{base}.{key}",))
         _ITEMS.append(Indicator(f"{page}.{module}.{key}", page, module, module_label, label, unit, cnt, paths,
-                                tuple((service, view, f) for f in fields), detail))
+                                tuple((service, view, f) for f in fields), detail, perm))
 
 
 # ---- 市场总览 ----
@@ -153,6 +155,10 @@ _add("industries", "series", "板块近 N 日序列（下钻）", "CNT-032", [
     ("di", "DI 序列", "", "data.points[].di", "di"),
 ], F, "series", detail=True)
 
+_add("industries", "members", "成分股统计", "CNT-039", [
+    ("list", "行业成分股逐只历史统计表", "", "data.items", ("stock_code", "stock_name", "change_pct")),
+], "public-industry-members", "list", perm="data.members")
+
 # ---- 题材与涨跌结构 ----
 T, L = "public-theme-limit-stats", "public-limit-pool-structure"
 _add("themes", "themes", "题材统计", "CNT-022", [
@@ -164,6 +170,10 @@ _add("themes", "themes", "题材统计", "CNT-022", [
 _add("themes", "ladder", "连板梯队", "CNT-022", [
     ("board_tiers", "连板梯队计数", "只", "data.board_tiers", ("tier", "count")),
 ], T, "ladder")
+_add("themes", "stock_lists", "涨跌停个股名单", "CNT-038", [
+    ("limit_up_stocks", "涨停梯队个股名单", "只", "data.board_tiers[].stocks", "tier_counts"),
+    ("limit_down_tiers", "跌停梯队与个股名单", "只", "data.limit_down_tiers", "limit_down_tiers"),
+], "public-limit-pool-structure", "current")
 _add("themes", "seal_time", "封板时间分布（下钻）", "CNT-022", [
     ("seal_time_buckets", "各题材封板时间 5 档计数", "只",
      ("data.themes[].seal_time_buckets", "data.seal_time_buckets"), ("theme", "bucket", "count")),

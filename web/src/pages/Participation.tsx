@@ -47,9 +47,9 @@ const STYLE_COLORS = ['var(--c-viz-1)', 'var(--c-viz-2)', 'var(--c-viz-3)', 'var
 // 开盘五分钟（原历史复盘页的一块，2026-11 搬到本页）
 const OPEN5 = [
   { key: 'coverage_ratio', label: '覆盖率', color: 'var(--c-viz-5)', sub: (r: any) => `${fmt.num(r.open5_ready_count, 0)} / ${fmt.num(r.expected_stock_count, 0)} 只` },
-  { key: 'positive_open5_ratio', label: '开盘 5 分钟上涨的个股占比', color: 'var(--c-viz-1)', sub: (r: any) => `分母 ${fmt.num(r.open5_ready_count, 0)} 只` },
-  { key: 'continuation_ratio', label: '开盘方向延续到收盘的占比', color: 'var(--c-viz-3)', sub: (r: any) => `分母 ${fmt.num(r.close_ready_count, 0)} 只` },
-  { key: 'over_response_ratio', label: '过度反应占比', color: 'var(--c-viz-2)', sub: (r: any) => `分母 ${fmt.num(r.close_ready_count, 0)} 只` },
+  { key: 'positive_open5_ratio', label: '09:35 高于前收的个股占比', color: 'var(--c-viz-1)', sub: (r: any) => `分母 ${fmt.num(r.open5_ready_count, 0)} 只` },
+  { key: 'continuation_ratio', label: '延续占比（两段都不跌）', color: 'var(--c-viz-3)', sub: (r: any) => `分母 ${fmt.num(r.close_ready_count, 0)} 只` },
+  { key: 'over_response_ratio', label: '过度反应占比（先不跌后跌）', color: 'var(--c-viz-2)', sub: (r: any) => `分母 ${fmt.num(r.close_ready_count, 0)} 只` },
 ] as const
 // 近 n 个点的均值；窗口里有效值不足 3 个时不给，不拿更少的点凑
 const movingMean = (vals: (number | null)[], n: number) => vals.map((_, i) => {
@@ -325,7 +325,7 @@ export function Component() {
                 })}
               </div>
               {o5Partial && <p className="mt-3 text-xs text-ink-3">当日覆盖不全（覆盖率低于 100%），数值仅供参考。</p>}
-              <Note>怎么读：第二项是开盘后 5 分钟累计上涨的股票占比。收盘时每只股票按开盘 5 分钟的涨跌有没有保持，归为延续、过度反应、反转、偏弱四类之一，第三、四项是前两类的占比。开盘上涨占比高而延续占比低，说明多数股票开盘的涨幅没有保持到收盘。数据不完整的股票不计入分子和分母；覆盖率只反映数据完整程度，不代表市场表现。分类的具体算法以数据中台的说明为准。</Note>
+              <Note>怎么读：每只股票分两段看，第一段是 09:35 的价格相对前一交易日收盘（含开盘跳空），第二段是收盘相对 09:35 的价格，持平按不跌算。两段都不跌记为「延续」，第一段不跌、第二段下跌记为「过度反应」，这两个占比的分母都是收盘数据完整的股票数。另外两类（第一段下跌、第二段不跌；两段都跌）没有单独给出，合计约为 1 − 延续占比 − 过度反应占比。第二项是 09:35 价格严格高于前收的股票数 ÷ 开盘五分钟数据完整的股票数。数据不完整的股票不计入分子和分母；覆盖率只反映数据完整程度，不代表市场表现。</Note>
             </Panel>
           </BlurFade>
         )}
@@ -339,7 +339,7 @@ export function Component() {
                   <TrendTile label="破净股占比" text={val.break_ratio_pct == null ? PENDING : `${fmt.num(val.break_ratio_pct, 2)}%`} />
                   <TrendTile label="相对近 90 日中位数的折价" text={val.discount_pct == null ? PENDING : `${fmt.num(val.discount_pct, 2)}%`} />
                 </div>
-                <Note>破净股占比：股价低于每股净资产的股票占全部股票的比例。折价比例：当前全市场市盈率中位数比近 90 日中位数低多少，即（近 90 日中位数 − 当前值）÷ 近 90 日中位数；正值表示当前低于近 90 日水平，负值表示高于。</Note>
+                <Note>破净股占比：当日市净率大于 0 且小于 1 的股票数 ÷ 市净率大于 0 的股票数（市净率为负或缺失的不计入）。折价比例：当前全市场市盈率中位数比近 90 日中位数低多少，即（近 90 日中位数 − 当前值）÷ 近 90 日中位数；正值表示当前低于近 90 日水平，负值表示高于。</Note>
               </Panel>
             </BlurFade>
           </ModuleGate>
@@ -352,7 +352,7 @@ export function Component() {
                 <div className="space-y-4">
                   {(bc.conditions || []).map((c: any) => <BulletBar key={c.key} label={c.condition_label ? `${c.label} · ${c.condition_label}` : c.label} value={num(c.value)} marker={num(c.threshold)} markerLabel="阈值" format={(v) => fmt.num(v, 1)} />)}
                 </div>
-                <Note>怎么读：横条是当日观察值，金色刻度是阈值，名称后面标出当日是否达到阈值。{bc.note || '只说明当日数值在阈值的哪一侧，不构成状态预测'}。三项的具体算法以数据中台的说明为准。</Note>
+                <Note>怎么读：横条是当日观察值，金色刻度是阈值，名称后面标出比较结果。三项观察值都是 0–100，越高表示该项的压力越低：宽度承接由下跌家数占比、炸板与跌停扩散两项算出；风险偏好由宽基股指期货与期权的压力算出；流动性由融资余额回撤、大单净流出、单一行业最大净流出、散户资金极值四项算出。阈值取该项在数据日之前最近 60 个有效交易日观察值的分位数（宽度承接、风险偏好取 60% 分位，流动性取 55% 分位，并限制在 30–70 之间），是固定规则，没有用历史收益校准。观察值不低于阈值为「已达到阈值」，低于但差距在 5 以内为「接近阈值」，低于超过 5 为「未达到阈值」，观察值或阈值缺失为「数据不足」。{bc.note || '只说明当日数值在阈值的哪一侧，不构成状态预测'}。</Note>
               </Panel>
             </BlurFade>
           </ModuleGate>

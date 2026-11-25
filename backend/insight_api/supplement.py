@@ -16,7 +16,8 @@ from .upstream import FetchResult, Upstream, UpstreamError
 
 log = logging.getLogger(__name__)
 
-INDEX_CODES = ["000001.SH", "399001.SZ", "399006.SZ", "000688.SH", "000300.SH", "000905.SH", "000852.SH", "000985.SH"]
+# 与中台指数一览（overview 视图）同一组 8 个指数。原来这里有深证成指 399001.SZ，它不在中台的指数池里，每次请求都失败
+INDEX_CODES = ["000001.SH", "000016.SH", "399006.SZ", "000688.SH", "000300.SH", "000905.SH", "000852.SH", "000985.SH"]
 
 SUPPLEMENT: Dict[str, Dict[str, Any]] = {
     "index_overview": {

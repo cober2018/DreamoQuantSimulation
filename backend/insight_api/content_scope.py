@@ -42,7 +42,7 @@ CONTENT_SCOPE: List[Dict[str, str]] = [
     {"id": "CNT-022", "source": "题材", "item": "题材涨停/炸板数、最高板、平均涨幅、封板时间", "selection": KEEP, "v1": DELIVERED, "page": "题材与涨跌结构", "reason": "题材统计取自题材数据，封板时间分布取自涨跌停明细；不交付强度分、阶段、代表股"},
     {"id": "CNT-023", "source": "题材", "item": "题材强度分、决策分、代表股选择", "selection": EXCLUDE, "v1": EXCLUDED, "page": "-", "reason": "强度分、决策分与代表股入选规则不迁入；题材事实（涨停/炸板/梯队/封板时间）已由 CNT-022 覆盖"},
     {"id": "CNT-024", "source": "题材/股票池", "item": "主动建议类动作", "selection": EXCLUDE, "v1": EXCLUDED, "page": "-", "reason": "动作及等价专用分一并排除"},
-    {"id": "CNT-025", "source": "股票池", "item": "炸板率、涨跌比、连板/断板历史结构", "selection": KEEP, "v1": DELIVERED, "page": "题材与涨跌结构", "reason": "取自股票池的计数，带分子分母与历史序列；不交付风险指令与池内个股"},
+    {"id": "CNT-025", "source": "股票池", "item": "炸板率、涨跌比、连板/断板历史结构", "selection": KEEP, "v1": DELIVERED, "page": "题材与涨跌结构", "reason": "取自股票池的计数，带分子分母与历史序列；不交付风险指令。涨停、跌停个股名单见 CNT-038"},
     {"id": "CNT-026", "source": "股票池", "item": "风险指令", "selection": EXCLUDE, "v1": EXCLUDED, "page": "-", "reason": "指令形态不迁入"},
     {"id": "CNT-027", "source": "股票池", "item": "高标抱团、动量极端等池（计数部分）", "selection": KEEP, "v1": DELIVERED, "page": "题材与涨跌结构", "reason": "只交付各池当日个股数与窗口/数据状态说明；池内名单、排序与入选规则不迁入，风险指令另由 CNT-026 排除"},
     {"id": "CNT-028", "source": "每日复盘", "item": "明日操作指引（观察、中性、回避）", "selection": EXCLUDE, "v1": EXCLUDED, "page": "-", "reason": "涨跌+资金筛选并截断前三的指引不迁入"},
@@ -55,6 +55,9 @@ CONTENT_SCOPE: List[Dict[str, str]] = [
     {"id": "CNT-035", "source": "前瞻风险", "item": "宏观预测值、来源重要性", "selection": KEEP, "v1": DELIVERED, "page": "事件日历", "reason": "标明为第三方发布预期，非平台预测"},
     {"id": "CNT-036", "source": "前瞻风险", "item": "未来风险曲线、定价预期、尾部风险与置信度", "selection": EXCLUDE, "v1": EXCLUDED, "page": "-", "reason": "全部为模型输出与解读，无独立事实部分，不迁入"},
     {"id": "CNT-037", "source": "前瞻风险", "item": "事件影响及 A 股传导路径", "selection": EXCLUDE, "v1": EXCLUDED, "page": "-", "reason": "影响判断、传导路径与方向建议不迁入；事件事实（日期/公布值等）已由 CNT-034 覆盖"},
+    # 2026-11-25 用户决定（ZS-131 第六、七节）：事实名单和公式公开的单项统计可以放；评分、名次、挑出来的名单、准入不放
+    {"id": "CNT-038", "source": "股票池", "item": "涨停、跌停个股名单（代码、名称、涨跌幅、首封时间）", "selection": KEEP, "v1": DELIVERED, "page": "题材与涨跌结构", "reason": "交易所涨跌停事实，按梯队全量列出，只含沪深；不含封单强度、决策分等判断字段。只在网页端提供"},
+    {"id": "CNT-039", "source": "行业生命周期", "item": "行业成分股逐只历史统计（涨跌幅及行业内分位、近 5 日走势、分时、开盘、资金、均线位置）", "selection": KEEP, "v1": DELIVERED, "page": "行业比较与轮动", "reason": "行业全部成分股，默认按代码排序，只给当日及以前数据算出的单项数值；不含评分、名次、角色、方向、准入和任何挑出来的名单。只在网页端提供"},
 ]
 
 _BY_ID = {c["id"]: c for c in CONTENT_SCOPE}
@@ -73,9 +76,9 @@ class ContentGuardViolation(RuntimeError):
 
 def validate_registry() -> None:
     ids = [c["id"] for c in CONTENT_SCOPE]
-    expected = [f"CNT-{i:03d}" for i in range(1, 38)]
+    expected = [f"CNT-{i:03d}" for i in range(1, 40)]
     if ids != expected:
-        raise RuntimeError("内容注册表必须恰好覆盖 CNT-001～CNT-037")
+        raise RuntimeError("内容注册表必须恰好覆盖 CNT-001～CNT-039")
     for c in CONTENT_SCOPE:
         if c["v1"] == DELIVERED and c["selection"] != KEEP:
             raise RuntimeError(f"{c['id']} 非保留设计却标记为已交付")

@@ -48,7 +48,7 @@ export function Component() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {Object.entries(V1).map(([k, l]) => <TrendTile key={k} label={l} value={items.filter((i) => i.v1 === k).length} format={{ maximumFractionDigits: 0 }} />)}
             </div>
-            <Panel title={<>内容范围（CNT-001～037）<small className="ml-2 text-xs font-normal text-ink-3">仅管理员可见</small></>}
+            <Panel title={<>内容范围（CNT-001～039）<small className="ml-2 text-xs font-normal text-ink-3">仅管理员可见</small></>}
               action={<HaloSegmented items={FILTERS} value={filter} onValueChange={setFilter} translucent={false} className="[&_button]:whitespace-nowrap" />}>
               {q.isPending ? <p className="text-sm text-ink-3">加载中…</p> : (
                 <Table>

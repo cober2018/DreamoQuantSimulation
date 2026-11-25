@@ -75,7 +75,7 @@ def trim(page: str, envelope: Dict[str, Any], allowed: Optional[Set[str]],
         return envelope
     items = [i for i in by_page(page) if only_module is None or i.module == only_module]
     if only_module is None:
-        items = [i for i in items if not (page == "industries" and i.module == "series")]
+        items = [i for i in items if not (page == "industries" and i.module == "series") and not i.perm]
     restricted = [i for i in items if i.id not in allowed]
     for ind in restricted:
         for path in ind.paths:
@@ -107,6 +107,9 @@ def perms_for(cfg: Dict[str, Any]) -> Dict[str, int]:
     selected = {i for ids in cfg.get("pages", {}).values() for i in ids}
     if any(INDICATORS[i].detail for i in selected if i in INDICATORS):
         perms["data.detail"] = 1
+    for i in selected:
+        if i in INDICATORS and INDICATORS[i].perm:
+            perms[INDICATORS[i].perm] = 1
     for e in cfg.get("entries", []):
         perms[f"client.{e}"] = 1
     if cfg.get("admin_console"):
@@ -128,7 +131,8 @@ def from_legacy(role_perms: Dict[str, Dict[str, int]]) -> Dict[str, Dict[str, An
         pages = {}
         for page in PAGES:
             if perms.get(f"page.{page}"):
-                pages[page] = [i.id for i in by_page(page) if perms.get("data.detail") or not i.detail]
+                pages[page] = [i.id for i in by_page(page) if (perms.get("data.detail") or not i.detail)
+                               and (not i.perm or perms.get(i.perm))]
         out[role] = {
             "pages": pages,
             "history_days": int(perms.get("data.history_days", 1)),

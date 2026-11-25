@@ -124,7 +124,7 @@ class FixtureSource:
         """public-* 夹具: {"<view>|<trade_date>|<其他参数 k=v 按键排序>": data 对象}; latest 取该视图最大日期。"""
         view = params.get("view", "")
         extra = "|".join(f"{k}={params[k]}" for k in sorted(params)
-                         if k not in ("view", "trade_date", "limit", "offset", "fields"))
+                         if k not in ("view", "trade_date", "limit", "offset", "fields", "sort_by", "sort_order"))
         day = params.get("trade_date", "latest")
         if day == "latest":
             days = sorted(k.split("|")[1] for k in loaded if k.split("|")[0] == view)
@@ -134,6 +134,10 @@ class FixtureSource:
             return [], {"trade_date": None, "requested_trade_date": params.get("trade_date"),
                         "context": {"empty_reason": "no_data_for_trade_date", "latest_available_date": None}}
         rows = data.get("rows") or []
+        if params.get("sort_by"):  # 模拟上游排序：缺值总排在最后
+            key, desc = params["sort_by"], params.get("sort_order") == "desc"
+            have = sorted((r for r in rows if r.get(key) is not None), key=lambda r: r[key], reverse=desc)
+            rows = have + [r for r in rows if r.get(key) is None]
         offset, limit = int(params.get("offset", 0)), int(params.get("limit", 100))
         return rows[offset:offset + limit], {k: v for k, v in data.items() if k != "rows"}
 

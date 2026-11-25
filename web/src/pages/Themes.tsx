@@ -31,6 +31,7 @@ export function Component() {
   const matchN = [...tiers, ...(downTiers || [])].reduce((n, t) => n + (kw.trim() ? (t.stocks || []).filter((s) => s.stock_name?.includes(kw.trim())).length : 0), 0)
   const hasNames = [...tiers, ...(downTiers || [])].some((t) => (t.stocks || []).length > 0)
   const themes: any[] = data?.themes || []
+  const scopeNote = `${data?.stock_list_scope || '个股名单只含沪深 A 股，来自交易所涨跌停明细'}。`
 
   // 历史按交易日升序；前一日取当前交易日的前一条，缺当日记录时不做对比
   const hist: Hist[] = [...(data?.history || [])].sort((a: Hist, b: Hist) => a.trade_date.localeCompare(b.trade_date))
@@ -113,17 +114,22 @@ export function Component() {
 
         <ModuleGate module="structure">
           <BlurFade delay={0.08} className="lg:col-span-2">
-            <Panel title={<>涨停梯队{kw.trim() && <small className="ml-2 text-xs font-normal text-primary">匹配 {matchN} 只</small>}</>} hint={hasNames ? '1 板到最高板各有多少家，附个股名称；移到名称上看代码、涨幅和首封时间' : '1 板到最高板各有多少家'}
+            <Panel title={<>涨停梯队{kw.trim() && <small className="ml-2 text-xs font-normal text-primary">匹配 {matchN} 只</small>}</>} hint={hasNames ? '1 板到最高板各有多少家，每档列出个股的名称、代码、当日涨跌幅和首次封板时间' : '1 板到最高板各有多少家'}
               action={hasNames ? <Input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="按名称高亮，如 东方" aria-label="按名称高亮" className="h-8 w-44 text-xs" /> : undefined}>
               {tiers.length ? <TierBoard tiers={tiers} kind="up" keyword={kw} label="涨停梯队" /> : <p className="text-sm text-ink-3">当日暂无连板数据。</p>}
-              {tiers.length > 0 && !hasNames && <p className="mt-3 text-[11px] text-ink-3">涨停个股名单（代码、名称、涨幅、首封时间）：数据待更新。</p>}
+              {tiers.length > 0 && !tiers.some((t) => (t.stocks || []).length > 0) && <p className="mt-3 text-[11px] text-ink-3">涨停个股名单（代码、名称、涨幅、首封时间）：数据待更新。</p>}
+              {tiers.some((t) => (t.stocks || []).length > 0) && <p className="mt-3 text-[11px] leading-relaxed text-ink-3">{scopeNote}每档内按当日涨跌幅从高到低排列。名单是交易所涨跌停的事实记录。</p>}
             </Panel>
           </BlurFade>
           <BlurFade delay={0.11} className="lg:col-span-2">
-            <Panel title="跌停梯队" hint="首次跌停到连续跌停各有多少家">
+            <Panel title="跌停梯队" hint={downTiers ? '首次跌停到连续跌停各有多少家，每档列出个股的名称、代码、当日涨跌幅和首次封板时间' : '首次跌停到连续跌停各有多少家'}>
               {downTiers === null ? <p className="text-sm text-ink-3">{st?.limit_down_count != null && <>当日跌停 <b className="tnum font-medium text-down">{st.limit_down_count}</b> 只。</>}连续跌停天数和跌停个股名单：数据待更新。</p>
                 : downTiers.length === 0 ? <p className="text-sm text-ink-3">当日没有跌停个股。</p>
                 : <TierBoard tiers={downTiers} kind="down" keyword={kw} label="跌停梯队" />}
+              {downTiers !== null && downTiers.length > 0 && (
+                <p className="mt-3 text-[11px] leading-relaxed text-ink-3">{scopeNote}每档内按当日跌幅从大到小排列。
+                  {st?.limit_down_count != null && downTiers.reduce((n, t) => n + (t.count ?? 0), 0) !== st.limit_down_count && `各档合计 ${downTiers.reduce((n, t) => n + (t.count ?? 0), 0)} 只，上方的跌停数 ${st.limit_down_count} 只含北交所，两者口径不同。`}</p>
+              )}
             </Panel>
           </BlurFade>
         </ModuleGate>

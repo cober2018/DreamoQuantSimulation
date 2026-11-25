@@ -361,7 +361,12 @@ def build_mcp_router(access: AccessService, gate: Gate, settings, pages: McpPage
         log(payload.get("status") or "ok")
         return rpc_result(msg_id, text_result(payload))
 
+    # 只在网页端提供的内容，不出现在 MCP 的数据集说明里（涨跌停个股名单、行业成分股统计；等套餐切分定了再说）
+    WEB_ONLY_CONTENT = {"CNT-038", "CNT-039"}
+
     def visible(p, ind) -> bool:
+        if ind.cnt in WEB_ONLY_CONTENT:
+            return False
         allowed_ids = p.extra.get("indicators")
         return ind.id in allowed_ids if allowed_ids is not None else (not ind.detail or p.can("data.detail"))
 
@@ -370,7 +375,7 @@ def build_mcp_router(access: AccessService, gate: Gate, settings, pages: McpPage
         for page, title in PAGES.items():
             if not p.can(f"page.{page}"):
                 continue
-            modules = list(dict.fromkeys(i.module_label for i in by_page(page) if visible(p, i)))
+            modules = list(dict.fromkeys(i.module_label for i in by_page(page) if visible(p, i)))  # visible 已排除只在网页端提供的内容
             items.append({"name": page, "title": title, "modules": modules,
                           "tools": [t.name for t in TOOLS if t.page == page and permitted(t, p)]})
         return {"role": p.role, "role_label": access.role_label(p.role), "history_days": p.history_days,
@@ -380,9 +385,9 @@ def build_mcp_router(access: AccessService, gate: Gate, settings, pages: McpPage
         if not p.can(f"page.{name}"):
             raise HTTPException(403, f"当前账号等级不能读取「{PAGES[name]}」，该内容需要更高等级")
         fields = [{"id": i.id, "module": i.module_label, "label": i.label, "unit": i.unit,
-                   "path": list(i.paths), "visible": visible(p, i)} for i in by_page(name)]
+                   "path": list(i.paths), "visible": visible(p, i)} for i in by_page(name) if i.cnt not in WEB_ONLY_CONTENT]
         content = [{"id": c["id"], "item": c["item"]} for c in CONTENT_SCOPE
-                   if c["v1"] == DELIVERED and c["page"] in (PAGES[name], "全部页面")]
+                   if c["v1"] == DELIVERED and c["page"] in (PAGES[name], "全部页面") and c["id"] not in WEB_ONLY_CONTENT]
         return {"name": name, "title": PAGES[name], "tools": [t.name for t in TOOLS if t.page == name],
                 "fields": fields, "content_items": content,
                 "path_note": "path 为字段在工具返回 result 中的位置：a.b 为对象键，a[].x 为列表每项的键，a[key=k] 为列表中 key=k 的一项",

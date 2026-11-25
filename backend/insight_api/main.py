@@ -173,6 +173,13 @@ def create_app() -> FastAPI:
         ind = p.extra.get("indicators")
         return p.can("data.detail") if ind is None else any(i.startswith("industries.series.") for i in ind)
 
+    def members_ok(p) -> bool:
+        """成分股统计（CNT-039）：独立权限点 data.members，只在网页端提供；小程序和 MCP 不带出。"""
+        if p.client != "web":
+            return False
+        ind = p.extra.get("indicators")
+        return p.can("data.members") if ind is None else "industries.members.list" in ind
+
     # ---- 各页取数 + 裁剪：网页路由与 MCP 工具都只调这里，口径不分叉 ----
     async def load_overview(u: Upstream, p, trade_date=None):
         return out_for("overview", await src("overview").overview(u, trade_date), p)
@@ -189,9 +196,24 @@ def create_app() -> FastAPI:
         out = await src("industries").industry_series(u, sector_code, end_date, min(days, p.history_days))
         return gate.stamp(trim("industries", out, p.extra.get("indicators"), only_module="series"), p)
 
+    async def load_industry_members(u: Upstream, p, sector_code, trade_date=None, idx_type="行业板块",
+                                    sort_by="stock_code", sort_order="asc", limit=50, offset=0):
+        if not members_ok(p):
+            raise HTTPException(403, "成分股统计需要更高等级")
+        if sort_by not in public_modules.MEMBER_SORT_FIELDS:
+            raise HTTPException(422, "不支持按这一列排序")
+        out = await public_modules.industry_members(u, sector_code, trade_date, idx_type, sort_by, sort_order, limit, offset)
+        return gate.stamp(out, p)
+
     async def load_themes(u: Upstream, p, trade_date=None):
         out = await src("themes").themes(u, trade_date)
         data = out.get("data") or {}
+        if p.client != "web":
+            # 涨跌停个股名单（CNT-038）只在网页端提供：小程序、MCP 的返回里去掉名单，家数照常
+            for t in data.get("board_tiers") or []:
+                t.pop("stocks", None)
+            data.pop("limit_down_tiers", None)
+            data.pop("stock_list_scope", None)
         ind = p.extra.get("indicators")
         if (not p.can("data.detail")) if ind is None else ("themes.seal_time.seal_time_buckets" not in ind):
             for t in data.get("themes", []):
@@ -232,6 +254,20 @@ def create_app() -> FastAPI:
     ):
         p = entitled(request, "page.industries", end_date)
         return await load_industry_series(up(request), p, sector_code, end_date, days)
+
+    @app.get("/api/v1/industries/{sector_code}/members")
+    async def industry_members(
+        request: Request,
+        sector_code: str = Path(..., pattern=r"^[A-Za-z0-9._-]{1,32}$"),
+        trade_date: Optional[str] = TradeDate,
+        idx_type: IdxType = "行业板块",
+        sort_by: str = Query("stock_code", pattern=r"^[a-z0-9_]{1,40}$"),
+        sort_order: Literal["asc", "desc"] = "asc",
+        limit: int = Query(50, ge=1, le=500),
+        offset: int = Query(0, ge=0, le=5000),
+    ):
+        p = entitled(request, "page.industries", trade_date)
+        return await load_industry_members(up(request), p, sector_code, trade_date, idx_type, sort_by, sort_order, limit, offset)
 
     @app.get("/api/v1/themes")
     async def themes(request: Request, trade_date: Optional[str] = TradeDate):

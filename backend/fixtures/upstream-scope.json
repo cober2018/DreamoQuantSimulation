@@ -90,6 +90,7 @@
    "current": [
     "broken_board_count",
     "limit_down_count",
+    "limit_down_tiers",
     "tier_counts",
     "trade_date"
    ],
@@ -324,6 +325,34 @@
     "highest_tier",
     "theme",
     "up_count"
+   ]
+  },
+  "public-industry-members": {
+   "list": [
+    "above_ma20",
+    "active_net_amount_ratio_pct",
+    "after_open5_change_pct",
+    "change_5d_pct",
+    "change_5d_pct_percentile",
+    "change_pct",
+    "change_pct_percentile",
+    "days_above_industry_median_5d",
+    "intraday_close_location",
+    "intraday_late_move_share",
+    "intraday_max_drawdown_pct",
+    "intraday_path_efficiency",
+    "is_3d_high",
+    "large_order_net_20d",
+    "large_order_net_5d",
+    "large_order_net_positive_days",
+    "ma20_deviation_pct",
+    "max_drawdown_5d_pct",
+    "member_count",
+    "open5_change_pct",
+    "path_efficiency_5d",
+    "stock_code",
+    "stock_name",
+    "top_day_gain_share_5d"
    ]
   }
  }
