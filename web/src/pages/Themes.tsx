@@ -31,7 +31,7 @@ export function Component() {
   const matchN = [...tiers, ...(downTiers || [])].reduce((n, t) => n + (kw.trim() ? (t.stocks || []).filter((s) => s.stock_name?.includes(kw.trim())).length : 0), 0)
   const hasNames = [...tiers, ...(downTiers || [])].some((t) => (t.stocks || []).length > 0)
   const themes: any[] = data?.themes || []
-  const scopeNote = `${data?.stock_list_scope || '个股名单只含沪深 A 股，来自交易所涨跌停明细'}。`
+  const scopeNote = `${data?.stock_list_scope || '个股名单和上方的计数都只统计沪深 A 股，不含北交所'}。`
 
   // 历史按交易日升序；前一日取当前交易日的前一条，缺当日记录时不做对比
   const hist: Hist[] = [...(data?.history || [])].sort((a: Hist, b: Hist) => a.trade_date.localeCompare(b.trade_date))
@@ -128,7 +128,7 @@ export function Component() {
                 : <TierBoard tiers={downTiers} kind="down" keyword={kw} label="跌停梯队" />}
               {downTiers !== null && downTiers.length > 0 && (
                 <p className="mt-3 text-[11px] leading-relaxed text-ink-3">{scopeNote}每档内按当日跌幅从大到小排列。
-                  {st?.limit_down_count != null && downTiers.reduce((n, t) => n + (t.count ?? 0), 0) !== st.limit_down_count && `各档合计 ${downTiers.reduce((n, t) => n + (t.count ?? 0), 0)} 只，上方的跌停数 ${st.limit_down_count} 只含北交所，两者口径不同。`}</p>
+                  {st?.limit_down_count != null && downTiers.reduce((n, t) => n + (t.count ?? 0), 0) !== st.limit_down_count && '数据源修订中，名单与计数暂不一致。'}</p>
               )}
             </Panel>
           </BlurFade>

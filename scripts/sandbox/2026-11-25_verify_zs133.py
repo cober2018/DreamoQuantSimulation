@@ -189,7 +189,7 @@ def app_checks(TestClient):
         check("跌停梯队按档给出家数和名单，判断标签被丢掉", [t["tier"] for t in down] == ["首次跌停", "2连跌停"]
               and list(down[0]["stocks"][0]) == ["stock_code", "stock_name", "change_pct", "first_seal_time"], down)
         check("名单被截断时家数仍是全量（页面据此写明）", down[0]["count"] == 400 and len(down[0]["stocks"]) == 1)
-        check("名单口径说明写明只含沪深", "沪深" in d["stock_list_scope"])
+        check("口径说明：名单和计数同为沪深口径，不含北交所", "都只统计沪深 A 股，不含北交所" in d["stock_list_scope"] and "含北交所，所以" not in d["stock_list_scope"], d["stock_list_scope"])
 
         # ---- 小程序、MCP 不带出新数据 ----
         r = tc.post("/api/v1/auth/wechat", json={"code": "mock:mpuser", "accept_terms": True})

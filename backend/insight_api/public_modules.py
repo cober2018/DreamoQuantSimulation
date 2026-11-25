@@ -638,7 +638,7 @@ async def themes(up: Upstream, trade_date: Optional[str]) -> Dict[str, Any]:
         "seal_time_buckets": [b[0] for b in SEAL_BUCKETS],
         "board_tiers": tiers,
         "limit_down_tiers": down_tiers,
-        "stock_list_scope": "个股名单只含沪深 A 股，来自交易所涨跌停明细；每档最多列 300 只。跌停数含北交所，所以跌停各档合计可能小于跌停数",
+        "stock_list_scope": "个股名单和上方的涨停数、跌停数、炸板数、各梯队家数都只统计沪深 A 股，不含北交所；名单来自交易所涨跌停明细，每档最多列 300 只",
         "structure": structure,
         "pools": pools_counts,
         "history": history,
