@@ -7,10 +7,11 @@
 
 from __future__ import annotations
 
+import contextvars
 import json
 import time
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date, datetime, time as dtime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
@@ -21,6 +22,38 @@ from .tier_routing import RouteRejected, TierRouter, RouteLog, audit_headers, cu
 PAGE_LIMIT = 500
 MAX_PAGES = 10
 HISTORICAL_TTL = 24 * 3600
+
+# ZS-135：上海时间 21:30 前不对外显示当天数据（全站只在这里定义这个时刻；网页从 /api/v1/meta/visible-date 读取）。
+# 规则是一个日期上限：21:30 前为昨天，21:30 起为今天（按日历日）。每个上游视图取「不晚于上限、自己最近一个有数据的日子」，
+# 所以周末、节假日自然落到最近一个交易日，当天还没写完的视图继续给它上一交易日的数据，不会变空。
+VISIBLE_CUTOFF = dtime(21, 30)
+SHANGHAI = timezone(timedelta(hours=8))  # 中国不实行夏令时，固定 UTC+8
+FALLBACK_HOPS = 10  # 往前找有数据的日子最多试几次（国庆长假 8 天）
+_RANGE_KEYS = ("start_date", "end_date", "from", "to")
+# 本次请求是否跟随最新日：不带日期、或带的日期晚于上限时为真。为真时页面里每个区块各自回落；
+# 为假（用户指定了历史日期）时各区块严格按那一天取，缺了就缺，和原来一样
+_follow_latest: contextvars.ContextVar[bool] = contextvars.ContextVar("insight_follow_latest", default=False)
+
+
+def date_cap(now: datetime) -> str:
+    local = now.astimezone(SHANGHAI)
+    day = local.date() if local.time() >= VISIBLE_CUTOFF else local.date() - timedelta(days=1)
+    return day.isoformat()
+
+
+def _has_data(res: "FetchResult") -> bool:
+    # public-* 某天有数据但零行时（例如当天没有连板）仍带 trade_date；没有这一天的数据时 trade_date 为空
+    return bool(res.rows or res.meta.get("trade_date"))
+
+
+def first_row(rows: List[Dict[str, Any]]) -> Any:
+    return rows[0] if rows else None
+
+
+def _row_day(row: Any) -> str:
+    if not isinstance(row, dict):
+        return ""
+    return str(row.get("trade_date") or row.get("date") or "")[:10]
 
 
 class UpstreamError(RuntimeError):
@@ -146,13 +179,23 @@ class FixtureSource:
 
 
 class Upstream:
-    def __init__(self, settings: Settings, router: TierRouter, route_log: Optional[RouteLog] = None):
+    def __init__(self, settings: Settings, router: TierRouter, route_log: Optional[RouteLog] = None,
+                 clock=None):
         self.data_mode = settings.data_mode
+        self.clock = clock or (lambda: datetime.now(timezone.utc))
+        self._resolved: Dict[str, tuple[float, str]] = {}  # 上限日无数据时回落到的日子，短缓存，避免每次先空查一次
         self._source = FixtureSource(settings) if settings.data_mode == "fixture" else HttpSource(settings)
         self._ttl = settings.cache_ttl
         self._cache: Dict[str, tuple[float, FetchResult]] = {}
         self._router = router
         self._route_log = route_log or RouteLog(None)
+
+    def date_cap(self) -> str:
+        return date_cap(self.clock())
+
+    def follow_latest(self, trade_date: Optional[str]) -> None:
+        """每个数据请求开头调用一次（main.bind）：记下本次是否跟随最新日。"""
+        _follow_latest.set(not trade_date or trade_date > self.date_cap())
 
     async def fetch(
         self,
@@ -160,7 +203,55 @@ class Upstream:
         params: Optional[Dict[str, str]] = None,
         max_rows: Optional[int] = None,
     ) -> FetchResult:
+        """按 21:30 上限取数：不带日期、或日期晚于上限时取上限；跟随最新日时，上限日没有数据就往前找该视图最近有数据的日子。
+        带 from/to、start_date/end_date 的区间请求不改参数，只去掉晚于上限的行。"""
         params = {k: v for k, v in (params or {}).items() if v not in (None, "")}
+        cap = self.date_cap()
+        day = params.get("trade_date")
+        if day is None and any(k in params for k in _RANGE_KEYS):
+            res = await self._fetch(service_key, params, max_rows)
+        else:
+            fallback = day in (None, "latest") or day > cap or _follow_latest.get()
+            day = cap if day in (None, "latest") or day > cap else day
+            memo_key = f"{service_key}|{max_rows}|{json.dumps({**params, 'trade_date': day}, sort_keys=True)}"
+            memo = self._resolved.get(memo_key)
+            if fallback and memo and time.monotonic() - memo[0] < self._ttl:
+                day = memo[1]
+            res = await self._fetch(service_key, {**params, "trade_date": day}, max_rows)
+            if fallback and not _has_data(res):
+                res = await self._earlier(service_key, params, max_rows, day, res, memo_key)
+        if any(_row_day(r) > cap for r in res.rows):
+            res = FetchResult(rows=[r for r in res.rows if _row_day(r) <= cap], issues=res.issues, meta=res.meta)
+        return res
+
+    async def _earlier(self, service_key: str, params: Dict[str, str], max_rows: Optional[int], day: str,
+                       res: FetchResult, memo_key: str) -> FetchResult:
+        """day 没有数据：找这个视图早于 day、最近一个有数据的日子。先用中台给的 latest_available_date；
+        没有提示时取一次它自己的最新，早于 day 才用（晚于的不用，不会露出上限之后的数据）；都不行再逐日往前。"""
+        latest: Optional[FetchResult] = None
+        for _ in range(FALLBACK_HOPS):
+            ctx = res.meta.get("context") if isinstance(res.meta.get("context"), dict) else {}
+            hint = str(ctx.get("latest_available_date") or "")[:10]
+            if hint and hint < day:
+                day = hint
+            elif latest is None:
+                probe = {**params, "trade_date": "latest"} if service_key.startswith("public-") else \
+                    {k: v for k, v in params.items() if k != "trade_date"}
+                latest = await self._fetch(service_key, probe, max_rows)
+                got = str(latest.meta.get("trade_date") or _row_day(first_row(latest.rows)))[:10]
+                if _has_data(latest) and got and got < day:
+                    self._resolved[memo_key] = (time.monotonic(), got)
+                    return latest
+                day = (date.fromisoformat(day[:10]) - timedelta(days=1)).isoformat()
+            else:
+                day = (date.fromisoformat(day[:10]) - timedelta(days=1)).isoformat()
+            res = await self._fetch(service_key, {**params, "trade_date": day}, max_rows)
+            if _has_data(res):
+                self._resolved[memo_key] = (time.monotonic(), day)
+                return res
+        return res
+
+    async def _fetch(self, service_key: str, params: Dict[str, str], max_rows: Optional[int]) -> FetchResult:
         ctx = current_context()
         view = params.get("view")
         try:
@@ -228,6 +319,8 @@ class Upstream:
     ) -> FetchResult:
         """取截至 end_date 的近 days 个交易日。优先用上游日期区间; 上游尚不支持 (422) 时逐日降级。"""
         params = dict(params or {})
+        if end_date and end_date[:10] > self.date_cap():
+            end_date = None
         if end_date is None:
             head = await self.fetch(service_key, {**params}, max_rows=1)
             if not head.rows:
@@ -247,7 +340,8 @@ class Upstream:
                 budget -= 1
                 if cursor.weekday() < 5:
                     r = await self.fetch(service_key, {**params, "trade_date": cursor.isoformat()})
-                    if r.rows:
+                    # 跟随最新日时 fetch 会回落到更早的日子，这里只要正好是这一天的行
+                    if r.rows and str(r.rows[0].get("trade_date"))[:10] == cursor.isoformat():
                         rows.extend(r.rows)
                         seen_dates.add(cursor.isoformat())
                         issues.extend(r.issues)
