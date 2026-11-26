@@ -23,7 +23,7 @@ from .mcp import McpPages, build_mcp_router
 from . import modules, public_modules
 from .config import ConfigError, load_settings
 from .content_scope import CONTENT_SCOPE, DISCLAIMER, ContentGuardViolation, validate_registry
-from .upstream import Upstream, UpstreamError
+from .upstream import VISIBLE_CUTOFF, Upstream, UpstreamError
 from .access.policy import UpstreamScope, trim
 from .tier_routing import (PolicyService, RequestContext, RouteLog, RouteRejected, TierRouter, end_user_ref,
                            new_request_id, set_context)
@@ -151,6 +151,11 @@ def create_app() -> FastAPI:
         return {"until": access.trial_until if access and access.trial_active() else None,
                 "email_verify": bool(access and access.email_verify)}
 
+    @app.get("/api/v1/meta/visible-date")
+    async def visible_date(request: Request):
+        # 日期选择器能选到的最晚一天（上海时间 21:30 前为昨天）；时刻也从这里给，前端不另写
+        return {"max_date": up(request).date_cap(), "cutoff": VISIBLE_CUTOFF.strftime("%H:%M")}
+
     @app.get("/api/v1/meta/content-scope")
     async def content_scope():
         return {"items": CONTENT_SCOPE, "disclaimer": DISCLAIMER}
@@ -158,6 +163,7 @@ def create_app() -> FastAPI:
     def bind(p, trade_date: Optional[str] = None):
         """取数前的共同一步（网页与 MCP 共用）：历史范围校验 + 路由上下文。"""
         gate.check_trade_date(p, trade_date)
+        app.state.upstream.follow_latest(trade_date)
         set_context(RequestContext(request_id=new_request_id(), user_id=p.user_id,
                                    end_user_ref=end_user_ref(store, p.user_id), role=p.role, client=p.client))
         return p
