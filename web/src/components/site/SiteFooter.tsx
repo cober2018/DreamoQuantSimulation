@@ -33,7 +33,7 @@ export function SiteFooter() {
           <Link to="/privacy">隐私政策</Link>
           <Link to="/terms">用户协议</Link>
           <a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2024135110号<span className="sr-only">（在新窗口打开）</span></a>
-          <span>© DreamOTech</span>
+          <span>© 2026 杭州梦氧科技有限公司</span>
         </p>
       </div>
     </footer>

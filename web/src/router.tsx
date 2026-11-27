@@ -48,7 +48,6 @@ export const router = createBrowserRouter([{
     { path: '/', ...lazyPage(() => import('./pages/Landing')), handle: { title: '知数星耀', public: true, bare: true } satisfies Handle },
     { path: '/follow', ...lazyPage(() => import('./pages/Follow')), handle: { title: '关注知数Talk 主理人', public: true, bare: true } satisfies Handle },
     stub('/pricing', '价格与权益'), stub('/mp', '小程序'), stub('/docs', '文档'), stub('/blog', '博客'),
-    { path: '/privacy', loader: () => redirect('/terms') },
     { path: '/app', loader: () => redirect('/overview') },
     { path: '/app/states', loader: () => redirect('/overview') },
     { ...dataPage('/overview'), ...lazyPage(() => import('./pages/Overview')) },
@@ -65,7 +64,8 @@ export const router = createBrowserRouter([{
     { path: '/account', ...lazyPage(() => import('./pages/Account')), handle: { title: '我的账号' } satisfies Handle },
     { path: '/admin', ...lazyPage(() => import('./pages/Admin')), handle: { title: '管理后台', perm: 'admin.console' } satisfies Handle },
     { path: '/login', ...lazyPage(() => import('./pages/Login')), handle: { title: '登录', bare: true, public: true } satisfies Handle },
-    { path: '/terms', ...lazyPage(() => import('./pages/Terms')), handle: { title: '用户协议与隐私政策', public: true, bare: true } satisfies Handle },
+    { path: '/terms', ...lazyPage(() => import('./pages/Terms')), handle: { title: '用户协议', public: true, bare: true } satisfies Handle },
+    { path: '/privacy', ...lazyPage(() => import('./pages/Privacy')), handle: { title: '隐私政策', public: true, bare: true } satisfies Handle },
     // 不存在的地址：显示「没有这个页面」，不用框架自带的英文报错页
     stub('*', '没有这个页面'),
   ],

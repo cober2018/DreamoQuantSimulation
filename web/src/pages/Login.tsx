@@ -113,12 +113,13 @@ export function Component() {
                     <div className="flex items-center gap-2 text-sm text-ink-2">
                       <Checkbox id="terms" checked={terms} onCheckedChange={(v) => setTerms(v === true)} />
                       <label htmlFor="terms">我已阅读并同意</label>
-                      <Link to="/terms" className="-ml-1 text-primary underline-offset-4 hover:underline">《用户协议与隐私政策》</Link>
+                      <span className="-ml-1"><Link to="/terms" className="text-primary underline-offset-4 hover:underline">《用户协议》</Link>和<Link to="/privacy" className="text-primary underline-offset-4 hover:underline">《隐私政策》</Link></span>
                     </div>
                     <p className="text-xs leading-relaxed text-ink-3">密码至少 10 位，需包含大小写字母与数字中的至少两类。</p>
                   </motion.div>
                 )}
               </AnimatePresence>
+              {!isReg && <p className="text-xs leading-relaxed text-ink-3">忘记密码请发邮件到 business@dreamotech.cn，我们核实后为你重置。</p>}
               {error && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm">{error}</p>}
               <Button type="submit" size="lg" disabled={busy} className="mt-1 w-full">{isReg ? '注册并登录' : '登录'}</Button>
             </form>
