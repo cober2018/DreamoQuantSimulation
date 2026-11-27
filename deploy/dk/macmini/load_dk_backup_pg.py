@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""把 dk 用户库的 SQLite 备份整份装进 Mac mini 上 postgres-db 容器里的一个库（ZS-138）。
+"""把 dk 用户库的 SQLite 备份整份装进 Mac mini 上 postgres-db 容器里的一个库的一个 schema（ZS-138）。
+
+这个库是公司境内产品的用户数据备份库，每个产品一个 schema，知数星耀是 dk_insight。
 
 只用标准库，Python 3.9 可跑。由 pull-dk-backup.sh 在拉取、校验通过后调用：
-  /usr/bin/python3 load_dk_backup_pg.py <备份文件.sqlite3> [--db dk_insight_backup]
+  /usr/bin/python3 load_dk_backup_pg.py <备份文件.sqlite3> [--db dreamo_user_backup] [--schema dk_insight]
 
 - 库不存在就建，每次都执行 REVOKE CONNECT ... FROM PUBLIC（重复执行不报错）。不建角色，不动别的库。
-- 整份替换放在一个事务里：先删掉库里 public 下所有表，再按 SQLite 重建并 COPY 写入，
-  写 _backup_meta，逐表核对行数，全部通过才提交；任何一步失败都整体回滚，库里保持上一次内容。
+- 整份替换放在一个事务里，只动指定的 schema（不存在就建）：先删掉这个 schema 里的所有表，再按 SQLite 重建并 COPY 写入，
+  写 _backup_meta（也在这个 schema 里），逐表核对行数，全部通过才提交；任何一步失败都整体回滚，库里保持上一次内容。
 - 只打印表名和行数，不打印数据内容。
 PostgreSQL 里这份只是方便查看的副本；恢复用拉下来的 SQLite 文件。
 """
@@ -22,6 +24,8 @@ DOCKER = "/usr/local/bin/docker"   # launchd 的 PATH 很短，写绝对路径
 CONTAINER = "postgres-db"
 DB_RE = re.compile(r"^[a-z_][a-z0-9_]{0,62}$")
 META = "_backup_meta"
+DEFAULT_DB = "dreamo_user_backup"
+DEFAULT_SCHEMA = "dk_insight"
 
 
 class LoadError(Exception):
@@ -98,31 +102,35 @@ def read_sqlite(path):
         con.close()
 
 
-def build_sql(tables, source_name, sha256):
-    """生成整份替换的 SQL（含 COPY 数据），在一个事务里执行。"""
-    p = ["\\set ON_ERROR_STOP on", "BEGIN;",
-         # 删掉库里 public 下现有的所有表：SQLite 里已经没有的表也一起去掉
-         "DO $$ DECLARE r record; BEGIN FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' "
-         "LOOP EXECUTE format('DROP TABLE %I CASCADE', r.tablename); END LOOP; END $$;"]
+def build_sql(tables, source_name, sha256, schema=DEFAULT_SCHEMA):
+    """生成整份替换的 SQL（含 COPY 数据），在一个事务里执行。只动 schema 这一个 schema，库里别的 schema 不碰。"""
+    sc, sl = qi(schema), ql(schema)
+    m = f"{sc}.{META}"
+    p = ["\\set ON_ERROR_STOP on", "SET client_min_messages = warning;", "BEGIN;",
+         f"CREATE SCHEMA IF NOT EXISTS {sc};",
+         # 删掉这个 schema 里现有的所有表：SQLite 里已经没有的表也一起去掉。
+         # 不用 CASCADE：别的 schema 里如果有对象依赖这些表，宁可报错回滚，也不连带删掉别人的东西
+         f"DO $$ DECLARE r record; BEGIN FOR r IN SELECT schemaname, tablename FROM pg_tables WHERE schemaname = {sl} "
+         "LOOP EXECUTE format('DROP TABLE %I.%I', r.schemaname, r.tablename); END LOOP; END $$;"]
     for t, cols, rows in tables:
-        p.append(f"CREATE TABLE {qi(t)} ({', '.join(f'{qi(c)} {typ}' for c, typ in cols)});")
-        p.append(f"COPY {qi(t)} ({', '.join(qi(c) for c, _ in cols)}) FROM STDIN;")
+        p.append(f"CREATE TABLE {sc}.{qi(t)} ({', '.join(f'{qi(c)} {typ}' for c, typ in cols)});")
+        p.append(f"COPY {sc}.{qi(t)} ({', '.join(qi(c) for c, _ in cols)}) FROM STDIN;")
         for i, row in enumerate(rows, 1):
             p.append("\t".join(copy_value(v, typ, f"表 {t} 列 {c} 第 {i} 行") for v, (c, typ) in zip(row, cols)))
         p.append("\\.")
-    p.append(f"CREATE TABLE {META} (source_file text NOT NULL, sha256 text NOT NULL, "
+    p.append(f"CREATE TABLE {m} (source_file text NOT NULL, sha256 text NOT NULL, "
              "loaded_at timestamptz NOT NULL DEFAULT now(), table_name text NOT NULL, row_count bigint NOT NULL);")
     for t, _, rows in tables:
-        p.append(f"INSERT INTO {META} (source_file, sha256, table_name, row_count) "
+        p.append(f"INSERT INTO {m} (source_file, sha256, table_name, row_count) "
                  f"VALUES ({ql(source_name)}, {ql(sha256)}, {ql(t)}, {len(rows)});")
-    # 逐表核对行数，以及库里的表正好是 SQLite 的表加元数据表；不一致就报错，整个事务回滚
+    # 逐表核对行数，以及这个 schema 里的表正好是 SQLite 的表加元数据表；不一致就报错，整个事务回滚
     p.append(
         "DO $$ DECLARE r record; c bigint; BEGIN "
-        f"FOR r IN SELECT table_name, row_count FROM {META} LOOP "
-        "EXECUTE format('SELECT count(*) FROM %I', r.table_name) INTO c; "
+        f"FOR r IN SELECT table_name, row_count FROM {m} LOOP "
+        f"EXECUTE format('SELECT count(*) FROM %I.%I', {sl}, r.table_name) INTO c; "
         "IF c <> r.row_count THEN RAISE EXCEPTION 'row count mismatch: % (expected %, got %)', r.table_name, r.row_count, c; END IF; "
         "END LOOP; "
-        f"IF (SELECT count(*) FROM pg_tables WHERE schemaname = 'public') <> (SELECT count(*) + 1 FROM {META}) "
+        f"IF (SELECT count(*) FROM pg_tables WHERE schemaname = {sl}) <> (SELECT count(*) + 1 FROM {m}) "
         "THEN RAISE EXCEPTION 'table set mismatch'; END IF; END $$;")
     p.append("COMMIT;")
     return "\n".join(p) + "\n"
@@ -134,8 +142,9 @@ def psql(db, sql, container=CONTAINER, docker=DOCKER, capture=False):
            'exec psql -X -q -t -A -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$1"', "sh", db]
     r = subprocess.run(cmd, input=sql.encode("utf-8"), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if r.returncode != 0:
-        # 只保留 psql 报错的第一行；COPY 出错时后面几行会带出问题行的内容，不往日志里写
-        first = (r.stderr.decode("utf-8", "replace").strip().splitlines() or ["(无输出)"])[0]
+        # 只保留 psql 报错的那一行（跳过 NOTICE）；COPY 出错时后面几行会带出问题行的内容，不往日志里写
+        lines = r.stderr.decode("utf-8", "replace").strip().splitlines() or ["(无输出)"]
+        first = next((x for x in lines if "ERROR" in x or "FATAL" in x or "error:" in x), lines[0])
         first = re.sub(r'"[^"]*"', '"…"', first)   # 报错里引号中的可能是数据值，去掉
         raise LoadError(f"psql 失败（库 {db}）：{first[:300]}")
     return r.stdout.decode("utf-8", "replace") if capture else ""
@@ -149,15 +158,17 @@ def ensure_db(db, container=CONTAINER, docker=DOCKER):
     psql("postgres", f"REVOKE CONNECT ON DATABASE {qi(db)} FROM PUBLIC;", container, docker)
 
 
-def load(path, db, container=CONTAINER, docker=DOCKER):
+def load(path, db, container=CONTAINER, docker=DOCKER, schema=DEFAULT_SCHEMA):
     if not DB_RE.match(db):
         raise LoadError(f"库名不合法：{db!r}（只允许小写字母、数字、下划线）")
     if db in ("postgres", "quant", "template0", "template1"):
         raise LoadError(f"不能装进现有的库 {db}")
+    if not DB_RE.match(schema) or schema in ("public", "information_schema") or schema.startswith("pg_"):
+        raise LoadError(f"schema 名不合法：{schema!r}（只允许小写字母、数字、下划线；不能是 public、information_schema 或 pg_ 开头）")
     with open(path, "rb") as f:
         sha = hashlib.sha256(f.read()).hexdigest()
     tables = read_sqlite(path)
-    sql = build_sql(tables, os.path.basename(path), sha)   # 先在本地生成完，类型不符在这里就失败，不碰库
+    sql = build_sql(tables, os.path.basename(path), sha, schema)   # 先在本地生成完，类型不符在这里就失败，不碰库
     ensure_db(db, container, docker)
     psql(db, sql, container, docker)
     return tables, sha
@@ -166,17 +177,18 @@ def load(path, db, container=CONTAINER, docker=DOCKER):
 def main(argv=None):
     ap = argparse.ArgumentParser(description="把 dk 用户库 SQLite 备份整份装进 PostgreSQL")
     ap.add_argument("sqlite_file")
-    ap.add_argument("--db", default="dk_insight_backup", help="目标库名，默认 dk_insight_backup")
+    ap.add_argument("--db", default=DEFAULT_DB, help=f"目标库名，默认 {DEFAULT_DB}")
+    ap.add_argument("--schema", default=DEFAULT_SCHEMA, help=f"本产品的 schema，默认 {DEFAULT_SCHEMA}")
     ap.add_argument("--container", default=CONTAINER)
     ap.add_argument("--docker", default=DOCKER)
     a = ap.parse_args(argv)
     try:
-        tables, sha = load(a.sqlite_file, a.db, a.container, a.docker)
+        tables, sha = load(a.sqlite_file, a.db, a.container, a.docker, a.schema)
     except (LoadError, sqlite3.Error, OSError) as e:
-        print(f"FAIL load {os.path.basename(a.sqlite_file)} -> {a.db}: {e}", file=sys.stderr)
+        print(f"FAIL load {os.path.basename(a.sqlite_file)} -> {a.db}.{a.schema}: {e}", file=sys.stderr)
         return 1
     total = sum(len(r) for _, _, r in tables)
-    print(f"OK load {os.path.basename(a.sqlite_file)} -> {a.db}: {len(tables)} 张表，{total} 行，sha256 {sha[:12]}")
+    print(f"OK load {os.path.basename(a.sqlite_file)} -> {a.db}.{a.schema}: {len(tables)} 张表，{total} 行，sha256 {sha[:12]}")
     for t, _, rows in tables:
         print(f"  {t}: {len(rows)}")
     return 0

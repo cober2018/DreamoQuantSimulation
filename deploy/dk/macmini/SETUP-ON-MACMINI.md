@@ -4,7 +4,9 @@ Mac mini 就是中台生产机（开发机上的 ssh 别名 `quantagents-prod`�
 
 1. 从 dk 服务器拉取用户库的 SQLite 备份（服务器每天 03:30 生成）。
 2. 校验后保留最新 14 份。
-3. 把最新一份整份装进本机 `postgres-db` 容器里的库 `dk_insight_backup`。
+3. 把最新一份整份装进本机 `postgres-db` 容器里的库 `dreamo_user_backup` 的 schema `dk_insight`。
+
+这个库是公司境内产品的用户数据备份库，每个产品一个 schema，知数星耀是 `dk_insight`。装库脚本只动自己的 schema：schema 不存在就建，只删、重建这个 schema 里的表，库里别的 schema（别的产品）不碰。
 
 - **恢复用拉下来的 SQLite 文件**：整个文件拷回服务器就行，见文末「恢复」。
 - PostgreSQL 里那份只是方便查看的副本，每天整份替换，只有最新一天。
@@ -21,7 +23,7 @@ Mac mini 就是中台生产机（开发机上的 ssh 别名 `quantagents-prod`�
 
 - 专用 Key `~/.ssh/dk_backup_ed25519` 已在 Mac mini 上生成（2026-11-18）。服务器端的 `dk-backup` 账号和 rrsync 只读限制已配好。
 - `postgres-db` 容器（postgres:16-alpine）在运行。装库脚本通过 `docker exec -i postgres-db sh -c 'psql -U "$POSTGRES_USER" ...'` 进库，用容器自己的环境变量，不经手任何密码。**不要用 `docker inspect`、`env` 把容器的密码打印出来。**
-- 不新建角色，也不动现有的 `postgres`、`quant` 库和 `odpquant` 角色。新库会执行 `REVOKE CONNECT ON DATABASE dk_insight_backup FROM PUBLIC`，`odpquant` 这类普通角色连不进去。
+- 不新建角色，也不动现有的 `postgres`、`quant` 库和 `odpquant` 角色。新库会执行 `REVOKE CONNECT ON DATABASE dreamo_user_backup FROM PUBLIC`，`odpquant` 这类普通角色连不进去。
 
 ## 第 1 步：拷文件（在开发机的仓库根目录执行）
 
@@ -38,7 +40,7 @@ PG_DB=dk_tmp_check bash ~/dk-backup/pull-dk-backup.sh; echo "exit=$?"
 tail -25 ~/dk-backup/pull.log
 ls -1 ~/dk-backup/snapshots/ | tail -3; ls -1 ~/dk-backup/snapshots/ | wc -l
 # 逐表行数：PostgreSQL 里的 _backup_meta 应当和 SQLite 一致（装库时已经在事务里核对过一遍，这里再人工看一眼）
-docker exec -i postgres-db sh -c 'psql -X -U "$POSTGRES_USER" -d dk_tmp_check -c "SELECT table_name, row_count FROM _backup_meta ORDER BY 1"'
+docker exec -i postgres-db sh -c 'psql -X -U "$POSTGRES_USER" -d dk_tmp_check -c "SELECT table_name, row_count FROM dk_insight._backup_meta ORDER BY 1"'
 latest=$(ls -1 ~/dk-backup/snapshots/insight-*.sqlite3 | sort | tail -1)
 for t in $(/usr/bin/sqlite3 "$latest" "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY 1"); do
   printf '%s %s\n' "$t" "$(/usr/bin/sqlite3 "$latest" "SELECT count(*) FROM \"$t\"")"; done
@@ -53,7 +55,7 @@ docker exec -i postgres-db sh -c 'psql -X -U "$POSTGRES_USER" -d postgres -c "DR
 预期结果：
 
 - `exit=0`。
-- 日志依次是 `OK pull …`、`OK load dk_tmp_check: 19 张表，N 行 …`、各表行数，最后一行 `OK load dk_tmp_check`。
+- 日志依次是 `OK pull …`、`OK load … -> dk_tmp_check.dk_insight: 19 张表，N 行 …`、各表行数，最后一行 `OK load dk_tmp_check.dk_insight`。
 - 快照目录最多 14 份。
 - 两边的逐表行数一致。
 - 权限查询输出 `f`。
@@ -66,27 +68,27 @@ plutil -lint ~/Library/LaunchAgents/cn.dreamotech.dk-backup-pull.plist
 launchctl bootout gui/$(id -u)/cn.dreamotech.dk-backup-pull 2>/dev/null; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/cn.dreamotech.dk-backup-pull.plist
 launchctl kickstart -k gui/$(id -u)/cn.dreamotech.dk-backup-pull     # 立即按 launchd 的环境跑一次
 sleep 20; tail -25 ~/dk-backup/pull.log; cat ~/dk-backup/launchd.err 2>/dev/null | tail -5
-docker exec -i postgres-db sh -c 'psql -X -U "$POSTGRES_USER" -d dk_insight_backup -c "SELECT DISTINCT source_file, loaded_at FROM _backup_meta"'
+docker exec -i postgres-db sh -c 'psql -X -U "$POSTGRES_USER" -d dreamo_user_backup -c "SELECT DISTINCT source_file, loaded_at FROM dk_insight._backup_meta"'
 ```
 
 预期结果：
 
 - `plutil` 输出 `OK`。
-- 日志最后一行是 `OK load dk_insight_backup`。
+- 日志最后一行是 `OK load dreamo_user_backup.dk_insight`。
 - `_backup_meta` 里是最新那份的文件名和刚才的时间。
 
 用 `kickstart` 跑一次，可以确认 launchd 的短 PATH 下 docker 能找到：脚本里写的是绝对路径 `/usr/local/bin/docker`，plist 里也补了 PATH。
 
 ## 日常
 
-- 看一眼 `tail -5 ~/dk-backup/pull.log`，最后应当是 `OK load dk_insight_backup`。
+- 看一眼 `tail -5 ~/dk-backup/pull.log`，最后应当是 `OK load dreamo_user_backup.dk_insight`。
 - 出现以下几种记录时要处理：
   - `FAIL rsync`：连不上服务器，或者 Key 有问题。
   - `FAIL integrity`：拉到的文件损坏。
   - `FAIL load`：装库失败。已经拉到的 SQLite 文件保留，PostgreSQL 里仍是上一次的内容。
   - `WARN … older than 26h`：服务器那边当天没生成备份。
 - 服务器迁移后：只改 `~/dk-backup/pull-dk-backup.sh` 顶部的 `SERVER=`，然后在新服务器上配好 `dk-backup` 账号和 rrsync（Key 不变），再跑一次第 3 步的 `kickstart` 验证。
-- 停用：`launchctl bootout gui/$(id -u)/cn.dreamotech.dk-backup-pull`。数据库用 `DROP DATABASE dk_insight_backup` 删除。
+- 停用：`launchctl bootout gui/$(id -u)/cn.dreamotech.dk-backup-pull`。只删知数星耀这一份用 `DROP SCHEMA dk_insight CASCADE`（在 `dreamo_user_backup` 库里执行）。整个库还放着别的产品时，不要 `DROP DATABASE`。
 
 ## 恢复（用 SQLite 文件，不用 PostgreSQL 那份）
 

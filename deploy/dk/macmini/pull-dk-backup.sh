@@ -1,11 +1,13 @@
 #!/bin/bash
 # 在家里的 Mac mini 上运行：每天从 dk 服务器拉取用户库 SQLite 备份（只读账号 + rrsync），
-# 校验后保留最新 14 份，再整份装进本机 postgres-db 容器里的库 dk_insight_backup（方便查看的副本）。
+# 校验后保留最新 14 份，再整份装进本机 postgres-db 容器里的库 dreamo_user_backup 的 schema dk_insight（方便查看的副本）。
+# 这个库是公司境内产品的用户数据备份库，每个产品一个 schema，知数星耀是 dk_insight。
 # 安装见 deploy/dk/macmini/SETUP-ON-MACMINI.md。
 set -euo pipefail
 SERVER="101.35.245.53"          # dk 服务器地址。服务器迁移后只改这一处
 KEEP=14                          # 保留份数，和隐私政策「每日一份，保留 14 份」一致
-PG_DB="${PG_DB:-dk_insight_backup}"
+PG_DB="${PG_DB:-dreamo_user_backup}"
+PG_SCHEMA="${PG_SCHEMA:-dk_insight}"
 BASE="${DK_BACKUP_BASE:-$HOME/dk-backup}"
 RSYNC="${RSYNC:-/usr/bin/rsync}"           # 自测时替换
 LOADER="${LOADER:-$BASE/load_dk_backup_pg.py}"
@@ -33,8 +35,8 @@ ls -1 "$DEST"/insight-*.sqlite3 | sort -r | tail -n +$((KEEP + 1)) | while IFS= 
 log "OK pull $latest ($(ls -1 "$DEST"/insight-*.sqlite3 | wc -l | tr -d ' ') files kept)"
 
 # 装进 PostgreSQL。失败时记 FAIL、退出码非 0；已拉到的文件保留
-if /usr/bin/python3 "$LOADER" "$latest" --db "$PG_DB" >> "$BASE/pull.log" 2>&1; then
-  log "OK load $PG_DB"
+if /usr/bin/python3 "$LOADER" "$latest" --db "$PG_DB" --schema "$PG_SCHEMA" >> "$BASE/pull.log" 2>&1; then
+  log "OK load $PG_DB.$PG_SCHEMA"
 else
-  log "FAIL load $PG_DB"; exit 1
+  log "FAIL load $PG_DB.$PG_SCHEMA"; exit 1
 fi

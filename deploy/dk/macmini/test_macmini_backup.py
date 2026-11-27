@@ -78,11 +78,11 @@ class SqlGen(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p = os.path.join(d, "insight-20261127-033000.sqlite3"); make_db(p)
             sql = L.build_sql(L.read_sqlite(p), "insight-20261127-033000.sqlite3", "ab" * 32)
-        self.assertTrue(sql.startswith("\\set ON_ERROR_STOP on\nBEGIN;\n"))
+        self.assertTrue(sql.startswith("\\set ON_ERROR_STOP on\nSET client_min_messages = warning;\nBEGIN;\n"))
         self.assertTrue(sql.endswith("COMMIT;\n"))
-        self.assertIn('CREATE TABLE "odd ""name""" ("col one" text);', sql)
-        self.assertIn('CREATE TABLE "users" ("id" bigint, "username" text, "created_at" double precision, "disabled" bigint, "email" text);', sql)
-        self.assertIn("DROP TABLE %I CASCADE", sql)
+        self.assertIn('CREATE TABLE "dk_insight"."odd ""name""" ("col one" text);', sql)
+        self.assertIn('CREATE TABLE "dk_insight"."users" ("id" bigint, "username" text, "created_at" double precision, "disabled" bigint, "email" text);', sql)
+        self.assertIn("DROP TABLE %I.%I'", sql)
         self.assertIn("row count mismatch", sql)
 
     def test_wal_file_without_shm(self):
@@ -94,6 +94,24 @@ class SqlGen(unittest.TestCase):
                 sqlite3.connect(f"file:{p}?mode=ro", uri=True).execute("SELECT 1").fetchone()
             self.assertEqual(len(L.read_sqlite(p)), 7)
             self.assertEqual(sorted(os.listdir(d)), ["insight-x.sqlite3"])   # 读的时候也没写旁路文件
+
+    def test_bad_schema_names(self):
+        for bad in ["public", "information_schema", "pg_temp", "pg_catalog", "Bad", "a.b", ""]:
+            with self.assertRaises(L.LoadError):
+                L.load("/nonexistent", "dk_x", schema=bad)
+
+    def test_sql_only_touches_schema(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "insight-x.sqlite3"); make_db(p)
+            sql = L.build_sql(L.read_sqlite(p), "insight-x.sqlite3", "ab" * 32, "dk_insight")
+        self.assertIn('CREATE SCHEMA IF NOT EXISTS "dk_insight";', sql)
+        self.assertIn("WHERE schemaname = 'dk_insight'", sql)
+        self.assertNotIn("'public'", sql)
+        self.assertNotIn("CASCADE", sql)
+        for line in sql.splitlines():
+            for head in ("CREATE TABLE ", "COPY ", "INSERT INTO "):
+                if line.startswith(head):
+                    self.assertTrue(line[len(head):].startswith('"dk_insight".'), line)
 
     def test_bad_db_names(self):
         for bad in ["postgres", "quant", "Bad", "x;drop", ""]:
@@ -110,7 +128,8 @@ def docker_ok():
 
 @unittest.skipUnless(docker_ok(), "本机没有可用的 docker，装库部分未真跑")
 class RealPostgres(unittest.TestCase):
-    DB = "dk_selftest_backup"
+    DB = "dreamo_user_backup"
+    SCHEMA = "dk_insight"
 
     @classmethod
     def setUpClass(cls):
@@ -136,6 +155,8 @@ class RealPostgres(unittest.TestCase):
 
     @classmethod
     def q(cls, db, sql):
+        if db == cls.DB:   # 查本产品的表时不用每句都写 schema
+            sql = f"SET search_path TO {cls.SCHEMA};\n" + sql
         return L.psql(db, sql, TEST_CONTAINER, DOCKER, capture=True).strip()
 
     def load(self, name, drop_extra=False):
@@ -175,16 +196,16 @@ class RealPostgres(unittest.TestCase):
         self.load("insight-20261126-033000.sqlite3")
         self.load("insight-20261126-033000.sqlite3")                          # 重复执行不报错
         self.assertEqual(self.q(self.DB, "SELECT count(*) FROM users;"), "2")
-        self.assertEqual(self.q(self.DB, "SELECT count(*) FROM pg_tables WHERE tablename = 'extra';"), "1")
+        self.assertEqual(self.q(self.DB, "SELECT count(*) FROM pg_tables WHERE schemaname = 'dk_insight' AND tablename = 'extra';"), "1")
         self.load("insight-20261127-033000.sqlite3", drop_extra=True)         # 新备份里没有 extra 表
-        self.assertEqual(self.q(self.DB, "SELECT count(*) FROM pg_tables WHERE tablename = 'extra';"), "0")
+        self.assertEqual(self.q(self.DB, "SELECT count(*) FROM pg_tables WHERE schemaname = 'dk_insight' AND tablename = 'extra';"), "0")
         self.assertEqual(self.q(self.DB, "SELECT DISTINCT source_file FROM _backup_meta;"), "insight-20261127-033000.sqlite3")
 
     def test_4_failure_rolls_back(self):
         self.load("insight-20261126-033000.sqlite3")
         p = os.path.join(self.tmp, "insight-20261128-033000.sqlite3")
         make_db(p, drop_extra=True)
-        sql = L.build_sql(L.read_sqlite(p), os.path.basename(p), "cd" * 32)
+        sql = L.build_sql(L.read_sqlite(p), os.path.basename(p), "cd" * 32, self.SCHEMA)
         # 把元数据里 users 的行数改错，模拟装完后核对不一致
         bad = sql.replace("'users', 2);", "'users', 3);")
         self.assertNotEqual(bad, sql)
@@ -192,7 +213,7 @@ class RealPostgres(unittest.TestCase):
             L.psql(self.DB, bad, TEST_CONTAINER, DOCKER)
         self.assertIn("row count mismatch", str(cm.exception))
         # 库里仍是上一次的内容：extra 表还在，来源文件没变
-        self.assertEqual(self.q(self.DB, "SELECT count(*) FROM pg_tables WHERE tablename = 'extra';"), "1")
+        self.assertEqual(self.q(self.DB, "SELECT count(*) FROM pg_tables WHERE schemaname = 'dk_insight' AND tablename = 'extra';"), "1")
         self.assertEqual(self.q(self.DB, "SELECT DISTINCT source_file FROM _backup_meta;"), "insight-20261126-033000.sqlite3")
 
     def test_5_type_mismatch_does_not_touch_db(self):
@@ -204,6 +225,31 @@ class RealPostgres(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertEqual(self.q(self.DB, "SELECT DISTINCT source_file FROM _backup_meta;"), "insight-20261126-033000.sqlite3")
 
+    def test_6_other_schema_kept(self):
+        # 同一个库里已有别的产品的 schema 和表（含同名的 users、_backup_meta）以及 public 里的表，装两次之后原样还在
+        self.load("insight-20261126-033000.sqlite3")   # 先建出库
+        L.psql(self.DB, "CREATE SCHEMA other_product; CREATE TABLE other_product.users (id bigint, email text);"
+               "INSERT INTO other_product.users VALUES (1, 'x@example.com'), (2, NULL);"
+               "CREATE TABLE other_product._backup_meta (note text); INSERT INTO other_product._backup_meta VALUES ('theirs');"
+               "CREATE TABLE public.keep_me (k int); INSERT INTO public.keep_me VALUES (7);", TEST_CONTAINER, DOCKER)
+        before = L.psql(self.DB, "SELECT * FROM other_product.users ORDER BY id; SELECT * FROM other_product._backup_meta; SELECT * FROM public.keep_me;",
+                        TEST_CONTAINER, DOCKER, capture=True)
+        self.load("insight-20261126-033000.sqlite3")
+        self.load("insight-20261127-033000.sqlite3", drop_extra=True)
+        after = L.psql(self.DB, "SELECT * FROM other_product.users ORDER BY id; SELECT * FROM other_product._backup_meta; SELECT * FROM public.keep_me;",
+                       TEST_CONTAINER, DOCKER, capture=True)
+        self.assertEqual(before, after)
+        self.assertEqual(self.q(self.DB, "SELECT count(*) FROM pg_tables WHERE schemaname = 'other_product';"), "2")
+        self.assertEqual(self.q(self.DB, "SELECT count(*) FROM pg_tables WHERE schemaname = 'dk_insight';"), "7")  # 6 张表 + _backup_meta
+
+    def test_7_dependency_from_other_schema_blocks_instead_of_dropping(self):
+        # 别的 schema 里有视图依赖本产品的表：宁可装库失败回滚，也不连带删掉别人的视图
+        self.load("insight-20261126-033000.sqlite3")
+        L.psql(self.DB, "CREATE SCHEMA IF NOT EXISTS reports; CREATE VIEW reports.v AS SELECT id FROM dk_insight.users;", TEST_CONTAINER, DOCKER)
+        with self.assertRaises(L.LoadError):
+            self.load("insight-20261126-033000.sqlite3")
+        self.assertEqual(self.q(self.DB, "SELECT count(*) FROM reports.v;"), "2")
+        L.psql(self.DB, "DROP VIEW reports.v;", TEST_CONTAINER, DOCKER)
 
 class PullScript(unittest.TestCase):
     def setUp(self):
@@ -243,8 +289,8 @@ class PullScript(unittest.TestCase):
         self.assertNotIn(" -a ", " " + args)
         self.assertIn("dk-backup@101.35.245.53:insight-*.sqlite3", args)
         self.assertEqual((self.d / "loaded").read_text(),
-                         f"{self.base}/snapshots/insight-20261116-033000.sqlite3 --db dk_insight_backup")
-        self.assertIn("OK pull", log); self.assertIn("OK load dk_insight_backup", log)
+                         f"{self.base}/snapshots/insight-20261116-033000.sqlite3 --db dreamo_user_backup --schema dk_insight")
+        self.assertIn("OK pull", log); self.assertIn("OK load dreamo_user_backup.dk_insight", log)
         self.assertNotIn("WARN", log)
         self.assertEqual(oct((self.base / "snapshots" / s[-1]).stat().st_mode & 0o777), "0o600")
 
@@ -259,7 +305,7 @@ class PullScript(unittest.TestCase):
     def test_load_failure_keeps_files(self):
         rc, log = self.run_pull(FAKE_LOAD_RC="1", PG_DB="dk_tmp_check")
         self.assertNotEqual(rc, 0)
-        self.assertIn("FAIL load dk_tmp_check", log)
+        self.assertIn("FAIL load dk_tmp_check.dk_insight", log)
         self.assertEqual(len(self.snaps()), 14)
 
     def test_rsync_failure(self):

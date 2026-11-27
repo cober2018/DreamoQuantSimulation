@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- 放到 Mac mini 的 ~/Library/LaunchAgents/，把 __HOME__ 换成实际家目录。每天 04:30 运行（服务器 03:30 备份）：拉取、校验、保留 14 份，再装进 PostgreSQL 库 dk_insight_backup。 -->
+<!-- 放到 Mac mini 的 ~/Library/LaunchAgents/，把 __HOME__ 换成实际家目录。每天 04:30 运行（服务器 03:30 备份）：拉取、校验、保留 14 份，再装进 PostgreSQL 库 dreamo_user_backup 的 schema dk_insight。 -->
 <plist version="1.0">
 <dict>
   <key>Label</key><string>cn.dreamotech.dk-backup-pull</string>
