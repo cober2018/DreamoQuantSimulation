@@ -118,13 +118,13 @@ class RealPostgres(unittest.TestCase):
         # 只在本机起的一次性容器；口令是测试用的固定值，容器结束即删
         subprocess.run([DOCKER, "run", "-d", "--name", TEST_CONTAINER, "-e", "POSTGRES_PASSWORD=selftest-only",
                         "-e", "POSTGRES_USER=postgres", "postgres:16-alpine"], check=True, stdout=subprocess.DEVNULL)
-        for _ in range(60):
-            r = subprocess.run([DOCKER, "exec", TEST_CONTAINER, "pg_isready", "-U", "postgres"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if r.returncode == 0:
-                try:
-                    cls.q("postgres", "SELECT 1;"); break
-                except L.LoadError:
-                    pass
+        # 镜像先起一个临时实例做初始化、停掉再正式启动；要等初始化完成的那行日志，否则可能连到正在关闭的临时实例
+        for _ in range(90):
+            logs = subprocess.run([DOCKER, "logs", TEST_CONTAINER], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout
+            if b"PostgreSQL init process complete" in logs and subprocess.run(
+                    [DOCKER, "exec", TEST_CONTAINER, "pg_isready", "-U", "postgres"],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+                break
             time.sleep(1)
         cls.q("postgres", "CREATE ROLE odpquant LOGIN; CREATE DATABASE quant;")   # 模拟 Mac mini 上已有的普通角色和库
         cls.tmp = tempfile.mkdtemp()
