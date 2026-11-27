@@ -274,6 +274,13 @@ class PullScript(unittest.TestCase):
         r = subprocess.run(["/bin/bash", str(HERE / "pull-dk-backup.sh")], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return r.returncode, (self.base / "pull.log").read_text() if (self.base / "pull.log").exists() else ""
 
+    def assert_no_side_files(self):
+        # 回归：快照是 WAL 模式，脚本打开它们后 snapshots/ 里不能留下 -shm、-wal（清理只认 insight-*.sqlite3，删不到会累积）
+        names = sorted(p.name for p in (self.base / "snapshots").iterdir())
+        self.assertTrue(names and all(n.startswith("insight-") and n.endswith(".sqlite3") for n in names), names)
+        # 确认测的是 WAL 文件：文件头第 18 字节（读版本号）为 2 表示 WAL。immutable 打开时 PRAGMA journal_mode 不准，所以直接读文件头
+        self.assertEqual((self.base / "snapshots" / names[-1]).read_bytes()[18], 2)
+
     def snaps(self):
         return sorted(p.name for p in (self.base / "snapshots").glob("insight-*.sqlite3"))
 
@@ -293,6 +300,7 @@ class PullScript(unittest.TestCase):
         self.assertIn("OK pull", log); self.assertIn("OK load dreamo_user_backup.dk_insight", log)
         self.assertNotIn("WARN", log)
         self.assertEqual(oct((self.base / "snapshots" / s[-1]).stat().st_mode & 0o777), "0o600")
+        self.assert_no_side_files()
 
     def test_stale_backup_warns(self):
         old = time.time() - 3 * 86400   # 服务器上最新一份是 3 天前的
@@ -301,12 +309,14 @@ class PullScript(unittest.TestCase):
         rc, log = self.run_pull()
         self.assertEqual(rc, 0, log)
         self.assertIn("WARN latest backup is older than 26h", log)
+        self.assert_no_side_files()
 
     def test_load_failure_keeps_files(self):
         rc, log = self.run_pull(FAKE_LOAD_RC="1", PG_DB="dk_tmp_check")
         self.assertNotEqual(rc, 0)
         self.assertIn("FAIL load dk_tmp_check.dk_insight", log)
         self.assertEqual(len(self.snaps()), 14)
+        self.assert_no_side_files()
 
     def test_rsync_failure(self):
         rc, log = self.run_pull(FAKE_RSYNC_FAIL="1")

@@ -25,7 +25,9 @@ fi
 chmod 600 "$DEST"/insight-*.sqlite3 2>/dev/null || true
 latest=$(ls -1 "$DEST"/insight-*.sqlite3 2>/dev/null | sort | tail -1)
 if [ -z "$latest" ]; then log "FAIL no backup file"; exit 1; fi
-ok=$(/usr/bin/sqlite3 "$latest" "PRAGMA integrity_check;" 2>&1 || true)
+# 备份是 WAL 模式：普通方式打开会在旁边留下 -shm、-wal（不匹配 insight-*.sqlite3，清理删不到会一直累积），
+# 所以按 immutable 只读打开，不写任何旁路文件
+ok=$(/usr/bin/sqlite3 "file:$latest?mode=ro&immutable=1" "PRAGMA integrity_check;" 2>&1 || true)
 if [ "$ok" != "ok" ]; then log "FAIL integrity $latest"; exit 1; fi
 # 拉到的最新一份必须在 26 小时内生成（服务器每天 03:30 备份；rsync -t 保留了服务器上的修改时间）
 age=$(( $(date +%s) - $(stat -f %m "$latest") ))

@@ -42,8 +42,9 @@ ls -1 ~/dk-backup/snapshots/ | tail -3; ls -1 ~/dk-backup/snapshots/ | wc -l
 # 逐表行数：PostgreSQL 里的 _backup_meta 应当和 SQLite 一致（装库时已经在事务里核对过一遍，这里再人工看一眼）
 docker exec -i postgres-db sh -c 'psql -X -U "$POSTGRES_USER" -d dk_tmp_check -c "SELECT table_name, row_count FROM dk_insight._backup_meta ORDER BY 1"'
 latest=$(ls -1 ~/dk-backup/snapshots/insight-*.sqlite3 | sort | tail -1)
-for t in $(/usr/bin/sqlite3 "$latest" "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY 1"); do
-  printf '%s %s\n' "$t" "$(/usr/bin/sqlite3 "$latest" "SELECT count(*) FROM \"$t\"")"; done
+# 快照用 immutable 只读方式打开（file:…?mode=ro&immutable=1）：备份是 WAL 模式，普通方式打开会在 snapshots/ 里留下 -shm、-wal
+for t in $(/usr/bin/sqlite3 "file:$latest?mode=ro&immutable=1" "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY 1"); do
+  printf '%s %s\n' "$t" "$(/usr/bin/sqlite3 "file:$latest?mode=ro&immutable=1" "SELECT count(*) FROM \"$t\"")"; done
 # 普通角色连不进去，应输出 f
 docker exec -i postgres-db sh -c 'psql -X -tA -U "$POSTGRES_USER" -d postgres' <<'SQL'
 SELECT has_database_privilege('odpquant', 'dk_tmp_check', 'CONNECT');
@@ -96,7 +97,7 @@ docker exec -i postgres-db sh -c 'psql -X -U "$POSTGRES_USER" -d dreamo_user_bac
 
 ```bash
 # 1) 在 Mac mini 上挑一份（一般是最新的），先确认完整
-f=$(ls -1 ~/dk-backup/snapshots/insight-*.sqlite3 | sort | tail -1); /usr/bin/sqlite3 "$f" "PRAGMA integrity_check;"   # 应输出 ok
+f=$(ls -1 ~/dk-backup/snapshots/insight-*.sqlite3 | sort | tail -1); /usr/bin/sqlite3 "file:$f?mode=ro&immutable=1" "PRAGMA integrity_check;"   # 应输出 ok；immutable 打开不在旁边留 -shm、-wal
 # 2) 拷到服务器的临时目录（用有 sudo 的运维账号，不是 dk-backup）
 scp "$f" <运维账号>@<服务器>:/tmp/insight-restore.sqlite3
 # 3) 在服务器上：停服务 → 旧库留底 → 换上备份 → 删掉旧库的 -wal/-shm → 恢复属主和权限 → 启服务
