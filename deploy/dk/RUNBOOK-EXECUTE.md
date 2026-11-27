@@ -307,9 +307,11 @@ for u in http://dk.dreamotech.cn/ https://dk.dreamotech.cn/ https://dk.dreamotec
 
 ---
 
-## E13 异地备份：家里的 Mac mini 每天拉取（DK4）
+## E13 异地备份：家里的 Mac mini 每天拉取，并装进那里的 PostgreSQL（DK4 / ZS-138）
 
 方向是 **Mac mini 主动拉**，边缘机不需要能连回家里。备份含境内用户的账号信息，只存放在境内（边缘机加家里的 Mac mini），不出境。
+
+Mac mini 就是中台生产机。它保留最新 **14 份** SQLite 备份，并把最新一份整份装进那里 `postgres-db` 容器的库 `dreamo_user_backup` 的 schema `dk_insight`。这个库是公司境内产品的用户数据备份库，每个产品一个 schema，知数星耀是 `dk_insight`。PostgreSQL 那份只是方便查看的副本；**恢复用 SQLite 文件**。
 
 ### E13.1 边缘机：只读专用账号【写·服务器】
 
@@ -324,7 +326,7 @@ ssh $H 'sudo ls -ld /var/lib/dk-insight /var/lib/dk-insight/backups; sudo ls -l 
 - 如果 E12-13 的第一份备份是在本次修改之前生成的（0600），就再手动跑一次备份。
 - 找不到 rrsync：从 rsync 源码包的 `support/rrsync` 拷到 `/usr/local/bin/rrsync`，`chmod 755`。它是一个 Python 脚本，需要 python3。
 
-> **E13.2、E13.4、E13.5 由用户本人在 Mac mini 上执行**（本会话不连 Mac mini）。可以直接复制的完整命令块在 `deploy/dk/macmini/SETUP-ON-MACMINI.md`：块 A = E13.2，块 B = E13.4，块 C = E13.5。下面保留的命令只是说明。
+> **E13.2、E13.4、E13.5 在 Mac mini 上执行**。安装、验证、日常和恢复的完整命令都在 `deploy/dk/macmini/SETUP-ON-MACMINI.md`，以那里为准；这里只列要点。
 
 ### E13.2 Mac mini：生成专用 Key【需在 Mac mini 上执行】
 
@@ -343,35 +345,27 @@ ssh $H "sudo install -d -o dk-backup -g dk-insight -m 0700 /home/dk-backup/.ssh 
 - `rrsync` 的路径按 E13.1 实际找到的位置填写。
 - 如果边缘机的 sshd 设置了 `AllowUsers` 或 `AllowGroups`，要把 `dk-backup` 加进去。属于 sshd 配置改动，先 `sshd -t` 再 reload。
 
-### E13.4 Mac mini：安装拉取脚本和定时任务【需在 Mac mini 上执行】
+### E13.4 Mac mini：安装拉取脚本、装库脚本和定时任务【需在 Mac mini 上执行】
 
-```bash
-mkdir -p ~/dk-backup && chmod 700 ~/dk-backup
-cp deploy/dk/macmini/pull-dk-backup.sh ~/dk-backup/ && chmod 700 ~/dk-backup/pull-dk-backup.sh
-sed "s#__HOME__#$HOME#g" deploy/dk/macmini/cn.dreamotech.dk-backup-pull.plist > ~/Library/LaunchAgents/cn.dreamotech.dk-backup-pull.plist
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/cn.dreamotech.dk-backup-pull.plist
-```
+按 `SETUP-ON-MACMINI.md` 第 1 到 3 步做：拷 `pull-dk-backup.sh`、`load_dk_backup_pg.py`、plist 到 `~/dk-backup/`，先用 `PG_DB=dk_tmp_check` 试装一遍并核对行数，再装 launchd 定时任务，用 `kickstart` 跑第一次。
 
 - 每天 04:30 运行（服务器 03:30 备份）。
-- 本地保留 **30 天**（`KEEP_DAYS=30`）；边缘机本地保留 14 份。
-- Mac mini 需要开着；如果睡眠时错过了 04:30，launchd 会在唤醒后补跑一次。建议在「节能」设置里打开「唤醒以供网络访问」。
-- 建议打开 FileVault（备份含个人信息）。
+- Mac mini 保留最新 **14 份**（按文件名），和边缘机、隐私政策一致。
+- 服务器地址只在 `pull-dk-backup.sh` 顶部的 `SERVER=` 一处，迁移后只改这里。
+- rsync 用 `-t` 加文件名通配，不带 `-a`、`-r`：macOS 自带的 openrsync 带 `-a` 会被服务器端 rrsync 拒绝。
 
 ### E13.5 验证【需在 Mac mini 上执行·只读】
 
-```bash
-# 1) 只读限制生效：交互登录、执行命令、写入都应该被拒绝
-ssh -i ~/.ssh/dk_backup_ed25519 -o BatchMode=yes dk-backup@101.35.245.53 'ls /'   # 预期：被 rrsync 拒绝
-rsync -a -e "ssh -i ~/.ssh/dk_backup_ed25519" /etc/hosts dk-backup@101.35.245.53:x  # 预期：失败（只读）
-# 2) 手动跑一次拉取
-bash ~/dk-backup/pull-dk-backup.sh && tail -1 ~/dk-backup/pull.log                  # 预期：OK …/insight-<时间>.sqlite3
-# 3) 备份可用：完整性检查，并抽查表结构
-/usr/bin/sqlite3 "$(ls -1t ~/dk-backup/snapshots/insight-*.sqlite3 | head -1)" "PRAGMA integrity_check; SELECT count(*) FROM users;"
-```
+按 `SETUP-ON-MACMINI.md` 第 2、3 步的核对命令做：
 
-- 预期：完整性检查输出 `ok`，紧接着是用户数（只看数量，不导出内容）。
-- 日常监控：`~/dk-backup/pull.log` 每天一行 `OK`。出现 `FAIL`，或者 `WARN …older than 26h`（服务器备份没跑），就查边缘机的 `systemctl status dk-insight-backup.timer`。
-- 恢复演练（建议上线一周内做一次）：把 Mac mini 上的一份备份拷回边缘机临时目录，用 E12-13 的方法打开，确认能用。
+- `pull.log` 最后一行是 `OK load dreamo_user_backup.dk_insight`。
+- `dk_insight._backup_meta` 的逐表行数和 SQLite 一致。
+- `odpquant` 对库没有 CONNECT 权限。
+
+- 日常监控：`~/dk-backup/pull.log` 每天出现 `OK pull`、`OK load`。出现以下记录时要查：
+  - `FAIL rsync`、`FAIL integrity`、`FAIL load`。
+  - `WARN …older than 26h`：服务器备份没跑，查边缘机的 `systemctl status dk-insight-backup.timer`。
+- 恢复：用 Mac mini 上的 SQLite 文件，步骤见 `SETUP-ON-MACMINI.md`「恢复」。
 
 ## E14 收尾【写·本地】
 

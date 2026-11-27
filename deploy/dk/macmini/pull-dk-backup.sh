@@ -1,26 +1,44 @@
 #!/bin/bash
-# 在家里的 Mac mini 上运行：每天从边缘机拉取 dk 的 SQLite 备份（只读账号 + rrsync），校验后保留 30 天。
-# 安装见 deploy/dk/RUNBOOK-EXECUTE.md E13。
+# 在家里的 Mac mini 上运行：每天从 dk 服务器拉取用户库 SQLite 备份（只读账号 + rrsync），
+# 校验后保留最新 14 份，再整份装进本机 postgres-db 容器里的库 dreamo_user_backup 的 schema dk_insight（方便查看的副本）。
+# 这个库是公司境内产品的用户数据备份库，每个产品一个 schema，知数星耀是 dk_insight。
+# 安装见 deploy/dk/macmini/SETUP-ON-MACMINI.md。
 set -euo pipefail
-BASE="$HOME/dk-backup"
+SERVER="101.35.245.53"          # dk 服务器地址。服务器迁移后只改这一处
+KEEP=14                          # 保留份数，和隐私政策「每日一份，保留 14 份」一致
+PG_DB="${PG_DB:-dreamo_user_backup}"
+PG_SCHEMA="${PG_SCHEMA:-dk_insight}"
+BASE="${DK_BACKUP_BASE:-$HOME/dk-backup}"
+RSYNC="${RSYNC:-/usr/bin/rsync}"           # 自测时替换
+LOADER="${LOADER:-$BASE/load_dk_backup_pg.py}"
 DEST="$BASE/snapshots"
 KEY="$HOME/.ssh/dk_backup_ed25519"
-REMOTE="dk-backup@101.35.245.53"
-KEEP_DAYS=30
 mkdir -p "$DEST"
 chmod 700 "$BASE" "$DEST"
 log() { printf '%s %s\n' "$(date '+%F %T')" "$*" >> "$BASE/pull.log"; }
 
-# rrsync 把根目录限制在 /var/lib/dk-insight/backups，所以远端路径写成「:」（即受限根目录）
-if ! rsync -a --chmod=F600 -e "ssh -i $KEY -o BatchMode=yes -o IdentitiesOnly=yes" "$REMOTE:" "$DEST/"; then
+# macOS 自带 openrsync：不能带 -a/-r（会发 --dirs，服务器端 rrsync 拒绝），按文件名通配逐个拉
+if ! "$RSYNC" -t -e "ssh -i $KEY -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=15" \
+    "dk-backup@$SERVER:insight-*.sqlite3" "$DEST/"; then
   log "FAIL rsync"; exit 1
 fi
-latest=$(ls -1t "$DEST"/insight-*.sqlite3 2>/dev/null | head -1)
+chmod 600 "$DEST"/insight-*.sqlite3 2>/dev/null || true
+latest=$(ls -1 "$DEST"/insight-*.sqlite3 2>/dev/null | sort | tail -1)
 if [ -z "$latest" ]; then log "FAIL no backup file"; exit 1; fi
-# 拉到的最新一份必须在 26 小时内生成（服务器每天 03:30 备份）
+# 备份是 WAL 模式：普通方式打开会在旁边留下 -shm、-wal（不匹配 insight-*.sqlite3，清理删不到会一直累积），
+# 所以按 immutable 只读打开，不写任何旁路文件
+ok=$(/usr/bin/sqlite3 "file:$latest?mode=ro&immutable=1" "PRAGMA integrity_check;" 2>&1 || true)
+if [ "$ok" != "ok" ]; then log "FAIL integrity $latest"; exit 1; fi
+# 拉到的最新一份必须在 26 小时内生成（服务器每天 03:30 备份；rsync -t 保留了服务器上的修改时间）
 age=$(( $(date +%s) - $(stat -f %m "$latest") ))
-ok=$(/usr/bin/sqlite3 "$latest" "PRAGMA integrity_check;")
-if [ "$ok" != "ok" ]; then log "FAIL integrity $latest: $ok"; exit 1; fi
 if [ "$age" -gt 93600 ]; then log "WARN latest backup is older than 26h: $latest"; fi
-find "$DEST" -name 'insight-*.sqlite3' -mtime +$KEEP_DAYS -delete
-log "OK $latest ($(ls -1 "$DEST"/insight-*.sqlite3 | wc -l | tr -d ' ') files kept)"
+# 按文件名只留最新 KEEP 份（文件名带时间，排序即时间顺序）
+ls -1 "$DEST"/insight-*.sqlite3 | sort -r | tail -n +$((KEEP + 1)) | while IFS= read -r f; do rm -f "$f"; done
+log "OK pull $latest ($(ls -1 "$DEST"/insight-*.sqlite3 | wc -l | tr -d ' ') files kept)"
+
+# 装进 PostgreSQL。失败时记 FAIL、退出码非 0；已拉到的文件保留
+if /usr/bin/python3 "$LOADER" "$latest" --db "$PG_DB" --schema "$PG_SCHEMA" >> "$BASE/pull.log" 2>&1; then
+  log "OK load $PG_DB.$PG_SCHEMA"
+else
+  log "FAIL load $PG_DB.$PG_SCHEMA"; exit 1
+fi

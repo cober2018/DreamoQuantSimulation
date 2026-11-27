@@ -28,7 +28,7 @@
 | Python | `/opt/dk-insight/venv`（`/usr/bin/python3.11 -m venv`，`pip install -r backend/requirements.lock`） |
 | 前端 | `/opt/dk-insight/web/releases/<ts>/`（`web/dist`），`current` 软链 |
 | 数据 | `/var/lib/dk-insight/insight.sqlite3`（账号、角色、会员、审计） |
-| 备份 | `/var/lib/dk-insight/backups/`，每日 03:30，保留 14 份（0640，组只读）；异地：家里的 Mac mini 每日拉取，保留 30 天 |
+| 备份 | `/var/lib/dk-insight/backups/`，每日 03:30，保留 14 份（0640，组只读）；异地：家里的 Mac mini（中台生产机）每日 04:30 拉取，保留最新 14 份，并整份装进那里 PostgreSQL 的库 `dreamo_user_backup` 的 schema `dk_insight`（查看用副本，只有最新一天） |
 | 配置 | `/etc/dk-insight/insight.env`（root:dk-insight 0640），变量见 `insight.env.example` |
 | 日志 | nginx：`/var/log/nginx/dk-insight/`，保留 30 天；网关：`journalctl -u dk-insight-api` |
 | 证书 | **单独签** `live/dk.dreamotech.cn`，和现有证书一样用 certbot nginx 插件。不碰 `live/dreamotech.cn`（derper 依赖） |
@@ -168,7 +168,7 @@ nginx 草案要点：`/api/` 覆盖写 `X-Forwarded-For $remote_addr`（配合 u
 ## 9. 【写】备份
 
 - 每日 03:30 `dk-insight-backup.timer` 用 SQLite 在线备份 API 写到 `/var/lib/dk-insight/backups/`，做完整性检查，保留 14 份（`deploy/dk/scripts/backup_sqlite.py`，只依赖 Python 标准库）。
-- 异地：家里的 Mac mini 每天 04:30 主动拉取（DK4），只读专用账号 `dk-backup` + rrsync，本地保留 30 天，数据不出境。步骤见 `RUNBOOK-EXECUTE.md` E13。
+- 异地：家里的 Mac mini（中台生产机）每天 04:30 主动拉取（DK4/ZS-138），只读专用账号 `dk-backup` + rrsync，保留最新 14 份，数据不出境。拉取并校验后，整份装进 Mac mini 上 `postgres-db` 容器的库 `dreamo_user_backup` 的 schema `dk_insight`（`REVOKE CONNECT ... FROM PUBLIC`，普通角色读不到），每天整份替换、只有最新一天，只是方便查看的副本。这个库是公司境内产品的用户数据备份库，每个产品一个 schema，知数星耀是 `dk_insight`。**恢复用拉下来的 SQLite 文件**，不用 PostgreSQL 那份。脚本和安装步骤见 `deploy/dk/macmini/`（`SETUP-ON-MACMINI.md`）。
 - 恢复演练【只读】：抽一份备份 `python3 -c "import sqlite3;print(sqlite3.connect('<备份>').execute('PRAGMA integrity_check').fetchone())"`。
 
 ## 10. 【只读】验收
